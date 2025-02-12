@@ -25,7 +25,7 @@ const tagCounts = postCollection.reduce<Record<string, number>>(
     return res;
   },
   {
-    All: postCollection.length,
+    全部文章: postCollection.length,
   },
 );
 
@@ -64,10 +64,10 @@ const posts = [...postCollection]
             <span class="shrink-0">{item.data.title}</span>
             <span class="mx-8 hidden h-px w-full grow border-t border-dashed border-slate6 sm:flex" />
             <span class="shrink-0 text-slate8">
-              {item.data.pubDate?.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
+              {item.data.pubDate?.toLocaleDateString('zh-CN', {
+                year: '2-digit',
+                month: '2-digit',
+                day: '2-digit',
               })}
             </span>
           </a>

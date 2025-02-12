@@ -11,6 +11,7 @@
   ],
   "compilerOptions": {
     "strictNullChecks": true,
+    "allowJs": true,
     "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {

@@ -29,12 +29,12 @@ const post = Astro.props;
 const { Content, remarkPluginFrontmatter, headings } = await post.render();
 const lastModifiedDate = dayjs(remarkPluginFrontmatter.lastModified ? remarkPluginFrontmatter.lastModified : undefined);
 const lastModified = lastModifiedDate.isSame(dayjs(), 'year')
-  ? lastModifiedDate.format('MMM DD')
-  : lastModifiedDate.format('MMM DD, YYYY');
+  ? lastModifiedDate.format('MM/DD')
+  : lastModifiedDate.format('YY/MM/DD');
 const pubDate = dayjs(post.data.pubDate);
 const formattedPubDate = pubDate.isSame(dayjs(), 'year')
-  ? pubDate.format('MMM DD')
-  : pubDate.format('MMM DD, YYYY');
+  ? pubDate.format('MM/DD')
+  : pubDate.format('YY/MM/DD');
 ---
 
 <PageLayout title={post.data.title} description={post.data.description}>
@@ -68,7 +68,7 @@ const formattedPubDate = pubDate.isSame(dayjs(), 'year')
     <Content />
     {
       slateConfig.lastModified && (
-        <div class="text-slate8">Last edited {lastModified}</div>
+        <div class="text-slate8">编辑于 {lastModified}</div>
       )
     }
   </div>
