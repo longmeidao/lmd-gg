@@ -27,7 +27,9 @@ function generateAstroConfigure() {
     site: slateConfig.site,
     integrations: [
       computedIntegrations(),
-      sitemap()
+      sitemap({
+        filter: (page) => !page.includes("/admin")
+      })
     ],
     markdown: {
       remarkPlugins: [
