@@ -13,5 +13,20 @@ export default defineConfig({
   readTime: true,
   footer: {
     copyright: '© 2025 三墩冰室',
+  },
+  navigations: [
+    {
+      label: "导览册",
+      href: "/about"
+    },
+    {
+      label: 'RSS',
+      href: '/rss.xml'
+    },
+  ],
+  algolia: {
+    appId: 'K3HL1E7WTZ',
+    apiKey: 'e9e6758cf004bd93db4ca97d7aec2e96',
+    indexName: 'lmd'
   }
 });

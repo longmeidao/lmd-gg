@@ -103,6 +103,10 @@
     @apply text-slate8;
   }
 
+  li > ul {
+    margin-bottom: calc(var(--spacing)* 2);
+  }
+
   ol {
     @apply mb-6 mt-2 list-decimal pl-6 text-base leading-relaxed text-slate11;
   }

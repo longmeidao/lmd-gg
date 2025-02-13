@@ -28,6 +28,11 @@ export interface SlateConfig {
   title: string;
   /** 网站描述 */
   description: string;
+  /** 导航栏配置 */
+  navigations?: Array<{
+    label: string;
+    href: string;
+  }>;
   /** 是否显示阅读时间 */
   readTime?: boolean;
   /** 是否显示最后修改时间 */
@@ -47,4 +52,5 @@ export interface SlateConfig {
     feedId: string;
     userId: string;
   };
+
 }

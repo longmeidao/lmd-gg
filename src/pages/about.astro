@@ -1,0 +1,54 @@
+---
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import Button from '@/components/button';
+import '@/assets/style/blog.css';
+---
+
+<PageLayout title="导览册">
+  <div class="mb-16" slot="header">
+    <Button id="back">←</Button>
+  </div>
+  <div class="blog-content">
+    <div class="mb-16">
+      <h1>导览册</h1>
+    </div>
+    <h2>在这里找到我</h3>
+    <ul>
+      <li>X：<a target="_blank" rel="noopener" href="https://twitter.com/longmeidao">泷美道</a></li>
+      <li>Bangumi：<a target="_blank" rel="noopener" href="https://bgm.tv/user/longmeidao">泷美道</a></li>
+      <li>哔哩哔哩：<a target="_blank" rel="noopener" href="https://space.bilibili.com/348434572">泷美道</a></li>
+      <li>Exophase：<a target="_blank" rel="noopener" href="https://www.exophase.com/user/longmeidao/">longmeidao</a></li>
+      <li>Steam：<a target="_blank" rel="noopener" href="https://steamcommunity.com/id/longmeidao">泷美道</a></li>
+      <li>Battle.net：
+        <ul>
+          <li>泷美道#5377（中国大陆服务器）</li>
+          <li>Aya#11783（国际服务器）</li>
+        </ul>
+      </li>
+      <li><del>Project Sekai：<a target="_blank" rel="noopener" href="https://profile.pjsekai.moe/#/user/37200377896058882">瀧美道</a></del></li>
+      <li>osu!：<a target="_blank" rel="noopener" href="https://osu.ppy.sh/users/21976968">longmeidao</a></li>
+      <li>Discord：
+        <ul>
+          <li>泷美道#1209</li>
+          <li>加入<a target="_blank" rel="noopener" href="https://discord.gg/jneSbC76re">我的服务器</a></li>
+        </ul>
+      </li>
+      <li>Telegram：<a target="_blank" rel="noopener" href="https://t.me/longmeidao">longmeidao</a></li>
+      <li>Email：<a href="mailto:longmeidao@pm.me">longmeidao@pm.me</a></li>
+    </ul>
+    <h2>做着玩的</h2>
+    <ul>
+      <li><del><a target="_blank" rel="noopener" href="https://temoto.us/">Temoto.us</a>: a temoto video collection site.</del></li>
+      <li><del><a target="_blank" rel="noopener" href="https://prsc.pics/">PrSc.Pics</a>: Printscreening, lifelogging.</del></li>
+      <li><del><a target="_blank" rel="noopener" href="https://sese.pics/">sese.pics</a>: a setu site (waiting for ideas).</del></li>
+    </ul>
+    <div class="text-slate8">编辑于 02/13</div>
+  </div>
+</PageLayout>
+
+<script>
+  const backBtn = document.getElementById('back');
+  backBtn?.addEventListener('click', () => {
+    window.location.href = '/';
+  });
+</script>

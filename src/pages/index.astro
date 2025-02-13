@@ -44,12 +44,30 @@ const posts = [...postCollection]
   }));
 ---
 
+<style>
+  .navi > span:last-child {
+    display: none;
+  }
+</style>
+
 <PageLayout>
   <section class="relative mb-16">
     <h3 class="text-[40px] font-semibold leading-tight text-slate12">
       {slateConfig.title}
     </h3>
     <p class="text-xl text-slate10">{slateConfig.description}</p>
+    <div class="flex flex-wrap gap-3 mt-5 text-base navi">
+      {
+        slateConfig.navigations?.map((navigation) => {
+          return (
+            <a href={navigation.href} class="flex items-center">
+              {navigation.label}
+            </a>
+            <span>·</span>
+          );
+        })
+      }
+    </div>
     <Search
       client:only="react"
       className="absolute right-0 top-1/2 -translate-y-1/2"
