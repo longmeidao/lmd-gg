@@ -57,7 +57,7 @@ pnpm build
 | title | 网站标题 | `string` | - |
 | description | 网站描述 | `string` | - |
 | lang | 语言 | `string` | `zh-CN` |
-| theme | 主题 | `{ mode: 'auto' | 'light' | 'dark', enableUserChange: boolean }` | `{ mode: 'auto', enableUserChange: true }` |
+| theme | 主题 | `{ mode: 'auto' \| 'light' \| 'dark', enableUserChange: boolean }` | `{ mode: 'auto', enableUserChange: true }` |
 | avatar | 头像 | `string` | - |
 | sitemap | 网站 sitemap 配置 | [SitemapOptions](https://docs.astro.build/zh-cn/guides/integrations-guide/sitemap/) | - |
 | readTime | 是否显示阅读时间 | `boolean` | `false` |

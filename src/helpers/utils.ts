@@ -2,7 +2,7 @@ import slateConfig from '~@/slate.config';
 import type { ThemeMode } from '@/typings/config';
 
 /**
- * @description: 获取完整标题
+ * @description: Get full title
  * @param title
  */
 export function getFullTitle(title: string) {
@@ -10,7 +10,7 @@ export function getFullTitle(title: string) {
 }
 
 /**
- * @description: 设置主题模式
+ * @description: Set theme mode
  * @param mode
  */
 export function setThemeMode(mode: ThemeMode) {

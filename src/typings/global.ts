@@ -1,9 +1,9 @@
-/** 主题值 */
+/** Theme value */
 export enum ThemeValue {
-  /** 自动 */
+  /** Auto */
   Auto = 'auto',
-  /** 亮色 */
+  /** Light */
   Light = 'light',
-  /** 暗色 */
+  /** Dark */
   Dark = 'dark',
 }

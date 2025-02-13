@@ -4,20 +4,20 @@ const postCollection = defineCollection({
   type: 'content',
   schema: z
     .object({
-      /** 标题 */
+      /** Title */
       title: z.string(),
-      /** 描述 */
+      /** Description */
       description: z.string().optional(),
-      /** 标签 */
+      /** Tags */
       tags: z.array(z.string()).optional(),
-      /** 是否是草稿 */
+      /** Whether it's a draft */
       draft: z.boolean().optional(),
-      /** 发布时间（当非草稿时必须提供） */
+      /** Publish date (required when not draft) */
       pubDate: z.coerce.date().optional(),
     })
     .refine(
       (data) => {
-        // 如果是草稿则 pubDate 不是必须的，反之时必须的
+        // If it is a draft, then pubDate is not required; otherwise, it is mandatory.
         if (data.draft === true) {
           return true;
         }

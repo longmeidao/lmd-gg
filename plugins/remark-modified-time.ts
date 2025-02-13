@@ -1,5 +1,5 @@
 /*
- * @Description: 自动添加最后修改时间
+ * @Description: Automatically add last modified time
  */
 import { execSync } from 'child_process';
 

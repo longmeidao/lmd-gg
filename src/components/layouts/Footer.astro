@@ -12,7 +12,7 @@ const { copyright = stateConfig.footer?.copyright } = Astro.props;
 
 <footer class="mt-auto flex items-center justify-between pt-6">
   <div class="text-slate8 text-sm">{copyright}</div>
-  {/* S 主题选择 */}
+  {/* S theme selection */}
   {(stateConfig.theme as ThemeOptions).enableUserChange && <ThemeSelect client:visible />}
-  {/* E 主题选择 */}
+  {/* E theme selection */}
 </footer>

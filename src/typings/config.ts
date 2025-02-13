@@ -4,50 +4,50 @@ export const languages = ['zh-CN', 'en-US'] as const;
 export type LangType = (typeof languages)[number];
 
 export const theme = ['auto', 'light', 'dark'] as const;
-/** 主题模式 */
+/** Theme mode */
 export type ThemeMode = (typeof theme)[number];
 export interface ThemeOptions {
-  /** 模式 */
+  /** Mode */
   mode: ThemeMode;
-  /** 是否允许允许用户切换 */
+  /** Whether to allow user to change theme */
   enableUserChange?: boolean;
 }
 
 export interface SlateConfig {
-  /** 最终部署的链接 */
+  /** Final deployment link */
   site: string;
-  /** 语言 */
+  /** Language */
   lang?: LangType;
-  /** 主题 */
+  /** Theme */
   theme?: ThemeOptions;
-  /** 头像 */
+  /** Avatar */
   avatar?: string;
-  /** sitemap 配置 */
+  /** Sitemap configuration */
   sitemap?: SitemapOptions;
-  /** 网站标题 */
+  /** Website title */
   title: string;
-  /** 网站描述 */
+  /** Website description */
   description: string;
   /** 导航栏配置 */
   navigations?: Array<{
     label: string;
     href: string;
   }>;
-  /** 是否显示阅读时间 */
+  /** Whether to show reading time */
   readTime?: boolean;
-  /** 是否显示最后修改时间 */
+  /** Whether to show last modified time */
   lastModified?: boolean;
-  /** docsearch 配置 */
+  /** Docsearch configuration */
   algolia?: {
     appId: string;
     apiKey: string;
     indexName: string;
   };
-  /** 网站底部配置 */
+  /** Website footer configuration */
   footer?: {
     copyright: string;
   };
-  /** follow订阅认证配置 */
+  /** Follow subscription authentication configuration */
   follow?: {
     feedId: string;
     userId: string;

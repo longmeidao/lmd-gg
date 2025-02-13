@@ -1,5 +1,5 @@
 /*
- * @file 主题配置
+ * @file Theme configuration
  */
 import { defineConfig } from './src/helpers/config-helper';
 
