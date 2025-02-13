@@ -16,7 +16,7 @@ collections:
     fields: # 每个文档的字段，通常在 front matter 中
       - { label: "标题", name: "title", widget: "string" }
       - { label: "描述", name: "description", widget: "string" }
-      #- { label: "标签", name: "tags", widget: "tags", allow_add: true }
+      - { label: "标签", name: "tags", widget: "array" }
       - { label: "草稿", name: "draft", widget: "boolean" }
       - { label: "发布日期", name: "pubDate", widget: "datetime", date_format: "YY-MM-DD" }
       - { label: "正文", name: "body", widget: "markdown" }
