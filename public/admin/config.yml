@@ -1,0 +1,25 @@
+local_backend: true
+backend:
+  name: git-gateway
+  branch: main
+  repo: longmeidao/slate-blog
+  site_domain: lmd.gg
+  base_url: https://lmd.gg
+
+logo_url: https://lmd.gg/logo.png
+locale: 'zh_Hans'
+
+collections:
+  - name: "blog" # 用于路由，例如，/admin/collections/blog
+    label: "文章" # 在 UI 中使用
+    folder: "src/content/post" # 存储文档的文件夹路径
+    create: true # 允许用户在此集合中创建新文档
+    fields: # 每个文档的字段，通常在 front matter 中
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "描述", name: "description", widget: "string" }
+      #- { label: "标签", name: "tags", widget: "tags", allow_add: true }
+      - { label: "草稿", name: "draft", widget: "boolean" }
+      - { label: "发布日期", name: "pubDate", widget: "datetime", date_format: "YY-MM-DD" }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+media_folder: "../img"
