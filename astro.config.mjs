@@ -25,7 +25,10 @@ function computedIntegrations() {
 function generateAstroConfigure() {
   const astroConfig = {
     site: slateConfig.site,
-    integrations: computedIntegrations(),
+    integrations: [
+      computedIntegrations(),
+      sitemap()
+    ],
     markdown: {
       remarkPlugins: [
         remarkGemoji,
