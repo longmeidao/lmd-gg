@@ -8,13 +8,13 @@ pubDate: 2022-08-06
 
 如果妳没有玩过《恶魔之魂》这款游戏，请谨慎阅读这篇文章。
 
-<center>❧</center>
+<hr />
 
 > Don’t make me think.
 
 Steve Krug 的起初作为网页设计方针的[这句话](https://sensible.com/dont-make-me-think/)，已然成为了用户体验设计的金科玉律，而其适用性在游戏领域似乎特为尤甚。就像[喜欢当妳家长的苹果](https://blog.yitianshijie.net/2021/05/21/app-store-is-the-elephant-in-the-room/)，就像游戏中的自动寻路和一键扫荡。
 
-但毕竟游戏作为一种具有强互动属性的媒介，一般情况下游戏开发者并不是完全不鼓励玩家「思考」，而是尽量避免让玩家感到「困惑」。
+但毕竟游戏作为一种具有强互动属性的媒介，一般情况下游戏开发者并不是完全不鼓励玩家<span class="heti-em">思考</span>，而是尽量避免让玩家感到<span class="heti-em">困惑</span>。
 
 宫崎英高就是想要让玩家感到困惑。
 

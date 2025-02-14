@@ -86,6 +86,11 @@
   blockquote {
     @apply my-6 border-l-2 border-slate4 pl-4;
 
+    /* heti.css hack */
+    background-color: transparent;
+    margin-inline: 0;
+    padding-block: 0;
+
     p {
       @apply text-base leading-relaxed text-slate10;
     }
@@ -148,6 +153,10 @@
 
   .heti-adjacent-quarter {
     @apply me-[-0.25em];
+  }
+
+  .heti em {
+    font-family: "Times New Roman", times, "Heti Kai Black", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   }
 }
 

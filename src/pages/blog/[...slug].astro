@@ -11,6 +11,7 @@ import CodeGroupEvent from '@/components/code-group-event';
 import slateConfig from '~@/slate.config';
 import { getFullTitle } from '@/helpers/utils';
 import 'remark-block-containers/css';
+import 'heti/umd/heti.min.css';
 import '@/assets/style/blog.css';
 
 export async function getStaticPaths() {
@@ -74,14 +75,16 @@ const formattedPubDate = pubDate.isSame(dayjs(), 'year')
         }
       </div>
     </div>
-    <Content />
-    {
-      slateConfig.lastModified && (
-        <div class="text-slate8">
-          {i18next.t('blog.lastModified')} {lastModified}
-        </div>
-      )
-    }
+    <div class="post-content heti">
+      <Content />
+      {
+        slateConfig.lastModified && (
+          <div class="text-slate8" style="font-size: 14px;">
+            {i18next.t('blog.lastModified')} {lastModified}
+          </div>
+        )
+      }
+    </div>
   </div>
   <!-- E 内容 -->
   <!-- S 目录 -->
