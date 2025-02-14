@@ -22,7 +22,7 @@ pubDate: 2025-02-14
 
 除却「截图工具」外，我还尝试过不少热门的 Windows 截图工具，像是 Snipaste、PixPin 和 Greenshot 等，但它们无一能实现上述的「Mac-like」截图效果。
 
-LINUX DO 的一个[帖子](https://linux.do/t/topic/330335)中推荐了「ShareX」，其截取活动窗口的功能在设置「截图窗口带阴影」后，截图图片便能达到类似 macOS 的截图效果：
+LINUX DO 的一个[帖子](https://linux.do/t/topic/330335/5)推荐了「ShareX」，其截取活动窗口的功能在设置「截图窗口带阴影」后，截图图片便能达到类似 macOS 的截图效果：
 
 ![ShareX 在调整设置后的截图结果](../images/sharex-config.png)
 
@@ -30,6 +30,6 @@ ShareX 还支持功能强大的图像特效，官方提供了不少[例子](http
 
 实际上，PixPin 也支持给截图区域周围添加阴影的功能，但其截图图片仍包含窗口背后的图像。
 
-既然 ShareX 能够做到<span class="heti-em">不包含窗口背后的图像</span>地截图，说明并非 Windows 不支持该功能，只是其他诸多截图工具（包括 Windows 自带的「截图工具」）并没有默认集成。Who cares?
+既然 ShareX 能够做到<span class="heti-em">不包含窗口背后的图像</span>地截图，说明并非 Windows 不支持该功能，只是其他诸多截图工具*（包括 Windows 自带的「截图工具」）*并没有默认集成。Who cares?
 
 另外，OBS Studio 中的「捕获窗口」功能也能实现类似的效果。但我并没有在 OBS Studio 找到把捕获的窗口导出为图片的功能，更何况将一个串流软件作为截图工具有些显得杀鸡用牛刀了。
