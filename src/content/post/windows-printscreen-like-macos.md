@@ -13,7 +13,7 @@ pubDate: 2025-02-14
 
 ![Windows 上使用「截图工具」快捷键截取的「Typora」窗口](../images/win-shift-s-capture.png)
 
-然而相似的只是<span class="heti-em">截图体验</span>，并非<span class="heti-em">截图效果</span>。「截图工具」捕获的窗口图片：
+然而相似的只是截图体验，并非<span class="heti-em">截图效果</span>。「截图工具」捕获的窗口图片：
 
 - 没有窗口周围的阴影
 - 包含了窗口背后的图像
@@ -34,6 +34,6 @@ ShareX 还支持功能强大的图像特效，官方提供了不少[例子](http
 
 实际上，PixPin 也支持给截图区域周围添加阴影的功能，但其截图图片仍包含窗口背后的图像。
 
-既然 ShareX 能够做到<span class="heti-em">不包含窗口背后的图像</span>地截图，说明并非 Windows 不支持该功能，只是其他诸多截图工具（*包括 Windows 自带的「截图工具」*）并没有默认集成。Who cares?
+既然 ShareX 能够做到<span class="heti-em">不包含窗口背后的图像</span>地截图，那么说明并非 Windows 不支持该功能，只是其他诸多截图工具（*包括 Windows 自带的「截图工具」*）并没有默认集成。Who cares?
 
 另外，OBS Studio 中的「捕获窗口」功能也能实现类似的效果。但我并没有在 OBS Studio 找到把捕获的窗口导出为图片的功能，更何况将一个串流软件作为截图工具有些显得杀鸡用牛刀了。
