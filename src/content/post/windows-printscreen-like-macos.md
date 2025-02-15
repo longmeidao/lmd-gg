@@ -5,7 +5,7 @@ tags:
 pubDate: 2025-02-14
 ---
 
-在 macOS 上，妳可以使用 `⇧ + ⌘ + 5` 快捷键唤起系统自带的「截屏」应用，来截图、录屏。*详见[在 Mac 上截屏或录屏](https://support.apple.com/zh-cn/guide/mac-help/mh26782/mac)。*
+在 macOS 上，妳可以使用 `⇧ + ⌘ + 5` 快捷键唤起系统自带的「截屏」应用，来截图、录屏。*（详见[在 Mac 上截屏或录屏](https://support.apple.com/zh-cn/guide/mac-help/mh26782/mac)。）*
 
 ![macOS 上使用「截屏」应用截取的「Follow」窗口](../images/follow.png)
 
@@ -22,11 +22,15 @@ pubDate: 2025-02-14
 
 除却「截图工具」外，我还尝试过不少热门的 Windows 截图工具，像是 Snipaste、PixPin 和 Greenshot 等，但它们无一能实现上述的「Mac-like」截图效果。
 
-LINUX DO 的一个[帖子](https://linux.do/t/topic/330335/5)推荐了「ShareX」，其截取活动窗口的功能在设置「截图窗口带阴影」后，截图图片便能达到类似 macOS 的截图效果：
+直到我在 LINUX DO 的一个[帖子](https://linux.do/t/topic/330335/5)里发现了「ShareX」，其截取活动窗口的功能在设置「截图窗口带阴影」后，截图图片才达到了类似 macOS 的截图效果：
 
 ![ShareX 在调整设置后的截图结果](../images/sharex-config.png)
 
-ShareX 还支持功能强大的图像特效，官方提供了不少[例子](https://getsharex.com/image-effects)供参考。（*如果妳遇到粘贴剪贴板的图片背景不为透明的情况，可以参考[这个](https://github.com/ShareX/ShareX/issues/6607) GitHub Issue。*）
+ShareX 还支持功能强大的图像特效，官方提供了不少[例子](https://getsharex.com/image-effects)供参考。
+
+:::info
+*如果妳遇到粘贴剪贴板的图片背景不为透明的情况，可以参考[这个](https://github.com/ShareX/ShareX/issues/6607) GitHub Issue。*
+:::
 
 实际上，PixPin 也支持给截图区域周围添加阴影的功能，但其截图图片仍包含窗口背后的图像。
 
