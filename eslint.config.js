@@ -12,6 +12,12 @@ export default [
   ...eslintPluginAstro.configs['jsx-a11y-recommended'],
   // pluginReactConfig,
   {
+    rules: {
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+    }
+  },
+  {
     ignores: ['node_modules', 'dist', '.astro', 'src/env.d.ts', '**/.obsidian'],
   },
   {
