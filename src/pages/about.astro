@@ -2,9 +2,58 @@
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import Button from '@/components/button';
 import '@/assets/style/blog.css';
+import 'bangumi-tv/dist/bangumi.css';
+import 'remark-block-containers/css';
 ---
 
 <PageLayout title="导览册">
+  <style is:global>
+    .bgm-tab {
+      margin-right: 5px;
+      padding: 10px;
+    }
+    .bgm-tabs {
+      margin: 0 0 36px 0;
+    }
+    .bgm-active {
+      background: var(--color-slate3);
+      border-radius: .25rem;
+    }
+    .bgm-item {
+      background-color: var(--block-info-bg);
+      border-radius: .5rem;
+    }
+    .bgm-item-thumb {
+      border-radius: .5rem .5rem 0 0;
+    }
+    .bgm-item-info {
+      padding: .75rem;
+    }
+    .bgm-item-title.main {
+      font-size: var(--text-sm);
+      color: var(--color-slate12);
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .bgm-item-title:not(.main) {
+      display: none;
+    }
+    .bgm-item-statusBar {
+      background: var(--color-slate8);
+    }
+    .bgm-item-statusBar-container {
+      background: var(--color-slate11);
+    }
+    .bgm-btn {
+      margin-top: 24px;
+      background-color: var(--color-slate3) !important;
+      color: var(--color-slate11) !important;
+      text-decoration: none !important;
+    }
+    a.bgm-btn:hover {
+      cursor: pointer;
+    }
+  </style>
   <div class="mb-16" slot="header">
     <Button id="back">←</Button>
   </div>
@@ -12,7 +61,7 @@ import '@/assets/style/blog.css';
     <div class="mb-16">
       <h1>导览册</h1>
     </div>
-    <div class="post-content heti">
+    <div class="post-content">
       <img src="/rin.png" alt="Avatar" style="width: calc(var(--spacing)* 28); height: calc(var(--spacing)* 28); border-radius: 3.40282e38px; border-style: var(--tw-border-style); border-width: 4px; border-color: var(--color-white);" />
       <h3 style="text-align: center;">泷美道</h3>
       <div style="display: flex; gap: calc(var(--spacing)* 3); align-items: center; justify-content: center;">
@@ -20,14 +69,26 @@ import '@/assets/style/blog.css';
         <span>·</span>
         <a href="mailto:longmeidao@pm.me">寄信</a>
       </div>
+      <hr />
+      <h3 style="text-align: center;">番组计划</h3>
+      <div class="bgm-container"></div>
     </div>
   </div>
 
-</PageLayout>
+<style>
 
+</style>
 <script>
   const backBtn = document.getElementById('back');
   backBtn?.addEventListener('click', () => {
     window.location.href = '/';
   });
 </script>
+<script is:inline>
+  const bgmConfig = {
+      apiUrl: "https://bgm.lmd.gg",
+      quote: ""
+    }
+</script>
+<script is:inline src="//cdn.jsdmirror.com/npm/bangumi-tv@latest/dist/bangumi.js"></script>
+</PageLayout>
