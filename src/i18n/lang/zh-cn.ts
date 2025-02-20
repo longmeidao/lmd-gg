@@ -1,4 +1,8 @@
 export default {
+  common: {
+    /** all tags */
+    all: '全部',
+  },
   blog: {
     lastModified: '编辑于',
     readingTime: '{{minutes}} 分钟阅读'

@@ -13,6 +13,32 @@ export interface ThemeOptions {
   enableUserChange?: boolean;
 }
 
+/** 社交链接配置 */
+export interface SocialLink {
+  icon: SocialLinkIcon;
+  link: string;
+  ariaLabel?: string;
+}
+
+type SocialLinkIcon =
+  | 'dribbble'
+  | 'facebook'
+  | 'figma'
+  | 'github'
+  | 'instagram'
+  | 'jike'
+  | 'link'
+  | 'notion'
+  | 'npm'
+  | 'rednote'
+  | 'rss'
+  | 'threads'
+  | 'stackoverflow'
+  | 'weibo'
+  | 'x'
+  | 'youtube'
+  | { svg: string };
+
 export interface SlateConfig {
   /** Final deployment link */
   site: string;
@@ -52,5 +78,6 @@ export interface SlateConfig {
     feedId: string;
     userId: string;
   };
-
+  /** 社交链接 */
+  socialLinks?: SocialLink[];
 }

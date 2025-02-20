@@ -1,4 +1,8 @@
 export default {
+  common: {
+    /** all tags */
+    all: 'All',
+  },
   /** blog page */
   blog: {
     /** last modified */

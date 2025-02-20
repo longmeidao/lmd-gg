@@ -65,6 +65,30 @@ pnpm build
 | algolia | docsearch 配置 | `{ appId: string, apiKey: string, indexName: string }` | - |
 | follow | follow 订阅认证配置 | `{ feedId: string, userId: string }` | - |
 | footer | 网站底部配置 | `{ copyright: string }` | - |
+| socialLinks | 社交链接配置 | `{ icon: [SocialLinkIcon](#SocialLinkIcon), link: string, ariaLabel?: string }` | - |
+
+### SocialLinkIcon
+
+```ts
+type SocialLinkIcon =
+  | 'dribbble'
+  | 'facebook'
+  | 'figma'
+  | 'github'
+  | 'instagram'
+  | 'jike'
+  | 'link'
+  | 'notion'
+  | 'npm'
+  | 'rednote'
+  | 'rss'
+  | 'threads'
+  | 'stackoverflow'
+  | 'weibo'
+  | 'x'
+  | 'youtube'
+  | { svg: string }
+```
 
 ### algolia 申请
 

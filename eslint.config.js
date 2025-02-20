@@ -1,5 +1,5 @@
 import globals from 'globals';
-import eslintPluginAstro from 'eslint-plugin-astro';
+import { configs as astroEslintConfigs } from 'eslint-plugin-astro';
 import astroEslintParser from 'astro-eslint-parser';
 import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -8,8 +8,8 @@ import tseslint from 'typescript-eslint';
 export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
-  ...eslintPluginAstro.configs.recommended,
-  ...eslintPluginAstro.configs['jsx-a11y-recommended'],
+  ...astroEslintConfigs.recommended,
+  ...astroEslintConfigs['jsx-a11y-recommended'],
   // pluginReactConfig,
   {
     rules: {

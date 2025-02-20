@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import i18next from '@/i18n';
 import Search from '@/components/search';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 // import Button from '@/components/button';
@@ -25,7 +26,7 @@ const tagCounts = postCollection.reduce<Record<string, number>>(
     return res;
   },
   {
-    全部文章: postCollection.length,
+    [i18next.t('common.all')]: postCollection.length,
   },
 );
 
