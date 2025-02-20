@@ -84,12 +84,17 @@
   }
 
   blockquote {
-    @apply my-6 border-l-2 border-slate4 pl-4;
 
     /* heti.css hack */
-    background-color: transparent;
-    margin-inline: 0;
-    padding-block: 0;
+    margin-block: calc(var(--spacing)* 6) !important;
+    border-left-style: var(--tw-border-style) !important;
+    border-left-width: 2px !important;
+    border-color: var(--color-slate4) !important;
+    padding-left: calc(var(--spacing)* 4) !important;
+
+    background-color: transparent !important;
+    margin-inline: 0 !important;
+    padding-block: 0 !important;
 
     p {
       @apply text-base leading-relaxed text-slate10;
