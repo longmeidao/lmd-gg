@@ -5,7 +5,7 @@ backend:
   site_domain: lmd.gg
   base_url: https://lmd.gg
 
-logo_url: https://lmd.gg/logo.png
+logo_url: https://lmd.gg/images/logo.png
 locale: 'zh_Hans'
 
 collections:

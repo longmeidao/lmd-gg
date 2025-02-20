@@ -6,7 +6,7 @@ import { defineConfig } from './src/helpers/config-helper';
 export default defineConfig({
   site: 'https://lmd.gg',
   lang: 'zh-CN',
-  avatar: '/logo.png',
+  avatar: '/images/logo.png',
   title: '三墩冰室',
   description: '五年饮冰，来份烧仙草。',
   lastModified: true,
