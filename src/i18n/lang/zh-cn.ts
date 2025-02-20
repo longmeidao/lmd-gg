@@ -1,7 +1,7 @@
 export default {
   common: {
     /** all tags */
-    all: '全部',
+    all: '全部文章',
   },
   blog: {
     lastModified: '编辑于',
