@@ -34,6 +34,8 @@ yarn build
 pnpm build
 ```
 
+> 如果您 fork 仓库后，将仓库设置为私有时，默认会失去与上游仓库关联，可以通过运行 `pnpm sync-latest` 同步 Slate Blog 最新版本代码。
+
 ## 🗂 目录
 
 ```
