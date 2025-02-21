@@ -43,6 +43,8 @@ yarn build
 pnpm build
 ```
 
+> If you fork the repository and set it to private, you will lose the association with the upstream repository by default. You can sync the latest version of Slate Blog by running `pnpm sync-latest`.
+
 ## 🗂 Directory Structure
 
 ```
