@@ -27,6 +27,11 @@ export default defineConfig({
   },
   socialLinks: [
     {
+      icon: 'mail',
+      link: 'mailto:longmeidao@pm.me',
+      ariaLabel: 'Email'
+    },
+    {
       icon: 'x',
       link: 'https://x.com/longmeidao',
       ariaLabel: 'X'
