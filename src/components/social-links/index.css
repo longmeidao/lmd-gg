@@ -66,4 +66,8 @@
   &.rss {
     --icon: url('../../assets/images/rss.svg');
   }
+
+  &.mail {
+    --icon: url('../../assets/images/mail.svg');
+  }
 }

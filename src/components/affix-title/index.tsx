@@ -36,10 +36,10 @@ const AffixTitle = (props: AffixTitleProps) => {
       ref={affixTitleRef}
       className={classes}
     >
-      <div className="mx-auto flex items-center justify-between px-8 max-w-180">
+      <div className="mx-auto flex items-center justify-between px-4 max-w-180">
         <button
           onClick={() => window.location.href = '/'}
-          className="text-slate11 hover:text-slate12 transition-colors w-4"
+          className="text-slate11 hover:text-slate12 transition-colors w-8 cursor-pointer active:scale-95 rounded-full h-6 flex items-center justify-center hover:bg-slate12/5"
         >
           ←
         </button>
