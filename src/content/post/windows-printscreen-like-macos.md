@@ -37,3 +37,7 @@ ShareX 还支持功能强大的图像特效，官方提供了不少[例子](http
 既然 ShareX 能够做到<span class="heti-em">不包含窗口背后的图像</span>地截图，那么说明并非 Windows 不支持该功能，只是其他诸多截图工具（*包括 Windows 自带的「截图工具」*）并没有默认集成。Who cares?
 
 另外，OBS Studio 中的「捕获窗口」功能也能实现类似的效果。但我并没有在 OBS Studio 找到把捕获的窗口导出为图片的功能，更何况将一个串流软件作为截图工具有些显得杀鸡用牛刀了。
+
+---
+
+25/08/05 更新：Apple 自己似乎也不在乎截图背后的背景图像（[其一](https://support.apple.com/zh-cn/guide/macbook-pro/apd3a3bbed27/2024/mac/15)中的[截图](https://help.apple.com/assets/6751DB23764B24F68702812D/6751DB2EA70255F1E701251B/zh_CN/e51771794523daf2b58f0fea8d564fe9.png)，[其二](https://support.apple.com/zh-cn/102631)中的[截图](https://cdsassets.apple.com/live/7WUAS350/images/apple-account/locale/zh-cn/macos-sequoia-system-settings-apple-account-sign-in-security-recovery-methods.png)）。
