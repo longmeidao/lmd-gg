@@ -1,7 +1,8 @@
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
 import react from '@astrojs/react';
 import svgr from 'vite-plugin-svgr';
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import remarkGemoji from 'remark-gemoji';
@@ -16,46 +17,44 @@ import { remarkModifiedTime } from './plugins/remark-modified-time';
 import { remarkReadingTime } from './plugins/remark-reading-time';
 import slateConfig from './slate.config';
 
-function computedIntegrations() {
-  const result = [astroExpressiveCode(), mdx(), react(), sitemap(slateConfig.sitemap)];
-
-  return result;
-}
-
 function generateAstroConfigure() {
-  const astroConfig = {
-    site: slateConfig.site,
-    integrations: [
-      computedIntegrations(),
-      sitemap({
-        filter: (page) => !page.includes("/admin")
-      })
-    ],
-    markdown: {
-      remarkPlugins: [
-        remarkGemoji,
-        remarkMath,
-        codeImport,
-        // [codesandbox, { mode: 'button' }],
-        remarkBlockContainers,
-      ],
-      rehypePlugins: [rehypeKatex, rehypeFigure],
-    },
-    vite: {
-      plugins: [
-        svgr(),
-        tailwindcss(),
-      ],
-    },
-  };
+  const remarkPlugins = [
+    remarkGemoji,
+    remarkMath,
+    codeImport,
+    remarkBlockContainers,
+  ];
 
   if (slateConfig.lastModified) {
-    astroConfig.markdown.remarkPlugins.push(remarkModifiedTime);
+    remarkPlugins.push(remarkModifiedTime);
   }
 
   if (slateConfig.readTime) {
-    astroConfig.markdown.remarkPlugins.push(remarkReadingTime);
+    remarkPlugins.push(remarkReadingTime);
   }
+
+  const astroConfig = {
+    site: slateConfig.site,
+    integrations: [
+      astroExpressiveCode(),
+      mdx(),
+      react(),
+      sitemap({
+        ...slateConfig.sitemap,
+        filter: (page) => !page.includes('/admin'),
+      }),
+    ],
+    compressHTML: true,
+    markdown: {
+      processor: unified({
+        remarkPlugins,
+        rehypePlugins: [rehypeKatex, rehypeFigure],
+      }),
+    },
+    vite: {
+      plugins: [svgr(), tailwindcss()],
+    },
+  };
 
   return astroConfig;
 }

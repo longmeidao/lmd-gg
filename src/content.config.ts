@@ -1,7 +1,9 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
 const postCollection = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/post' }),
   schema: z
     .object({
       /** Title */
@@ -17,15 +19,15 @@ const postCollection = defineCollection({
     })
     .refine(
       (data) => {
-        // If it is a draft, then pubDate is not required; otherwise, it is mandatory.
+        // Drafts may omit pubDate; published posts must include it.
         if (data.draft === true) {
           return true;
         }
         return data.pubDate !== undefined;
       },
       {
-        message: 'When draft is false, publicDate is required',
-        path: ['publicDate'],
+        message: 'When draft is false, pubDate is required',
+        path: ['pubDate'],
       },
     ),
 });

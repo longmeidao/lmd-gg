@@ -16,7 +16,7 @@ const Search = ({ className }: SearchProps) => {
       <div className={className}>
         <DocSearch
           appId={slateConfig.algolia.appId}
-          indexName={slateConfig.algolia.indexName}
+          indices={[slateConfig.algolia.indexName]}
           apiKey={slateConfig.algolia.apiKey}
           placeholder={algoliaLocalesConfig.placeholder}
           translations={algoliaLocalesConfig.translations}

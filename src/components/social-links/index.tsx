@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import classNames from 'classnames';
 import slateConfig from '~@/slate.config';
 import type { SocialLink } from '@/typings/config';
@@ -26,7 +26,7 @@ function SocialLinks(props: SocialLinksProps) {
 
   const socialLinks = useMemo(() => {
     return list.map((item) => {
-      let icon;
+      let icon: ReactNode;
       if (typeof item.icon !== 'string') {
         const iconBase64 = `data:image/svg+xml;base64,${btoa(item.icon.svg)}`;
         // @ts-expect-error ''--icon'' does not exist in type CSSProperties
@@ -46,7 +46,7 @@ function SocialLinks(props: SocialLinksProps) {
     <section className={classes}>
       {socialLinks.map((socialLink, index) => (
         <a
-          className="h-5 w-5 cursor-pointer text-slate10 hover:text-slate12 transition-all"
+          className="text-slate10 hover:text-slate12 h-5 w-5 cursor-pointer transition-all"
           href={socialLink.link}
           target="_blank"
           rel="noopener"
