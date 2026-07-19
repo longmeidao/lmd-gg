@@ -1,6 +1,6 @@
 import globals from 'globals';
 import { configs as astroEslintConfigs } from 'eslint-plugin-astro';
-import astroEslintParser from 'astro-eslint-parser';
+import * as astroEslintParser from 'astro-eslint-parser';
 import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
 // import pluginReactConfig from 'eslint-plugin-react/configs/recommended.js';

@@ -12,10 +12,9 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "allowJs": true,
-    "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "~@/*": ["./*"]
     },
     "jsxImportSource": "react",
