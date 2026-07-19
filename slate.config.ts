@@ -12,39 +12,39 @@ export default defineConfig({
   lastModified: true,
   readTime: true,
   footer: {
-    copyright: '© 2025 三墩冰室',
+    copyright: `© ${new Date().getFullYear()} 三墩冰室`,
   },
   navigations: [
     {
-      label: "导览册",
-      href: "/about"
-    }
+      label: '导览册',
+      href: '/about',
+    },
   ],
   algolia: {
     appId: 'K3HL1E7WTZ',
     apiKey: 'e9e6758cf004bd93db4ca97d7aec2e96',
-    indexName: 'lmd'
+    indexName: 'lmd',
   },
   socialLinks: [
     {
       icon: 'mail',
       link: 'mailto:i@lmd.gg',
-      ariaLabel: 'Email'
+      ariaLabel: 'Email',
     },
     {
       icon: 'x',
       link: 'https://x.com/longmeidao',
-      ariaLabel: 'X'
+      ariaLabel: 'X',
     },
     {
       icon: 'link',
       link: 'https://bento.me/lmd',
-      ariaLabel: 'Bento'
+      ariaLabel: 'Bento',
     },
     {
       icon: 'rss',
       link: 'https://lmd.gg/rss.xml',
-      ariaLabel: 'RSS'
-    }
-  ]
+      ariaLabel: 'RSS',
+    },
+  ],
 });

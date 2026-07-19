@@ -84,13 +84,12 @@
   }
 
   blockquote {
-
     /* heti.css hack */
-    margin-block: calc(var(--spacing)* 6) !important;
+    margin-block: calc(var(--spacing) * 6) !important;
     border-left-style: var(--tw-border-style) !important;
     border-left-width: 2px !important;
     border-color: var(--color-slate4) !important;
-    padding-left: calc(var(--spacing)* 4) !important;
+    padding-left: calc(var(--spacing) * 4) !important;
 
     background-color: transparent !important;
     margin-inline: 0 !important;
@@ -118,7 +117,7 @@
   }
 
   li > ul {
-    margin-bottom: calc(var(--spacing)* 2);
+    margin-bottom: calc(var(--spacing) * 2);
   }
 
   ol {
@@ -166,6 +165,50 @@
   }
 
   .heti em {
-    font-family: "Times New Roman", times, "Heti Kai Black", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family:
+      'Times New Roman', times, 'Heti Kai Black', serif, 'Apple Color Emoji',
+      'Segoe UI Emoji', 'Segoe UI Symbol';
+  }
+
+  /* Slate Blog: horizontal layout for two to six consecutive images. */
+  .rehype-figure-container:has(> .rehype-figure:nth-child(2)) {
+    column-count: 2;
+    column-gap: 8px;
+    @apply my-1.5;
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(3)) {
+    column-count: 3;
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(4)) {
+    column-count: 4;
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(5)) {
+    column-count: 5;
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(6)) {
+    column-count: 4;
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(2)) .rehype-figure {
+    @apply relative mb-2 break-inside-avoid;
+
+    figcaption {
+      @apply absolute right-2 bottom-2 max-w-[calc(100%-16px)] overflow-hidden rounded-lg bg-black/50 px-2 py-1 overflow-ellipsis text-white;
+    }
+  }
+
+  .rehype-figure-container:has(> .rehype-figure:nth-child(2)) img {
+    @apply border-slate6 m-0 rounded-2xl border;
+  }
+
+  @media (max-width: 768px) {
+    .rehype-figure-container:has(> .rehype-figure:nth-child(2)) {
+      column-count: 1;
+      column-gap: 0;
+    }
   }
 }

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import classNames from 'classnames';
 import './index.css';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ButtonTypes = ['default', 'link'] as const;
 export type ButtonType = (typeof ButtonTypes)[number];
 
