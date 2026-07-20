@@ -30,6 +30,7 @@
     "lint-fix": "pnpm run lint-fix:script",
     "lint-fix:script": "pnpm run lint:script -- --fix",
     "lint:script": "eslint",
+    "check:services": "node --use-env-proxy scripts/check-external-services.mjs",
     "verify:rss": "node scripts/verify-rss.mjs",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,astro}\"",
     "sync-latest": "./scripts/sync-latest-blog.sh"

@@ -1,0 +1,30 @@
+name: External Service Health Check
+
+on:
+  schedule:
+    # 09:23 Asia/Shanghai. A non-round minute reduces scheduled-job congestion.
+    - cron: '23 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: external-service-health-check
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check production services
+        run: npm run check:services
