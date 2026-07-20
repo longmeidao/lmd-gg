@@ -37,11 +37,6 @@ export default defineConfig({
       ariaLabel: 'X',
     },
     {
-      icon: 'link',
-      link: 'https://bento.me/lmd',
-      ariaLabel: 'Bento',
-    },
-    {
       icon: 'rss',
       link: 'https://lmd.gg/rss.xml',
       ariaLabel: 'RSS',
