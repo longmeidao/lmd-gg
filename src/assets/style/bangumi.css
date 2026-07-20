@@ -221,6 +221,11 @@
   box-shadow: none;
 }
 
+.bgm-navigator {
+  width: 100%;
+  text-align: center;
+}
+
 .bgm-btn {
   display: inline-block;
   min-width: 5rem;
