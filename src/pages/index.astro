@@ -48,6 +48,22 @@ const posts = [...postCollection]
   .navi > span:last-child {
     display: none;
   }
+
+  .home-tag {
+    border: 0;
+    background: var(--color-slate3);
+    color: var(--color-slate10);
+  }
+
+  .home-tag:hover {
+    background: var(--color-slate4);
+    color: var(--color-slate11);
+  }
+
+  .home-tag[aria-pressed='true'] {
+    background: var(--color-slate12);
+    color: var(--color-slate1);
+  }
 </style>
 
 <PageLayout>
@@ -76,11 +92,13 @@ const posts = [...postCollection]
     />
   </section>
 
-  <section class="mb-16">
-    <div class="text-slate12 text-base">
+  <section id="post-list-section" class="mb-16 scroll-mt-8">
+    <div id="post-list" class="text-slate12 text-base" aria-live="polite">
       {
         posts.map((item) => (
           <a
+            data-post-item
+            data-tags={JSON.stringify(item.data.tags ?? [])}
             class="active:bg-slate4 sm:hover:bg-slate3 flex cursor-pointer flex-col justify-between rounded-lg py-2.5 transition-all active:scale-[0.995] sm:flex-row sm:items-center sm:px-2"
             href={item.url}
             title={item.data.title}
@@ -97,6 +115,9 @@ const posts = [...postCollection]
           </a>
         ))
       }
+      <p id="post-filter-empty" class="text-slate10 py-8 text-center" hidden>
+        这个标签下还没有文章。
+      </p>
     </div>
     <!-- <Button className='m-auto mt-6' block> More </Button> -->
   </section>
@@ -105,14 +126,59 @@ const posts = [...postCollection]
   <section class="mb-16">
     <ul class="text-slate10 flex flex-wrap gap-2 text-base">
       {
-        tags.map(({ name, count }) => (
-          <li class="bg-slate3 text-slate10 hover:bg-slate4 hover:text-slate11 block cursor-pointer rounded-full px-4 py-2 transition-all">
-            {name}
-            <sup class="text-slate8 text-[10px]">{count}</sup>
+        tags.map(({ name, count }, index) => (
+          <li>
+            <button
+              type="button"
+              class="home-tag cursor-pointer rounded-full px-4 py-2 transition-all active:scale-[0.98]"
+              data-tag={name}
+              aria-pressed={index === 0 ? 'true' : 'false'}
+            >
+              {name}
+              <sup class="text-slate8 ml-1 text-[9px]">{count}</sup>
+            </button>
           </li>
         ))
       }
     </ul>
+    <span id="post-filter-status" class="sr-only" aria-live="polite"></span>
   </section>
   <!-- E 标签 -->
 </PageLayout>
+
+<script>
+  const allTag = document.querySelector<HTMLButtonElement>(
+    '.home-tag[aria-pressed="true"]',
+  )?.dataset.tag;
+  const tagButtons = document.querySelectorAll<HTMLButtonElement>('.home-tag');
+  const postItems = document.querySelectorAll<HTMLElement>('[data-post-item]');
+  const emptyState = document.querySelector<HTMLElement>('#post-filter-empty');
+  const filterStatus = document.querySelector<HTMLElement>(
+    '#post-filter-status',
+  );
+  const postListSection =
+    document.querySelector<HTMLElement>('#post-list-section');
+
+  tagButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const selectedTag = button.dataset.tag;
+      let visibleCount = 0;
+
+      tagButtons.forEach((item) => {
+        item.setAttribute('aria-pressed', String(item === button));
+      });
+
+      postItems.forEach((item) => {
+        const tags = JSON.parse(item.dataset.tags || '[]') as string[];
+        const isVisible = selectedTag === allTag || tags.includes(selectedTag!);
+        item.hidden = !isVisible;
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (emptyState) emptyState.hidden = visibleCount > 0;
+      if (filterStatus)
+        filterStatus.textContent = `${selectedTag}：${visibleCount} 篇文章`;
+      postListSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>

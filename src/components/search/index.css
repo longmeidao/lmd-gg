@@ -1,27 +1,54 @@
 @reference '../../assets/style/common.css';
 
 .DocSearch-Button {
-  --docsearch-searchbox-background: var(--color-slate3);
-  --docsearch-searchbox-focus-background: var(--color-slate4);
-  --docsearch-muted-color: var(--color-slate10);
-  --docsearch-searchbox-shadow: none;
-  @apply flex items-center m-0 h-10 transition-all duration-200;
+  @apply m-0 flex h-10 items-center transition-all duration-200;
+  background: var(--color-slate3);
+  border: 0;
+  color: var(--color-slate10);
+  box-shadow: none;
   padding: 0 16px;
+  border-radius: 40px;
+
+  &:hover,
+  &:focus {
+    background: var(--color-slate4);
+    color: var(--color-slate12);
+    box-shadow: none;
+    outline: none;
+  }
+
+  &:active {
+    background: var(--color-slate4);
+    transform: scale(0.98);
+  }
+
+  .DocSearch-Button-Container {
+    @apply flex h-full items-center;
+  }
 
   .DocSearch-Button-Placeholder {
     @apply hidden;
   }
 
   .DocSearch-Search-Icon {
-    @apply h-4 text-slate10;
+    @apply h-4 w-4;
+    color: currentColor;
+    stroke-width: 1.6;
   }
 
   .DocSearch-Button-Keys {
-    @apply min-w-auto ml-2;
+    @apply ml-2 min-w-auto;
   }
 
   .DocSearch-Button-Key {
-    @apply top-0 mr-0 shadow-none first-of-type:pt-px first-of-type:text-xl first-of-type:after:content-['+'] first-of-type:after:relative first-of-type:after:top-[-1px] first-of-type:after:left-0.5 first-of-type:after:text-base;
+    @apply top-0 mr-0 shadow-none first-of-type:pt-px first-of-type:text-xl first-of-type:after:relative first-of-type:after:top-[-1px] first-of-type:after:left-0.5 first-of-type:after:text-base first-of-type:after:content-['+'];
     background: transparent;
+    border: 0;
+    border-radius: 3px;
+    color: var(--color-slate10);
+    height: 18px;
+    margin-inline-end: 0;
+    padding: 0 0 2px;
+    width: 20px;
   }
 }

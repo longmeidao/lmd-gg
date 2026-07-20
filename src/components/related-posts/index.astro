@@ -1,0 +1,71 @@
+---
+interface RelatedPost {
+  title: string;
+  slug: string;
+  description?: string;
+  pubDate?: Date;
+  tags: string[];
+}
+
+interface Props {
+  posts: RelatedPost[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 1 && (
+    <section class="border-slate4 mt-16 border-t pt-16">
+      <h3 class="text-slate12 mb-6 text-base font-semibold sm:ml-2">
+        相关文章
+      </h3>
+      <div class="text-slate12 text-base">
+        {posts.map((post) => (
+          <a
+            class="active:bg-slate4 sm:hover:bg-slate3 group mt-4 flex cursor-pointer flex-col rounded-xl py-2.5 no-underline transition-all hover:no-underline active:scale-[0.995] sm:px-2"
+            href={`/blog/${post.slug}`}
+            title={post.title}
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <span class="text-slate12 shrink-0 font-medium">
+                  {post.title}
+                </span>
+                <span class="border-slate6 mx-8 hidden h-px w-full grow border-t border-dashed sm:flex" />
+                {post.pubDate && (
+                  <span class="text-slate8 shrink-0 text-base">
+                    {post.pubDate.toLocaleDateString('zh-CN', {
+                      year: '2-digit',
+                      month: '2-digit',
+                      day: '2-digit',
+                    })}
+                  </span>
+                )}
+              </div>
+              {post.description && (
+                <p class="text-slate10 mt-2 line-clamp-2 text-sm">
+                  {post.description}
+                </p>
+              )}
+              {post.tags.length > 0 && (
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  {post.tags.slice(0, 3).map((tag) => (
+                    <span class="bg-slate3 group-hover:bg-slate4 text-slate10 rounded-full px-2 py-0.5 text-sm transition-colors">
+                      {tag}
+                    </span>
+                  ))}
+                  {post.tags.length > 3 && (
+                    <span class="text-slate8 px-1 py-0.5 text-xs">
+                      +{post.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

@@ -6,6 +6,7 @@ import PageLayout from '@/components/layouts/PageLayout.astro';
 import ArticleJsonLd from '@/components/json-ld/article.astro';
 import Button from '@/components/button';
 import AffixTitle from '@/components/affix-title';
+import RelatedPosts from '@/components/related-posts/index.astro';
 import Toc from '@/components/toc';
 import CodeGroupEvent from '@/components/code-group-event';
 import slateConfig from '~@/slate.config';
@@ -19,15 +20,58 @@ export async function getStaticPaths() {
     return import.meta.env.DEV || data.draft !== true;
   });
 
-  return postEntries.map((post) => ({
-    params: { slug: post.id },
-    props: post,
-  }));
+  return postEntries.map((post) => {
+    const postTags = new Set(post.data.tags ?? []);
+    const candidates = postEntries
+      .filter(
+        (candidate) =>
+          candidate.id !== post.id && candidate.data.draft !== true,
+      )
+      .map((candidate) => ({
+        candidate,
+        score: (candidate.data.tags ?? []).filter((tag) => postTags.has(tag))
+          .length,
+      }))
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          (b.candidate.data.pubDate?.getTime() ?? 0) -
+            (a.candidate.data.pubDate?.getTime() ?? 0),
+      );
+    const relatedPosts = candidates
+      .filter(({ score }) => score > 0)
+      .slice(0, 3)
+      .map(({ candidate }) => ({
+        title: candidate.data.title,
+        slug: candidate.id,
+        description: candidate.data.description,
+        pubDate: candidate.data.pubDate,
+        tags: candidate.data.tags ?? [],
+      }));
+
+    const visibleRelatedPosts = relatedPosts.length > 1 ? relatedPosts : [];
+
+    return {
+      params: { slug: post.id },
+      props: { post, relatedPosts: visibleRelatedPosts },
+    };
+  });
 }
 
-type Props = CollectionEntry<'post'>;
+interface RelatedPost {
+  title: string;
+  slug: string;
+  description?: string;
+  pubDate?: Date;
+  tags: string[];
+}
 
-const post = Astro.props;
+interface Props {
+  post: CollectionEntry<'post'>;
+  relatedPosts: RelatedPost[];
+}
+
+const { post, relatedPosts } = Astro.props;
 const { Content, remarkPluginFrontmatter, headings } = await render(post);
 const lastModifiedDate = dayjs(
   remarkPluginFrontmatter.lastModified
@@ -85,6 +129,7 @@ const formattedPubDate = pubDate.isSame(dayjs(), 'year')
         )
       }
     </div>
+    <RelatedPosts posts={relatedPosts} />
   </div>
   <!-- E 内容 -->
   <!-- S 目录 -->
