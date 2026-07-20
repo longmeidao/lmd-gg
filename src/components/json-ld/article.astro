@@ -14,7 +14,7 @@ const {
   image = '/images/og_image.png',
   pubDate,
   lastModified,
-  author = 'slate',
+  author = slateConfig.title,
 } = Astro.props;
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',

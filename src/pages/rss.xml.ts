@@ -1,46 +1,45 @@
-/*
- * @Author: kim
- * @Description: rss 提要
- */
-import rss from '@astrojs/rss';
+import rss, { type RSSFeedItem, type RSSOptions } from '@astrojs/rss';
 import { experimental_AstroContainer } from 'astro/container';
 import { loadRenderers } from 'astro:container';
 import { getCollection, render } from 'astro:content';
 import { getContainerRenderer as mdxContainerRenderer } from '@astrojs/mdx/container-renderer';
+import type { APIContext } from 'astro';
 import sanitizeHtml from 'sanitize-html';
 import slateConfig from '~@/slate.config';
 
-export async function GET(context) {
-  const blog = await getCollection('post');
+export async function GET(context: APIContext) {
+  const blog = await getCollection('post', ({ data }) => data.draft !== true);
   const renderers = await loadRenderers([mdxContainerRenderer()]);
-  const container = await experimental_AstroContainer.create({
-    renderers,
-  });
+  const container = await experimental_AstroContainer.create({ renderers });
 
-  const postItems = await Promise.all(
+  const postItems: RSSFeedItem[] = await Promise.all(
     blog
-      .filter((post) => !post.data.draft)
-      .sort((a, b) => b.data.pubDate - a.data.pubDate)
+      .sort(
+        (a, b) =>
+          (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
+      )
       .map(async (post) => {
         const { Content } = await render(post);
-        const htmlStr = await container.renderToString(Content);
+        const html = await container.renderToString(Content);
 
         return {
-          link: `/blog/${post.slug}/`,
+          link: `/blog/${post.id}/`,
           title: post.data.title,
-          content: sanitizeHtml(htmlStr, {
+          description: post.data.description,
+          pubDate: post.data.pubDate,
+          categories: post.data.tags,
+          content: sanitizeHtml(html, {
             allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
           }),
-          ...post.data,
         };
       }),
   );
 
-  const rssOptions = {
+  const rssOptions: RSSOptions = {
     stylesheet: '/pretty-feed-v3.xsl',
     title: slateConfig.title,
     description: slateConfig.description,
-    site: context.site,
+    site: context.site ?? slateConfig.site,
     trailingSlash: false,
     items: postItems,
   };
@@ -49,7 +48,7 @@ export async function GET(context) {
     rssOptions.customData = `<follow_challenge>
       <feedId>${slateConfig.follow.feedId}</feedId>
       <userId>${slateConfig.follow.userId}</userId>
-    </follow challenge>`;
+    </follow_challenge>`;
   }
 
   return rss(rssOptions);

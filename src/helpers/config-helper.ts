@@ -3,31 +3,26 @@
  */
 import type { SlateConfig, ThemeOptions } from '@/typings/config';
 
+const defaultTheme: ThemeOptions = {
+  mode: 'auto',
+  enableUserChange: true,
+};
+
 /** Default configuration */
 const defaultConfig: Partial<SlateConfig> = {
   lang: 'zh-CN',
-  theme: {
-    mode: 'auto',
-    enableUserChange: true,
-  },
+  theme: defaultTheme,
   readTime: false,
   lastModified: false,
 };
 
 export function defineConfig(config: SlateConfig): SlateConfig {
-  const mergedConfig: Partial<SlateConfig> = {};
-
-  if (typeof config.theme === 'string') {
-    mergedConfig.theme = {
-      ...(defaultConfig.theme as ThemeOptions),
-      mode: config.theme,
-    };
-  } else {
-    mergedConfig.theme = {
-      ...(defaultConfig.theme as ThemeOptions),
+  return {
+    ...defaultConfig,
+    ...config,
+    theme: {
+      ...defaultTheme,
       ...config.theme,
-    };
-  }
-
-  return Object.assign({}, defaultConfig, config, mergedConfig);
+    },
+  };
 }

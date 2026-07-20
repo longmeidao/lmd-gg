@@ -4,7 +4,6 @@ import SunOutlined from '@/assets/images/sun-outlined.svg?react';
 import MoonOutlined from '@/assets/images/moon-outlined.svg?react';
 import stateConfig from '~@/slate.config';
 import { setThemeMode } from '@/helpers/utils';
-import type { ThemeOptions } from '@/typings/config';
 import { ThemeValue } from '@/typings/global';
 
 const THEME_LIST: Array<{ icon: ReactNode; value: ThemeValue }> = [
@@ -35,7 +34,7 @@ const ThemeSelect = () => {
       setCurrentTheme(theme);
       return;
     }
-    const presetTheme = (stateConfig.theme as ThemeOptions).mode;
+    const presetTheme = stateConfig.theme?.mode ?? ThemeValue.Auto;
     setCurrentTheme(presetTheme as ThemeValue);
   }, []);
 

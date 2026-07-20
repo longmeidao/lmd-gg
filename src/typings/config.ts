@@ -3,9 +3,8 @@ import type { SitemapOptions } from '@astrojs/sitemap';
 export const languages = ['zh-CN', 'en-US'] as const;
 export type LangType = (typeof languages)[number];
 
-export const theme = ['auto', 'light', 'dark'] as const;
 /** Theme mode */
-export type ThemeMode = (typeof theme)[number];
+export type ThemeMode = 'auto' | 'light' | 'dark';
 export interface ThemeOptions {
   /** Mode */
   mode: ThemeMode;

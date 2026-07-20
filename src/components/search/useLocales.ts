@@ -2,7 +2,7 @@ import type { DocSearchProps } from '@docsearch/react';
 import { useMemo } from 'react';
 import { languages, type LangType } from '@/typings/config';
 
-export const algoliaLocalesConfig: Record<
+const algoliaLocalesConfig: Record<
   LangType,
   Omit<DocSearchProps, 'appId' | 'apiKey' | 'indexName'>
 > = {

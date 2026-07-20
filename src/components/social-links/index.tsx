@@ -4,7 +4,7 @@ import slateConfig from '~@/slate.config';
 import type { SocialLink } from '@/typings/config';
 import './index.css';
 
-export interface SocialLinksProps {
+interface SocialLinksProps {
   className?: string;
   list?: SocialLink[];
 }

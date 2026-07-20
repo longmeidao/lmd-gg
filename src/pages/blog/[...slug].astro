@@ -43,24 +43,22 @@ export async function getStaticPaths() {
       .slice(0, 3)
       .map(({ candidate }) => ({
         title: candidate.data.title,
-        slug: candidate.id,
+        id: candidate.id,
         description: candidate.data.description,
         pubDate: candidate.data.pubDate,
         tags: candidate.data.tags ?? [],
       }));
 
-    const visibleRelatedPosts = relatedPosts.length > 1 ? relatedPosts : [];
-
     return {
       params: { slug: post.id },
-      props: { post, relatedPosts: visibleRelatedPosts },
+      props: { post, relatedPosts },
     };
   });
 }
 
 interface RelatedPost {
   title: string;
-  slug: string;
+  id: string;
   description?: string;
   pubDate?: Date;
   tags: string[];
@@ -123,7 +121,7 @@ const formattedPubDate = pubDate.isSame(dayjs(), 'year')
       <Content />
       {
         slateConfig.lastModified && (
-          <div class="text-slate8" style="font-size: 14px;">
+          <div class="text-slate8 text-sm">
             {i18next.t('blog.lastModified')} {lastModified}
           </div>
         )
@@ -135,7 +133,7 @@ const formattedPubDate = pubDate.isSame(dayjs(), 'year')
   <!-- S 目录 -->
   <Toc
     className="fixed top-0 right-0 bottom-0 hidden w-64 xl:block"
-    listClassName="px-5 pt-44 pb-14 "
+    listClassName="px-5 pt-44 pb-14"
     dataSource={headings}
     client:visible
   />

@@ -1,14 +1,7 @@
 {
   "extends": "astro/tsconfigs/base",
-  "include": [
-    ".astro/types.d.ts",
-    "src",
-    "slate.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": [".astro/types.d.ts", "src", "slate.config.ts"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "strictNullChecks": true,
     "allowJs": true,
@@ -17,9 +10,6 @@
       "@/*": ["./src/*"],
       "~@/*": ["./*"]
     },
-    "jsxImportSource": "react",
-  },
-  "rules": {
-    "no-unused-vars": "off"
+    "jsxImportSource": "react"
   }
 }

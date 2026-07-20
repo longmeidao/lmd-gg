@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
-export interface AffixTitleProps {
+interface AffixTitleProps {
   /** 距离窗口顶部达到指定偏移量后触发, 默认 320 */
   offsetTop?: number;
   title: string;
@@ -9,7 +9,6 @@ export interface AffixTitleProps {
 
 const AffixTitle = (props: AffixTitleProps) => {
   const { title, offsetTop = 320 } = props;
-  const affixTitleRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [backdropOpacity, setBackdropOpacity] = useState(0);
@@ -53,10 +52,7 @@ const AffixTitle = (props: AffixTitleProps) => {
     circumference - (scrollProgress / 100) * circumference;
 
   return (
-    <div
-      ref={affixTitleRef}
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] w-full"
-    >
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] w-full">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-32 overflow-hidden"
         style={{ opacity: backdropOpacity }}

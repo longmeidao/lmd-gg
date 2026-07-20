@@ -1,7 +1,7 @@
 ---
 interface RelatedPost {
   title: string;
-  slug: string;
+  id: string;
   description?: string;
   pubDate?: Date;
   tags: string[];
@@ -24,7 +24,7 @@ const { posts } = Astro.props;
         {posts.map((post) => (
           <a
             class="active:bg-slate4 sm:hover:bg-slate3 group mt-4 flex cursor-pointer flex-col rounded-xl py-2.5 no-underline transition-all hover:no-underline active:scale-[0.995] sm:px-2"
-            href={`/blog/${post.slug}`}
+            href={`/blog/${post.id}`}
             title={post.title}
           >
             <div class="min-w-0 flex-1">

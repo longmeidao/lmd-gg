@@ -15,29 +15,9 @@
     --icon: url('../../assets/images/instagram.svg');
   }
 
-  /* &.npm {
-    --icon: url('../../assets/images/github.svg');
-  }
-
-  &.jike {
-    --icon: url('../../assets/images/github.svg');
-  }
-
-  &.rednote {
-    --icon: url('../../assets/images/github.svg');
-  } */
-
   &.threads {
     --icon: url('../../assets/images/threads.svg');
   }
-
-  /* &.stackoverflow {
-    --icon: url('../../assets/images/github.svg');
-  }
-
-  &.weibo {
-    --icon: url('../../assets/images/github.svg');
-  } */
 
   &.x {
     --icon: url('../../assets/images/x.svg');

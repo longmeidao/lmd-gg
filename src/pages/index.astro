@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import i18next from '@/i18n';
 import Search from '@/components/search';
 import PageLayout from '@/components/layouts/PageLayout.astro';
-// import Button from '@/components/button';
 import slateConfig from '~@/slate.config';
 
 const postCollection = await getCollection('post', ({ data }) => {
@@ -36,7 +35,10 @@ const tags = Object.keys(tagCounts).map((tag) => ({
 }));
 
 const posts = [...postCollection]
-  .sort((a, b) => b.data.pubDate!.getTime() - a.data.pubDate!.getTime())
+  .sort(
+    (a, b) =>
+      (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
+  )
   .map((post) => ({
     id: post.id,
     url: `/blog/${post.id}`,
@@ -119,7 +121,6 @@ const posts = [...postCollection]
         这个标签下还没有文章。
       </p>
     </div>
-    <!-- <Button className='m-auto mt-6' block> More </Button> -->
   </section>
 
   <!-- S 标签 -->

@@ -20,7 +20,7 @@ const {
 } = Astro.props;
 const fullTitle = getFullTitle(title);
 
-// remark: Temporary solution to refresh theme flicker issue
+// Apply the theme before first paint to avoid a light/dark flash.
 const themeScript = `
   function getThemeMode() {
     const theme = localStorage.getItem('theme');

@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 import classNames from 'classnames';
 import './index.css';
 
-const ButtonTypes = ['default', 'link'] as const;
-export type ButtonType = (typeof ButtonTypes)[number];
+type ButtonType = 'default' | 'link';
 
-export interface BaseButtonProps {
+interface BaseButtonProps {
   /** 设置按钮类型, 默认 default */
   type?: ButtonType;
   className?: string;
@@ -25,7 +24,7 @@ type MergedHTMLAttributes = Omit<
   'type' | 'color'
 >;
 
-export interface ButtonProps extends BaseButtonProps, MergedHTMLAttributes {
+interface ButtonProps extends BaseButtonProps, MergedHTMLAttributes {
   /** 点击跳转的地址 */
   href?: string;
   /** 相当于 a 链接的 target 属性，href 存在时生效 */
