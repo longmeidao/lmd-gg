@@ -1,24 +1,29 @@
 import rss, { type RSSFeedItem, type RSSOptions } from '@astrojs/rss';
 import { experimental_AstroContainer } from 'astro/container';
 import { loadRenderers } from 'astro:container';
-import { getCollection, render } from 'astro:content';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
 import { getContainerRenderer as mdxContainerRenderer } from '@astrojs/mdx/container-renderer';
 import type { APIContext } from 'astro';
 import sanitizeHtml from 'sanitize-html';
 import slateConfig from '~@/slate.config';
 
+type PostEntry = CollectionEntry<'post'>;
+
 export async function GET(context: APIContext) {
-  const blog = await getCollection('post', ({ data }) => data.draft !== true);
+  const blog = await getCollection(
+    'post',
+    ({ data }: PostEntry) => data.draft !== true,
+  );
   const renderers = await loadRenderers([mdxContainerRenderer()]);
   const container = await experimental_AstroContainer.create({ renderers });
 
   const postItems: RSSFeedItem[] = await Promise.all(
     blog
       .sort(
-        (a, b) =>
+        (a: PostEntry, b: PostEntry) =>
           (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
       )
-      .map(async (post) => {
+      .map(async (post: PostEntry) => {
         const { Content } = await render(post);
         const html = await container.renderToString(Content);
 

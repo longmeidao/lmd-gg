@@ -22,7 +22,7 @@
     "prepare": "husky",
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "pnpm run tsc && astro check && astro build",
+    "build": "astro sync && pnpm run tsc && astro check && astro build && pnpm run verify:rss",
     "preview": "astro preview",
     "astro": "astro",
     "tsc": "tsc --noEmit",
@@ -30,6 +30,7 @@
     "lint-fix": "pnpm run lint-fix:script",
     "lint-fix:script": "pnpm run lint:script -- --fix",
     "lint:script": "eslint",
+    "verify:rss": "node scripts/verify-rss.mjs",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,astro}\"",
     "sync-latest": "./scripts/sync-latest-blog.sh"
   },
