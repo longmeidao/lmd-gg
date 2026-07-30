@@ -1,12 +1,9 @@
 ---
 title: 「不太懂」就好了
-description: 二〇〇二年十月一日，《inner universe》开始在日本电视上奏响。
-tags:
-  - 攻壳机动队
 pubDate: 2021-08-30
 ---
 
-:::info
+::: info
 *始撰于二〇一七年八月廿一日。*
 :::
 

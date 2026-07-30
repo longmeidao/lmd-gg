@@ -1,8 +1,5 @@
 ---
 title: Make me confused
-description: 如果妳没有玩过《恶魔之魂》这款游戏，请谨慎阅读这篇文章。
-tags:
-  - 恶魔之魂
 pubDate: 2022-08-06
 ---
 
