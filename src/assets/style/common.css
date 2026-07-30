@@ -234,6 +234,9 @@ body {
     'Times New Roman', times, 'Heti Kai Black', serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol';
   font-size: 0.95rem;
+  /* heti.min.css 有 `.heti em { font-weight: 600 }`，只有正文挂了 .heti，
+     不显式写死的话文章页会比首页粗一号。 */
+  font-weight: 400;
   font-style: italic;
 }
 
