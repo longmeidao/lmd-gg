@@ -226,16 +226,23 @@ body {
   stroke-width: 1.7;
 }
 
-/* 强调：楷体 + 着重号。详情页在 .heti 作用域下，首页 feed 没有那个 class，
-   所以同样合成一份、挂两个选择器。 */
+/*
+ * 强调：楷体 + 着重号。详情页在 .heti 作用域下，首页 feed 没有那个 class，
+ * 所以合成一份、挂两个选择器。
+ *
+ * 字体栈里不放 'Heti Kai Black'：那个 @font-face 定义在 heti.min.css 里，
+ * 而它只在文章页引入 —— 文章页的中文会落到楷体，首页因为查无此家族直接落到
+ * serif（宋体），同一段字两页长得不一样。统一取首页那一档。
+ *
+ * font-weight 也得写死：heti.min.css 有 `.heti em { font-weight: 600 }`，
+ * 不覆盖的话文章页还会粗一号。
+ */
 .blog-content .heti em,
 .home-entry-content em {
   font-family:
-    'Times New Roman', times, 'Heti Kai Black', serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol';
+    'Times New Roman', times, serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol';
   font-size: 0.95rem;
-  /* heti.min.css 有 `.heti em { font-weight: 600 }`，只有正文挂了 .heti，
-     不显式写死的话文章页会比首页粗一号。 */
   font-weight: 400;
   font-style: italic;
 }
