@@ -1,0 +1,595 @@
+@reference './common.css';
+
+/* ---------------------------------------------------------------------------
+ * 归档页
+ * 版式照 jant 的 /archive（ArchivePage.tsx + ui.css 的 .archive-* 那一组）：
+ * 顶部胶囊筛选 + 方格/列表切换，下面按月分组的方格墙。
+ * jant 根字号 15px，本站 16px，chrome 部分直接用它的实际渲染像素。
+ * ------------------------------------------------------------------------- */
+
+/* 宽度跟着 .site-shell，右上的视图切换才能和顶栏的搜索按钮右对齐 */
+.archive-page {
+  width: 100%;
+  margin-bottom: 4rem;
+}
+
+.archive-page-header {
+  margin-bottom: 0.5rem;
+}
+
+.archive-page-title {
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-size: clamp(2.1rem, 8vw, 2.55rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.archive-page-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1.75rem;
+  color: var(--color-slate10);
+  font-size: 0.9rem;
+}
+
+/* 计数右边的订阅入口（同 owen 归档页计数旁的 feed-link） */
+.archive-feed-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-slate9);
+  transition: color 150ms ease;
+}
+
+.archive-feed-link:hover {
+  color: var(--color-slate12);
+}
+
+.archive-feed-link svg {
+  display: block;
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* --- 筛选栏 -------------------------------------------------------------- */
+
+.archive-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.archive-filters-chips {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 药丸画在外层容器上：清除按钮要待在胶囊里面，而 button 不能嵌 button */
+.archive-chip-select {
+  position: relative;
+  display: inline-flex;
+  height: 2rem;
+  align-items: center;
+  border: 1px solid var(--color-slate6);
+  border-radius: 9999px;
+  background: transparent;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.archive-chip {
+  display: inline-flex;
+  height: 100%;
+  appearance: none;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0 6px 0 10px;
+  color: var(--color-slate10);
+  font: inherit;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+/* 没露出清除按钮时右边补回原来的留白（菜单 div 永远排在后面，用不了 :last-child） */
+.archive-chip-select:has([data-chip-clear][hidden]) .archive-chip {
+  padding-right: 10px;
+}
+
+.archive-chip-select:hover {
+  border-color: var(--color-slate7);
+  background: var(--color-slate2);
+}
+
+.archive-chip-select:hover .archive-chip {
+  color: var(--color-slate12);
+}
+
+/* 光晕：照 jant 的 .archive-chip:focus-within —— 边框染上主色，外面套一圈 3px 微光 */
+.archive-chip-select:focus-within,
+.archive-chip-select:has(.archive-chip[aria-expanded='true']) {
+  border-color: color-mix(in srgb, var(--color-indigo9) 34%, var(--color-slate6));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--color-indigo9) 12%, transparent);
+  outline: none;
+}
+
+.archive-chip:focus-visible {
+  outline: none;
+}
+
+/* 选中了非默认项：胶囊变实、显示选中的文字 */
+.archive-chip-select.is-active {
+  border-color: color-mix(in srgb, var(--color-slate12) 22%, transparent);
+  background: var(--color-slate3);
+}
+
+.archive-chip-select.is-active .archive-chip {
+  color: var(--color-slate12);
+}
+
+/* 多选时胶囊右侧的清除按钮（同 jant 的 .archive-chip-clear） */
+.archive-chip-clear {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  margin-right: 5px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+  padding: 0;
+  color: var(--color-slate9);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.archive-chip-clear[hidden] {
+  display: none;
+}
+
+.archive-chip-clear:hover {
+  background: color-mix(in srgb, var(--color-slate12) 10%, transparent);
+  color: var(--color-slate12);
+}
+
+.archive-chip-clear svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.archive-chip-chevron[hidden] {
+  display: none;
+}
+
+.archive-chip-icon {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.archive-chip-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.archive-chip-label {
+  max-width: 8rem;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.archive-chip-chevron {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: transform 160ms ease;
+}
+
+.archive-chip [aria-expanded='true'] .archive-chip-chevron,
+.archive-chip[aria-expanded='true'] .archive-chip-chevron {
+  transform: rotate(180deg);
+}
+
+/* --- 下拉面板 ------------------------------------------------------------ */
+
+/* 数值取自 demo.jant.me 实测：radius 7.4px、padding 3.75px、无阴影、
+   底色就是页面底色、min-width 跟触发器齐宽。比想象中更「平」。 */
+.archive-chip-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 5px);
+  left: 0;
+  min-width: 100%;
+  border: 1px solid var(--color-slate6);
+  border-radius: 0.46rem;
+  background: var(--color-slate1);
+  padding: 0.235rem;
+  animation: archive-chip-pop 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.archive-chip-menu[hidden] {
+  display: none;
+}
+
+.archive-chip-option {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 1.8rem;
+  appearance: none;
+  align-items: center;
+  gap: 0.47rem;
+  border: 0;
+  border-radius: 0.34rem;
+  background: transparent;
+
+  /* 右边留出勾的位置（勾是绝对定位的），和 jant 的 28px 右内边距一致 */
+  padding: 0.35rem 1.75rem 0.35rem 0.47rem;
+  color: var(--color-slate12);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.archive-chip-option:hover {
+  background: var(--color-slate3);
+}
+
+/* 子级选项缩进一级（jant 用的是 pl-4） */
+/* 站里暂时没有这类内容：仍可点，只是淡一点 */
+.archive-chip-option.is-empty {
+  opacity: 0.45;
+}
+
+.archive-chip-option.is-empty:hover,
+.archive-chip-option.is-empty.is-active {
+  opacity: 1;
+}
+
+.archive-chip-option.is-indented {
+  padding-left: 1.47rem;
+}
+
+/* 没有对应图标的选项（比如具体年份）留一个等宽占位，文字才对得齐 */
+.archive-chip-option-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-slate9);
+}
+
+.archive-chip-option.is-active .archive-chip-option-icon {
+  color: var(--color-slate11);
+}
+
+.archive-chip-check {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--color-slate12);
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.archive-chip-option.is-active .archive-chip-check {
+  opacity: 1;
+}
+
+@keyframes archive-chip-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.archive-view-toggle {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  background: var(--color-slate3);
+  padding: 3px;
+}
+
+.archive-view-btn {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-slate10);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.archive-view-btn:hover {
+  color: var(--color-slate12);
+}
+
+.archive-view-btn.is-active {
+  background: var(--color-slate1);
+  color: var(--color-slate12);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+}
+
+/* --- 方格墙 -------------------------------------------------------------- */
+
+.archive-body {
+  padding: 18px 0 10px;
+}
+
+.archive-grid {
+  display: grid;
+  align-items: start;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  margin: 0 auto;
+}
+
+.archive-grid [hidden] {
+  display: none !important;
+}
+
+.archive-month-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+  padding: 20px 2px 10px;
+}
+
+.archive-month-header-label {
+  color: var(--color-slate10);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.archive-month-header-count {
+  color: var(--color-slate9);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+.archive-tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--color-slate6) 78%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-slate1) 92%, var(--color-slate3));
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+
+.archive-tile:hover {
+  border-color: var(--color-slate7);
+  transform: translateY(-2px);
+}
+
+.archive-tile-top-meta {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  max-width: calc(100% - 3.5rem);
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-slate9);
+  pointer-events: none;
+}
+
+.archive-tile-date {
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0.72;
+}
+
+.archive-tile-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-indigo9);
+}
+
+/* 这些 svg 不带 width/height 属性，尺寸一律由 CSS 给 */
+.archive-tile-badge svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.archive-view-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 有图就拿第一张图当封面，文字压在下方的渐变遮罩上 */
+.archive-tile-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.archive-tile-quote {
+  position: absolute;
+  z-index: 1;
+  top: 0.5rem;
+  right: 0.7rem;
+  color: var(--color-slate7);
+  font-family: var(--font-serif-quote);
+  font-size: 2.4rem;
+  line-height: 1;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.archive-tile-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  padding: 32px 12px 12px;
+}
+
+.archive-tile-content.has-cover {
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 78%) 0%,
+    rgb(0 0 0 / 42%) 38%,
+    rgb(0 0 0 / 6%) 70%,
+    transparent 100%
+  );
+}
+
+.archive-tile-content.has-cover .archive-tile-title,
+.archive-tile-content.has-cover .archive-tile-summary {
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 45%);
+}
+
+/* 有封面时摘要少占一点，标题更突出 */
+.archive-tile-content.has-cover .archive-tile-summary {
+  -webkit-line-clamp: 2;
+}
+
+.archive-tile:has(.archive-tile-cover) .archive-tile-top-meta {
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 55%);
+}
+
+/* 内容贴着方格底部排，和 jant 一致 */
+.archive-tile-copy {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.archive-tile-title {
+  display: -webkit-box;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-bottom: 6px;
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.archive-tile-link-indicator {
+  display: inline-flex;
+  margin-left: 0.2em;
+  color: var(--color-slate9);
+  vertical-align: -0.1em;
+}
+
+.archive-tile-link-indicator svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.archive-tile-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-slate10);
+  font-family: var(--font-reading);
+  font-size: 0.8rem;
+  line-height: 1.48;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.archive-empty {
+  padding: 3rem 0;
+  color: var(--color-slate10);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* --- 视图切换 ------------------------------------------------------------ */
+/* 列表视图直接用首页那套条目展示（.home-feed / PostEntry），
+   所以这里只负责显示哪一个容器，不再自己排一套紧凑行。 */
+
+.archive-body[data-view='grid'] .archive-list,
+.archive-body[data-view='list'] .archive-grid {
+  display: none;
+}
+
+.archive-list {
+  max-width: 36.75rem;
+}
+
+.archive-list [hidden] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .archive-grid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  }
+
+  .archive-filters {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

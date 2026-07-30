@@ -1,0 +1,805 @@
+@reference './common.css';
+
+.home-column {
+  width: min(36.75rem, 100%);
+  margin-right: auto;
+}
+
+.home-hero-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.65rem, 6vw, 1.8rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+/* 导航不用「·」分隔，靠间距区分（同 owen）；一个字宽左右的 gap 对中文标签够用 */
+.home-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.home-nav a {
+  color: var(--color-slate10);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.home-nav a:hover {
+  color: var(--color-slate12);
+}
+
+.home-tag {
+  border: 0;
+  background: var(--color-slate3);
+  color: var(--color-slate10);
+}
+
+.home-tag:hover {
+  background: var(--color-slate4);
+  color: var(--color-slate11);
+}
+
+.home-tag[aria-pressed='true'] {
+  background: var(--color-slate12);
+  color: var(--color-slate1);
+}
+
+.home-feed-item {
+  position: relative;
+  padding: 0.35rem 0;
+}
+
+.home-feed-group[data-thread-group] {
+  --thread-rail-left: -1.7rem;
+  --thread-rail-width: 1px;
+  --thread-dot-size: 0.625rem;
+  --thread-dot-ring: 0.125rem;
+  --thread-hero-size: 0.875rem;
+  position: relative;
+}
+
+.home-feed-group[data-thread-group][data-visible-count]:not(
+    [data-visible-count='1']
+  )::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--thread-rail-left);
+  width: var(--thread-rail-width);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-slate6) 85%, transparent) 9%,
+    color-mix(in srgb, var(--color-slate6) 85%, transparent) 91%,
+    transparent 100%
+  );
+  content: '';
+}
+
+.home-feed-group[data-thread-group] .home-feed-item {
+  padding-left: 0;
+}
+
+.home-feed-group[data-thread-group][data-visible-count]:not(
+    [data-visible-count='1']
+  )
+  .home-feed-item::before {
+  position: absolute;
+  top: 50%;
+  left: calc(
+    var(--thread-rail-left) + (var(--thread-rail-width) / 2) -
+      (var(--thread-dot-size) / 2)
+  );
+  width: var(--thread-dot-size);
+  height: var(--thread-dot-size);
+  border: 2px solid var(--color-slate1);
+  border-radius: 50%;
+  background: var(--color-slate6);
+  box-shadow: 0 0 0 var(--thread-dot-ring)
+    color-mix(in srgb, var(--color-slate7) 18%, transparent);
+  transform: translateY(-50%);
+  content: '';
+  z-index: 1;
+}
+
+.home-feed-group[data-thread-group][data-visible-count]:not(
+    [data-visible-count='1']
+  )
+  .home-feed-item.is-thread-latest::before {
+  left: calc(
+    var(--thread-rail-left) + (var(--thread-rail-width) / 2) -
+      (var(--thread-hero-size) / 2)
+  );
+  width: var(--thread-hero-size);
+  height: var(--thread-hero-size);
+  border-width: 3px;
+  background: var(--color-indigo9);
+}
+
+.home-group-divider {
+  margin: 3rem auto;
+}
+
+/* 标题的下划线保持标题色。用 text-decoration 而不是背景渐变：渐变按盒宽铺，
+   块级标题会一直画到容器右边缘（就是之前"超框"的那个问题）。 */
+.home-article-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-article-title a:hover {
+  text-decoration: underline;
+  text-decoration-color: currentcolor;
+  text-underline-offset: 0.2em;
+}
+
+/* 下划线用背景渐变画，而不是 text-decoration 或 border：
+   - text-decoration 逐个 inline 盒绘制，heti 把日期切成 <heti-spacing> 之后会断；
+   - border/padding 会改变盒子高度，把 footer 那一行顶高、下划线也压得太低；
+   background 既连续又完全不参与布局。 */
+.home-entry-date {
+  display: inline-block;
+  background-image: linear-gradient(currentcolor, currentcolor);
+  background-repeat: no-repeat;
+
+  /* 从行盒中线往下推。日期是块级盒（flex item），行高 1.4rem 比文字本身高，
+     所以有余量把线放到字底下约 3px；写死 em 会在不同 line-height 下压到字上。 */
+  background-position: 0 calc(50% + 0.62em + 3px);
+  background-size: 0 1px;
+  color: var(--color-slate8);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  transition:
+    background-size 160ms ease,
+    color 150ms ease;
+}
+
+.home-entry-content heti-spacing,
+.home-entry-date heti-spacing {
+  display: inline;
+}
+
+.home-entry-date-link {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.home-entry-date-link:hover .home-entry-date {
+  background-size: 100% 1px;
+  color: var(--color-slate10);
+}
+
+
+.home-article-title,
+.home-entry-title {
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.home-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-entry-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-slate8);
+}
+
+.home-entry-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.home-entry-title {
+  color: var(--color-slate11);
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.home-entry-content {
+  color: var(--color-slate11);
+  font-family: var(--font-sans);
+  font-size: 1.0667rem;
+  line-height: 1.7;
+}
+
+.home-entry-content > :first-child {
+  margin-top: 0;
+}
+
+/* 但首条是 ::: 容器时得留着：它是个有底色的框，清掉上外边距就直接贴上标题了。
+   标题的下间距、容器本身的上间距都不动，只补这一种情况。 */
+.home-entry-content > .block-default:first-child {
+  margin-top: 1.5rem;
+}
+
+.home-entry-content > :last-child {
+  margin-bottom: 0;
+}
+
+.home-entry-content p {
+  margin: 0.75rem 0;
+}
+
+.home-article-content {
+  margin-top: 0.75rem;
+}
+
+.home-article-content p {
+  margin: 1rem 0;
+}
+
+.home-article-content h2,
+.home-article-content h3 {
+  margin: 1.5rem 0 0.55rem;
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.home-article-content h2 {
+  font-size: 1.3rem;
+}
+
+.home-article-content h3 {
+  font-size: 1.12rem;
+}
+
+.home-article-content ul,
+.home-article-content ol {
+  margin: 1rem 0;
+  padding-left: 1.4rem;
+}
+
+.home-article-content ul {
+  list-style: disc;
+}
+
+.home-article-content ol {
+  list-style: decimal;
+}
+
+.home-article-content blockquote {
+  position: relative;
+  margin: 1.5rem 0;
+  border: 0;
+  border-radius: 0.55rem;
+  background: var(--color-slate2);
+  padding: 2.75rem 1rem 0.9rem;
+  color: var(--color-slate10);
+  font-family: var(--font-serif);
+  font-size: 1.05em;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.home-article-content blockquote::before {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.9rem;
+  color: var(--color-slate7);
+  font-family: var(--font-serif);
+  font-size: 2.05rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  content: '“';
+}
+
+.home-article-content blockquote > :first-child {
+  margin-top: 0;
+}
+
+.home-article-content blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* 形状交给 common.css 的单枚叶形标记，这里只管间距 */
+.home-article-content hr {
+  margin: 3rem auto;
+}
+
+.home-article-content figure,
+.home-article-content > img {
+  margin: 1.25rem 0;
+}
+
+.home-article-content img {
+  width: 100%;
+  border: 1px solid var(--color-slate4);
+  border-radius: 0.75rem;
+}
+
+.home-article-content figcaption {
+  margin-top: 0.45rem;
+  color: var(--color-slate8);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.home-article-content pre {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-radius: 0.7rem;
+  background: var(--color-slate2);
+  padding: 0.9rem;
+}
+
+.home-feed-item[data-kind='quote'] {
+  padding-block: 1rem;
+}
+
+.home-quote-card {
+  position: relative;
+  padding-top: 1.15rem;
+}
+
+.home-quote-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--color-slate7);
+  font-family: var(--font-serif);
+  font-size: 3.25rem;
+  font-weight: 700;
+  line-height: 1;
+  z-index: 0;
+}
+
+.home-feed-item[data-kind='quote'] .home-entry-content {
+  position: relative;
+  z-index: 1;
+}
+
+.home-feed-item[data-kind='quote'] .home-entry-content blockquote {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  line-height: 1.6;
+}
+
+.home-feed-item[data-kind='quote'] .home-entry-content blockquote p {
+  margin: 0;
+}
+
+.home-entry-source {
+  display: block;
+  margin-top: 1.15rem;
+  color: var(--color-slate9);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+}
+
+.home-entry-source::before {
+  content: '— ';
+}
+
+.home-link-card {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  column-gap: 0.65rem;
+  color: inherit;
+}
+
+.home-link-icon {
+  display: inline-flex;
+  grid-column: 1;
+  grid-row: 1;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-slate8);
+}
+
+.home-link-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.home-link-url {
+  display: block;
+  overflow: hidden;
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--color-slate8);
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-link-url:hover {
+  color: var(--color-slate10);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.home-link-title {
+  display: block;
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.home-link-title:hover {
+  text-decoration: underline;
+  text-decoration-color: currentcolor;
+  text-underline-offset: 0.2em;
+}
+
+.home-link-card > .home-entry-content {
+  grid-column: 1 / -1;
+  margin-top: 0.9rem;
+}
+
+.home-entry-commentary {
+  position: relative;
+  margin-top: 1.05rem;
+  padding-top: 0.95rem;
+  color: var(--color-slate10);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.home-entry-commentary::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-slate6) 48%, transparent) 16%,
+    color-mix(in srgb, var(--color-slate6) 78%, transparent) 50%,
+    color-mix(in srgb, var(--color-slate6) 48%, transparent) 84%,
+    transparent 100%
+  );
+  content: '';
+}
+
+.home-entry-commentary p {
+  margin: 0;
+}
+
+.home-feed-item[data-kind='photo'] .home-entry-content img {
+  width: 100%;
+  max-height: 28rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--color-slate5);
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.home-entry-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.home-entry-collections {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  /* 和左侧的日期/评分拉开距离，不要挤成一团 */
+  margin-inline-start: 0.55rem;
+}
+
+.home-entry-rating {
+  color: var(--color-slate8);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+/* 合集不画下划线，只换颜色（照 jant） */
+.home-entry-collections a {
+  display: inline-block;
+  color: var(--color-slate8);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.home-entry-collections a:hover {
+  color: var(--color-slate11);
+}
+
+@media (max-width: 640px) {
+  .home-feed-group[data-thread-group] {
+    --thread-rail-left: -0.7rem;
+    padding-left: 0.5rem;
+  }
+
+  .home-feed-group[data-thread-group] .home-feed-item {
+    padding-left: 0;
+  }
+
+  /* 日期和合集一起缩，不然窄屏下两者字号又对不上了 */
+  .home-entry-date,
+  .home-entry-collections a {
+    font-size: 0.8rem;
+  }
+
+  .home-link-title {
+    font-size: 1.4rem;
+  }
+
+  .home-quote-card {
+    padding-top: 1rem;
+  }
+
+  .home-quote-mark {
+    font-size: 2.85rem;
+  }
+
+  .home-feed-item[data-kind='quote'] .home-entry-content blockquote {
+    font-size: 1.32rem;
+  }
+}
+
+/* --- feed 正文的行内元素 -------------------------------------------------- */
+/* 首页/合集页的正文和文章页走的是同一批 markdown，样式得对得上：
+   链接、行内代码、列表、表格、引用、小标题这些原来只在 blog.css 里有。 */
+
+.home-entry-content a {
+  color: var(--color-indigo11);
+  background-image: linear-gradient(
+    var(--color-indigo6),
+    var(--color-indigo6)
+  );
+  background-repeat: no-repeat;
+
+  /* 行内元素的背景定位区只有内容区那么高，直接定位到底部会紧贴字。
+     行内元素的垂直 padding 不参与行盒高度计算，所以拿它撑出下划线的空隙最安全。 */
+  background-position: 0 100%;
+  background-size: 0 1px;
+  padding-bottom: 0.2em;
+  box-decoration-break: clone;
+  text-decoration: none;
+  transition:
+    background-size 160ms ease,
+    color 150ms ease;
+}
+
+.home-entry-content a:hover {
+  background-size: 100% 1px;
+}
+
+/* 渐变下划线是按盒宽铺的，块级链接会一直画到容器右边缘（看起来"超框"）。
+   feed 里的结构性链接本来就有自己的样式，这里统一排除掉。 */
+.home-entry-content a:where(.home-link-url, .home-link-title, .home-entry-title),
+.home-entry-date-link,
+.home-link-url,
+.home-link-title,
+.home-entry-title {
+  background-image: none;
+}
+
+.home-entry-content code {
+  border: 1px solid var(--color-slate4);
+  border-radius: 0.5rem;
+  background: var(--color-slate3);
+  margin-inline: 0.125rem;
+  padding: 0.125rem 0.25rem;
+  color: var(--color-slate11);
+  font-size: 0.75em;
+}
+
+.home-entry-content pre {
+  overflow-x: auto;
+  border: 1px solid var(--color-slate4);
+  border-radius: 0.75rem;
+  background: var(--color-slate2);
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.home-entry-content pre code {
+  border: 0;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+.home-entry-content h2,
+.home-entry-content h3,
+.home-entry-content h4 {
+  color: var(--color-slate12);
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.home-entry-content h2 {
+  margin: 1.6rem 0 0.6rem;
+  font-size: 1.3rem;
+}
+
+.home-entry-content h3 {
+  margin: 1.4rem 0 0.5rem;
+  font-size: 1.12rem;
+}
+
+.home-entry-content h4 {
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1rem;
+}
+
+.home-entry-content ul,
+.home-entry-content ol {
+  margin: 0.9rem 0;
+  padding-left: 1.25rem;
+  color: var(--color-slate11);
+  font-family: var(--font-reading);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.home-entry-content ul {
+  list-style: disc;
+}
+
+.home-entry-content ol {
+  list-style: decimal;
+}
+
+.home-entry-content li {
+  margin: 0.25rem 0;
+}
+
+.home-entry-content li::marker {
+  color: var(--color-slate8);
+}
+
+.home-entry-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.95rem;
+}
+
+.home-entry-content th,
+.home-entry-content td {
+  border: 1px solid var(--color-slate4);
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+}
+
+.home-entry-content th {
+  background: var(--color-slate2);
+  color: var(--color-slate12);
+  font-weight: 600;
+}
+
+.home-entry-content figcaption {
+  margin-top: 0.5rem;
+  color: var(--color-slate9);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.home-entry-content hr {
+  margin: 2rem auto;
+}
+
+/* --- 串文页：整串展示，当前这条高亮，旧内容压暗 ------------------------- */
+
+.thread-view {
+  margin-bottom: 3rem;
+}
+
+/* 串文页的内容列比首页窄，锚点轨道相应往里收 */
+.thread-view .home-feed-group[data-thread-group] {
+  --thread-rail-left: -1.15rem;
+}
+
+.thread-view .home-feed-item {
+  transition:
+    opacity 220ms ease,
+    filter 220ms ease;
+}
+
+/* 点开的正好是最新一条时，把之前的压暗；鼠标移上去（或键盘聚焦进去）再还原 */
+.thread-view[data-emphasise-latest='true'] .home-feed-item.is-thread-dimmed {
+  opacity: 0.42;
+}
+
+.thread-view[data-emphasise-latest='true']
+  .home-feed-item.is-thread-dimmed:hover,
+.thread-view[data-emphasise-latest='true']
+  .home-feed-item.is-thread-dimmed:focus-within {
+  opacity: 1;
+}
+
+/* 当前这条的锚点用主色（沿用首页 is-thread-latest 那颗大点的尺寸） */
+.thread-view .home-feed-item.is-thread-current::before {
+  background: var(--color-indigo9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-view .home-feed-item {
+    transition: none;
+  }
+}
+
+/* --- 合集页 -------------------------------------------------------------- */
+
+.collection-hero {
+  position: relative;
+  margin-bottom: 3.5rem;
+}
+
+.collection-back {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  color: var(--color-slate9);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.collection-back:hover {
+  color: var(--color-slate12);
+}

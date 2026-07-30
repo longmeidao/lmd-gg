@@ -1,28 +1,66 @@
 @reference "./common.css";
 
-.blog-content {
-  @apply mb-16;
+/* 标题下的日期、正文末尾的更新时间：跟 owen 的 13.5/18.225 对齐（换算成本站 rem） */
+.post-header-meta,
+.post-footer-meta {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
 
+.blog-content {
+  @apply mr-auto mb-16 w-full max-w-[36.75rem];
+
+  /* 标题不加粗：owen 的 h1 是 500，不是 600/700 */
   h1 {
-    @apply text-slate12 mb-2 text-4xl leading-normal font-bold;
+    @apply text-slate12 mb-3 text-[1.96rem] leading-[1.15] font-medium;
+    font-family: var(--font-serif);
+    letter-spacing: -0.02em;
   }
   h2 {
-    @apply text-slate12 mt-8 mb-2 text-3xl leading-normal font-semibold;
+    @apply text-slate12 mt-10 mb-3 text-[1.45rem] leading-[1.25] font-medium;
+    font-family: var(--font-serif);
   }
   h3 {
-    @apply text-slate12 my-2 text-2xl leading-normal font-semibold;
+    @apply text-slate12 mt-8 mb-2 text-[1.2rem] leading-[1.3] font-medium;
+    font-family: var(--font-serif);
   }
 
   h4 {
-    @apply text-slate12 my-2 text-base leading-normal font-semibold;
+    @apply text-slate12 my-2 text-base leading-normal font-medium;
   }
 
   p {
-    @apply text-slate12 my-6 mt-4 text-base leading-relaxed;
+    @apply text-slate12 my-[1.45rem] text-[1.0667rem] leading-[1.7];
+    font-family: var(--font-reading);
   }
 
+  /* 下划线只用一种画法：背景渐变。
+     text-decoration 会被 heti 插入的 <heti-spacing> 切断，而两种画法同时开
+     就会出现上下两条线。clone 让换行的每段各画一条。 */
   a {
-    @apply text-indigo11 decoration-indigo6 underline-offset-4 transition-all hover:underline;
+    @apply text-indigo11 no-underline;
+
+    background-image: linear-gradient(
+      var(--color-indigo6),
+      var(--color-indigo6)
+    );
+    background-repeat: no-repeat;
+
+    /* 行内元素的背景定位区只有内容区那么高，直接贴底会压到字上；
+       行内的垂直 padding 不影响行盒高度，用它撑出空隙不会顶高排版。 */
+    background-position: 0 100%;
+    background-size: 0 1px;
+    padding-bottom: 0.2em;
+    box-decoration-break: clone;
+    transition:
+      background-size 160ms ease,
+      color 150ms ease;
+  }
+
+  a:hover {
+    @apply no-underline;
+
+    background-size: 100% 1px;
   }
 
   /* a::after{
@@ -46,30 +84,6 @@
     @apply hidden;
   }
 
-  .block-default {
-    @apply my-6 rounded-xl p-4;
-
-    p {
-      @apply text-slate12 my-0 text-base leading-relaxed;
-    }
-  }
-
-  .tip {
-    @apply border-indigo4 bg-indigo2 border;
-
-    .block-title {
-      @apply text-indigo11 text-lg font-semibold;
-    }
-  }
-
-  .warning {
-    @apply border-orange4 bg-orange2 border;
-
-    .block-title {
-      @apply text-orange11 text-lg font-semibold;
-    }
-  }
-
   table {
     @apply ring-slate4 my-6 w-full border-collapse overflow-hidden rounded-xl ring-1;
 
@@ -84,28 +98,59 @@
   }
 
   blockquote {
-    /* heti.css hack */
+    position: relative;
     margin-block: calc(var(--spacing) * 6) !important;
-    border-left-style: var(--tw-border-style) !important;
-    border-left-width: 2px !important;
-    border-color: var(--color-slate4) !important;
-    padding-left: calc(var(--spacing) * 4) !important;
-
-    background-color: transparent !important;
     margin-inline: 0 !important;
-    padding-block: 0 !important;
+    border: 0 !important;
+    border-radius: 0.55rem;
+    background-color: var(--color-slate2) !important;
+    padding: 2.8rem 1.15rem 1rem !important;
+    color: var(--color-slate10);
+    font-family: var(--font-serif);
+    font-style: italic;
+
+    &::before {
+      position: absolute;
+      top: 0.65rem;
+      left: 1rem;
+      color: var(--color-slate7);
+      font-family: var(--font-serif);
+      font-size: 2.15rem;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 1;
+      content: '“';
+    }
 
     p {
-      @apply text-slate10 text-base leading-relaxed;
+      @apply text-slate10 text-[1.05rem] leading-[1.7];
+      margin-block: 0.4rem;
+      font-family: var(--font-serif);
     }
   }
 
-  hr {
-    @apply border-slate4 mx-auto my-12 w-1/3;
+  /* 一枚略微转过角度的叶形标记（同 jant）。写在这里而不是 common.css，
+     因为 prose / preflight 的 hr 规则会盖掉外面同specificity 的声明。 */
+  .post-content hr {
+    width: 10px;
+    height: 11px;
+    margin: 3rem auto;
+    border: 0;
+    border-radius: 0;
+    background-color: color-mix(in srgb, var(--color-slate11) 30%, transparent);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
   }
 
   ul {
-    @apply text-slate11 mt-2 mb-6 list-disc pl-4 text-base leading-relaxed;
+    @apply text-slate11 mt-2 mb-6 list-disc pl-5 text-[1.05rem] leading-[1.7];
+    font-family: var(--font-reading);
   }
 
   .task-list-item {
@@ -121,11 +166,12 @@
   }
 
   ol {
-    @apply text-slate11 mt-2 mb-6 list-decimal pl-6 text-base leading-relaxed;
+    @apply text-slate11 mt-2 mb-6 list-decimal pl-6 text-[1.05rem] leading-[1.7];
+    font-family: var(--font-reading);
   }
 
   li {
-    @apply text-slate11 text-base leading-relaxed;
+    @apply text-slate11 text-[1.05rem] leading-[1.7];
   }
 
   ol li::marker {
@@ -144,13 +190,7 @@
     @apply inline;
   }
 
-  .heti-spacing-start {
-    @apply me-[0.25em];
-  }
-
-  .heti-spacing-end {
-    @apply ms-[0.25em];
-  }
+  /* 间隙的 margin→padding 处理统一在 common.css，这里不再重复 */
 
   heti-adjacent {
     @apply inline;
@@ -162,12 +202,6 @@
 
   .heti-adjacent-quarter {
     @apply me-[-0.25em];
-  }
-
-  .heti em {
-    font-family:
-      'Times New Roman', times, 'Heti Kai Black', serif, 'Apple Color Emoji',
-      'Segoe UI Emoji', 'Segoe UI Symbol';
   }
 
   /* Slate Blog: horizontal layout for two to six consecutive images. */

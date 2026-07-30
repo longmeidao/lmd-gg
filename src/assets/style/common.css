@@ -1,24 +1,51 @@
-@import "tailwindcss";
-@import "@radix-ui/colors/gray.css";
-@import "@radix-ui/colors/blue.css";
-@import "@radix-ui/colors/red.css";
-@import "@radix-ui/colors/green.css";
-@import "@radix-ui/colors/slate.css";
-@import "@radix-ui/colors/tomato.css";
-@import "@radix-ui/colors/amber.css";
-@import "@radix-ui/colors/indigo.css";
-@import "@radix-ui/colors/orange.css";
-@import "@radix-ui/colors/gray-dark.css";
-@import "@radix-ui/colors/blue-dark.css";
-@import "@radix-ui/colors/red-dark.css";
-@import "@radix-ui/colors/green-dark.css";
-@import "@radix-ui/colors/slate-dark.css";
-@import "@radix-ui/colors/tomato-dark.css";
-@import "@radix-ui/colors/amber-dark.css";
-@import "@radix-ui/colors/indigo-dark.css";
-@import "@radix-ui/colors/orange-dark.css";
+@import 'tailwindcss';
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/slate.css';
+@import '@radix-ui/colors/tomato.css';
+@import '@radix-ui/colors/amber.css';
+@import '@radix-ui/colors/indigo.css';
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/red-dark.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/slate-dark.css';
+@import '@radix-ui/colors/tomato-dark.css';
+@import '@radix-ui/colors/amber-dark.css';
+@import '@radix-ui/colors/indigo-dark.css';
+@import '@radix-ui/colors/orange-dark.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --font-sans:
+    system-ui, -apple-system, 'system-ui', 'Segoe UI', Roboto, 'Helvetica Neue',
+    Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang TC', 'Hiragino Sans CNS',
+    'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif;
+  --font-serif:
+    'New York Small', 'New York', 'Iowan Old Style', Charter,
+    'Bitstream Charter', 'Source Serif 4', Cambria, 'Sitka Text', Georgia,
+    'Songti SC', STSong, SimSun, 'Noto Serif SC', 'Noto Serif CJK SC',
+    'Songti TC', PMingLiU, MingLiU, 'Noto Serif TC', 'Noto Serif CJK TC',
+    ui-serif, serif;
+  --font-serif-quote:
+    'Songti SC', STSong, SimSun, 'Noto Serif SC', 'Noto Serif CJK SC',
+    'Songti TC', PMingLiU, MingLiU, 'Noto Serif TC', 'Noto Serif CJK TC',
+    ui-serif, 'New York Small', 'New York', 'Iowan Old Style', Charter, Georgia,
+    'Times New Roman', Times, serif;
+  --font-mono:
+    'SFMono-Regular', Consolas, 'Liberation Mono', 'Noto Sans Mono CJK SC',
+    monospace;
+  /* 系统字体打头（同 owen 的 ui-sans-serif）。之前 Noto Sans SC 在最前面，
+     它字面更满、笔画更重，正文看着就比 owen 粗一号。 */
+  --font-reading:
+    ui-sans-serif, system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', sans-serif;
+}
 
 @theme {
   --color-gray1: var(--gray-1);
@@ -139,5 +166,404 @@
 }
 
 body {
-  @apply text-sm text-slate12;
+  @apply text-slate12 text-base;
+
+  /* macOS 默认是次像素渲染，笔画会明显加粗；owen 的 body 也开了 antialiased */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/*
+ * 内容整体靠左、放宽（参考 owenyoung.com）：不贴边，左侧留一段较宽的边距，
+ * 右侧收窄，多出来的横向空间留给内容。owen 在 1280 视口是 160px / 51px。
+ */
+.site-shell {
+  width: min(81.5rem, 100%);
+  margin-inline: 0 auto;
+  padding-inline: clamp(1.5rem, 12.5vw, 10rem) clamp(1.5rem, 4vw, 3.25rem);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.45rem;
+}
+
+.header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--color-slate10);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.header-action:hover {
+  color: var(--color-slate12);
+}
+
+.header-action svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+/* 强调：楷体 + 着重号。详情页在 .heti 作用域下，首页 feed 没有那个 class，
+   所以同样合成一份、挂两个选择器。 */
+.blog-content .heti em,
+.home-entry-content em {
+  font-family:
+    'Times New Roman', times, 'Heti Kai Black', serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.blog-content .heti .heti-em,
+.home-entry-content .heti-em {
+  text-emphasis-color: var(--color-slate9);
+  text-emphasis-style: open sesame;
+}
+
+/*
+ * ::: info / tip / warning 容器。
+ *
+ * 详情页和首页 feed 的 DOM 不在同一个作用域里，之前各写一份就飘了 —— 这里合成
+ * 一段声明、挂两个选择器。权重要压过 vendor 的 `.block-default.info`(0,2,0)，
+ * 所以带上外层容器。
+ */
+.blog-content .block-default,
+.home-entry-content .block-default {
+  border-radius: 0.75rem;
+  margin-block: 1.5rem;
+  padding: 1rem;
+  /* vendor 的 --block-text-color 是 #333（浅色主题假设）。<p> 被下面盖掉了，
+     但列表、加粗这些非 p 的内容会变成深色背景上的深灰，几乎看不见。 */
+  color: var(--color-slate12);
+}
+
+.blog-content .block-default p,
+.home-entry-content .block-default p {
+  margin-block: 0;
+  color: var(--color-slate12);
+  font-size: 1.0667rem;
+  line-height: 1.7;
+}
+
+.blog-content .block-default.tip,
+.home-entry-content .block-default.tip {
+  border: 1px solid var(--color-indigo4);
+  background-color: var(--color-indigo2);
+}
+
+.blog-content .block-default.tip .block-title,
+.home-entry-content .block-default.tip .block-title {
+  color: var(--color-indigo11);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.blog-content .block-default.warning,
+.home-entry-content .block-default.warning {
+  border: 1px solid var(--color-orange4);
+  background-color: var(--color-orange2);
+}
+
+.blog-content .block-default.warning .block-title,
+.home-entry-content .block-default.warning .block-title {
+  color: var(--color-orange11);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* heti.min.css 给 .heti 强制了 subpixel-antialiased，会盖掉 body 上的 antialiased，
+   正文（唯一挂 .heti 的地方）就比站内其他文字明显粗一号。加载顺序按页面而异，用 !important。 */
+.heti {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* heti 会在中西文之间插入 <heti-spacing>，其自带样式用 margin 撑出间隙。
+   margin 落在 inline 盒之外，text-decoration 画不过去，链接/日期的下划线
+   就会在每个间隙处断开（见 heti.min.css 的 `.heti .heti-spacing-start`）。
+   改用 padding —— padding 属于 inline 盒，下划线连续。
+   heti.min.css 的加载顺序按页面而异，所以这里用 !important 压掉它的 margin。 */
+.heti-spacing-start,
+.heti .heti-spacing-start {
+  margin-inline-end: 0 !important;
+  padding-inline-end: 0.25em;
+}
+
+.heti-spacing-end,
+.heti .heti-spacing-end {
+  margin-inline-start: 0 !important;
+  padding-inline-start: 0.25em;
+}
+
+/* jant 的分隔标记：一枚略微转过角度的叶形，用 mask 画。
+   `.divider-mark` 是单枚（文章内、about 分节），`.divider-trio` 是三枚
+   各转 90°/100°/80°（首页分组）—— 三个一模一样的正圆排一行太机械。 */
+.divider-mark,
+.divider-trio,
+.home-group-divider,
+.about-divider,
+.home-entry-content hr {
+  display: block;
+  border: 0;
+  background-color: color-mix(in srgb, var(--color-slate11) 30%, transparent);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.divider-trio,
+.home-group-divider {
+  width: 30px;
+  height: 9px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+}
+
+.divider-mark,
+.about-divider,
+.home-entry-content hr {
+  width: 10px;
+  height: 11px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+}
+
+/* --- 条目管理操作（回复 + 三点菜单，规格参照 jant） ---------------------- */
+
+.post-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: auto;
+}
+
+.post-admin-menu {
+  position: relative;
+}
+
+.post-admin-btn {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  padding: 0;
+  color: var(--color-slate8);
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+/* 回复按钮是 <a>，在文章页落在 .blog-content 里，会被正文的链接规则染成蓝色
+   并在悬停时画出渐变下划线。这里按原样盖回去（选择器权重要压过 .blog-content a）。 */
+.blog-content .post-admin a.post-admin-btn {
+  background-image: none;
+  padding-bottom: 0;
+  color: var(--color-slate8);
+}
+
+.blog-content .post-admin a.post-admin-btn:hover {
+  background-image: none;
+  color: var(--color-slate12);
+}
+
+.post-admin-btn:hover,
+.post-admin-btn[aria-expanded='true'] {
+  background: var(--color-slate3);
+  color: var(--color-slate12);
+}
+
+.post-admin-btn svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.post-admin-btn:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
+.post-admin-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  width: min(17rem, calc(100vw - 2rem));
+  max-height: min(24rem, 70dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-slate5);
+  border-radius: 1.15rem;
+  background: var(--color-slate1);
+  padding: 0.5rem;
+  box-shadow:
+    0 0.75rem 2.5rem color-mix(in srgb, var(--color-slate12) 18%, transparent),
+    0 1px 3px color-mix(in srgb, var(--color-slate12) 8%, transparent);
+  animation: post-admin-pop 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.post-admin-popover[hidden] {
+  display: none;
+}
+
+.post-admin-row {
+  display: flex;
+  width: 100%;
+  min-height: 2.9rem;
+  appearance: none;
+  align-items: center;
+  gap: 0.6rem;
+  border: 0;
+  border-radius: 0.8rem;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: var(--color-slate12);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.post-admin-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-admin-row:hover {
+  background: var(--color-slate3);
+}
+
+.post-admin-row-value {
+  color: var(--color-slate9);
+  font-weight: 400;
+}
+
+.post-admin-row-icon {
+  flex-shrink: 0;
+  color: var(--color-slate10);
+}
+
+.post-admin-chevron {
+  color: var(--color-slate8);
+}
+
+.post-admin-row-danger {
+  color: var(--color-red10);
+}
+
+.post-admin-row-danger .post-admin-row-icon {
+  color: var(--color-red10);
+}
+
+.post-admin-separator {
+  height: 1px;
+  background: var(--color-slate4);
+  margin: 0.3rem 0.35rem;
+}
+
+.post-admin-back {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+  appearance: none;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 0.8rem;
+  background: transparent;
+  padding: 0.35rem 0.55rem;
+  color: var(--color-slate10);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.post-admin-back:hover {
+  background: var(--color-slate3);
+  color: var(--color-slate12);
+}
+
+.post-admin-back svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.post-admin-options {
+  display: grid;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.post-admin-check {
+  flex-shrink: 0;
+  color: var(--color-slate12);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.post-admin-row[aria-pressed='true'] .post-admin-check {
+  opacity: 1;
+}
+
+.post-admin-empty {
+  margin: 0;
+  padding: 0.85rem 0.75rem;
+  color: var(--color-slate9);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+@keyframes post-admin-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.3rem) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-actions {
+    gap: 0.8rem;
+  }
+
+  .header-action span {
+    display: none;
+  }
 }
