@@ -4,10 +4,9 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import i18next from '@/i18n';
 import PageLayout from '@/components/layouts/PageLayout.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
 import ArticleJsonLd from '@/components/json-ld/article.astro';
-import Button from '@/components/button';
 import RelatedPosts from '@/components/related-posts/index.astro';
-import HeaderActions from '@/components/layouts/HeaderActions.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import CodeGroupEvent from '@/components/code-group-event';
 import PostEntry from '@/components/feed/PostEntry.astro';
@@ -95,10 +94,7 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
   />
   <CodeGroupEvent client:only="react" />
 
-  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
-    <Button href="/">←</Button>
-    <HeaderActions />
-  </div>
+  <BackHeader slot="header" />
 
   {
     /* 串文视图必须放在 .blog-content 外面：blog.css 的正文样式（a / blockquote

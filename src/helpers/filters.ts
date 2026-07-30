@@ -5,7 +5,7 @@
  * 合集页要用就得复制一份 —— 复制过的东西迟早会飘（block-default 已经飘过一次）。
  */
 
-export const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<string, string> = {
   article: '长文',
   note: '随记',
   quote: '引文',
@@ -14,7 +14,7 @@ export const KIND_LABELS: Record<string, string> = {
 };
 
 /** 形式图标：note/link/quote 用 jant 的 FORMAT_ICONS，其余按同一套 lucide 取名 */
-export const KIND_ICONS: Record<string, string> = {
+const KIND_ICONS: Record<string, string> = {
   article: 'fileText',
   note: 'note',
   quote: 'quote',
@@ -24,9 +24,9 @@ export const KIND_ICONS: Record<string, string> = {
 
 /** 媒介图标：对齐 jant 的 MEDIA_KIND_ICONS */
 /** 媒介顺序固定，不跟着内容的出现顺序漂（同 jant 的 MediaCategory 排法） */
-export const MEDIA_ORDER = ['image', 'video', 'audio', 'file', 'attached', 'code'];
+const MEDIA_ORDER = ['image', 'video', 'audio', 'file', 'attached', 'code'];
 
-export const MEDIA_ICONS: Record<string, string> = {
+const MEDIA_ICONS: Record<string, string> = {
   image: 'image',
   video: 'video',
   audio: 'music',
@@ -35,7 +35,7 @@ export const MEDIA_ICONS: Record<string, string> = {
   code: 'code',
 };
 
-export const MEDIA_LABELS: Record<string, string> = {
+const MEDIA_LABELS: Record<string, string> = {
   image: '图片',
   video: '视频',
   audio: '音频',
@@ -90,7 +90,7 @@ export const detectMedia = (
   return [...media];
 };
 
-export interface FilterOption {
+interface FilterOption {
   value: string;
   label: string;
   icon?: string;
@@ -109,7 +109,7 @@ export interface FilterDef {
 }
 
 /** 参与筛选的条目需要提供的字段 */
-export interface FilterableEntry {
+interface FilterableEntry {
   kind: string;
   year: number;
   media: string[];

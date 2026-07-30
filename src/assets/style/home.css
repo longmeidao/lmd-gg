@@ -38,22 +38,6 @@
   color: var(--color-slate12);
 }
 
-.home-tag {
-  border: 0;
-  background: var(--color-slate3);
-  color: var(--color-slate10);
-}
-
-.home-tag:hover {
-  background: var(--color-slate4);
-  color: var(--color-slate11);
-}
-
-.home-tag[aria-pressed='true'] {
-  background: var(--color-slate12);
-  color: var(--color-slate1);
-}
-
 .home-feed-item {
   position: relative;
   padding: 0.35rem 0;
@@ -182,7 +166,6 @@
   background-size: 100% 1px;
   color: var(--color-slate10);
 }
-
 
 .home-article-title,
 .home-entry-title {
@@ -788,18 +771,4 @@
 .collection-hero {
   position: relative;
   margin-bottom: 3.5rem;
-}
-
-.collection-back {
-  display: inline-block;
-  margin-bottom: 1.25rem;
-  color: var(--color-slate9);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  text-decoration: none;
-  transition: color 150ms ease;
-}
-
-.collection-back:hover {
-  color: var(--color-slate12);
 }

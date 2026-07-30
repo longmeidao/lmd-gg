@@ -42,6 +42,11 @@
     monospace;
   /* 系统字体打头（同 owen 的 ui-sans-serif）。之前 Noto Sans SC 在最前面，
      它字面更满、笔画更重，正文看着就比 owen 粗一号。 */
+  /* 分隔标记：一枚略微转过角度的叶形（同 jant）。放成变量，
+     免得同一串 data URI 在 common.css 和 blog.css 里各抄一遍。 */
+  --divider-leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+  --divider-leaf-trio: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+
   --font-reading:
     ui-sans-serif, system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', sans-serif;
@@ -313,11 +318,8 @@ body {
   padding-inline-start: 0.25em;
 }
 
-/* jant 的分隔标记：一枚略微转过角度的叶形，用 mask 画。
-   `.divider-mark` 是单枚（文章内、about 分节），`.divider-trio` 是三枚
-   各转 90°/100°/80°（首页分组）—— 三个一模一样的正圆排一行太机械。 */
-.divider-mark,
-.divider-trio,
+/* jant 的分隔标记。单枚用在文章内和 about 分节，三枚（各转 90°/100°/80°，
+   三个一模一样的正圆排一行太机械）用在首页分组之间。 */
 .home-group-divider,
 .about-divider,
 .home-entry-content hr {
@@ -332,21 +334,19 @@ body {
   -webkit-mask-size: contain;
 }
 
-.divider-trio,
 .home-group-divider {
   width: 30px;
   height: 9px;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+  mask-image: var(--divider-leaf-trio);
+  -webkit-mask-image: var(--divider-leaf-trio);
 }
 
-.divider-mark,
 .about-divider,
 .home-entry-content hr {
   width: 10px;
   height: 11px;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
+  mask-image: var(--divider-leaf);
+  -webkit-mask-image: var(--divider-leaf);
 }
 
 /* --- 条目管理操作（回复 + 三点菜单，规格参照 jant） ---------------------- */

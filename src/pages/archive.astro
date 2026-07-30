@@ -2,8 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import { getImage } from 'astro:assets';
 import PageLayout from '@/components/layouts/PageLayout.astro';
-import Button from '@/components/button';
-import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import PostEntry from '@/components/feed/PostEntry.astro';
 import {
@@ -135,10 +134,7 @@ entries.forEach((entry) => {
 ---
 
 <PageLayout title="归档" description="按月份排列的全部内容。">
-  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
-    <Button href="/">←</Button>
-    <HeaderActions />
-  </div>
+  <BackHeader slot="header" />
 
   <main class="archive-page">
     <header class="archive-page-header">

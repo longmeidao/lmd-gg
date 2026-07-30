@@ -1,8 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
-import Button from '@/components/button';
-import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
 import PublishingActivity from '@/components/publishing-activity/index.astro';
 import '@/assets/style/blog.css';
 import '@/assets/style/about.css';
@@ -19,10 +18,7 @@ const publishedDates = publishedArticles
 ---
 
 <PageLayout title="导览册">
-  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
-    <Button href="/">←</Button>
-    <HeaderActions />
-  </div>
+  <BackHeader slot="header" />
   <main class="blog-content about-page">
     <div class="mb-16">
       <h1>导览册</h1>

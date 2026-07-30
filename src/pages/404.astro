@@ -1,15 +1,12 @@
 ---
 import i18next from '@/i18n';
 import PageLayout from '@/components/layouts/PageLayout.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
 import Button from '@/components/button';
-import HeaderActions from '@/components/layouts/HeaderActions.astro';
 ---
 
 <PageLayout title="四〇四">
-  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
-    <Button href="/">←</Button>
-    <HeaderActions />
-  </div>
+  <BackHeader slot="header" />
 
   <div class="flex h-[70vh] flex-col items-center justify-center">
     <h1 class="mb-4 text-4xl font-bold">四〇四</h1>

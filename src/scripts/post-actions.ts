@@ -1,9 +1,11 @@
 /**
- * 首页 / 详情页条目上的管理操作：回复、编辑、加入标签、可见性、复制链接、删除。
+ * 首页 / 详情页条目上的管理操作：回复、编辑、加入合集、可见性、复制链接、删除。
  *
  * 写接口是「整份 markdown 读回来 → 改 frontmatter → 写回去」，
  * 所以这里只对 frontmatter 做定点增删，正文原样保留。
  */
+
+import { DEFAULT_COLLECTION } from '@/helpers/collection';
 
 type Visibility = 'public' | 'hidden' | 'private';
 
@@ -49,8 +51,8 @@ const knownCollections = () => {
       const name = button.dataset.collectionFilter;
       if (name) names.add(name);
     });
-  // 「未分类」是没写 collections 时的兜底显示，不是真合集，不能写进 frontmatter
-  names.delete('未分类');
+  // 兜底合集只是展示用的，不是真合集，不能写进 frontmatter
+  names.delete(DEFAULT_COLLECTION);
   return [...names].sort((left, right) => left.localeCompare(right, 'zh-CN'));
 };
 

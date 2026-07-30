@@ -289,21 +289,6 @@
   color: var(--color-slate11);
 }
 
-.archive-chip-check {
-  position: absolute;
-  top: 50%;
-  right: 0.5rem;
-  width: 0.85rem;
-  height: 0.85rem;
-  color: var(--color-slate12);
-  opacity: 0;
-  transform: translateY(-50%);
-}
-
-.archive-chip-option.is-active .archive-chip-check {
-  opacity: 1;
-}
-
 @keyframes archive-chip-pop {
   from {
     opacity: 0;

@@ -1,8 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
-import Button from '@/components/button';
-import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import PostEntry from '@/components/feed/PostEntry.astro';
 import { getPostPath } from '@/helpers/post';
@@ -35,10 +34,7 @@ const posts = await Promise.all(
 ---
 
 <PageLayout title="精选" description="挑出来的、值得再读一次的内容。">
-  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
-    <Button href="/">←</Button>
-    <HeaderActions />
-  </div>
+  <BackHeader slot="header" />
 
   <main class="home-column">
     <section class="collection-hero">
