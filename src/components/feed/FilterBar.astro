@@ -1,0 +1,151 @@
+---
+import { ICON_PATHS, type FilterDef } from '@/helpers/filters';
+
+interface Props {
+  filters: FilterDef[];
+  count: number;
+  /** 计数右边的 RSS 链接（同 owen 归档页计数旁的 feed-link） */
+  feedHref?: string;
+  feedTitle?: string;
+  countLabel?: string;
+}
+
+const {
+  filters,
+  count,
+  feedHref,
+  feedTitle = '这个视图的 RSS 订阅',
+  countLabel = '条内容',
+} = Astro.props;
+---
+
+<p class="archive-page-meta">
+  共 <span data-archive-count>{count}</span> {countLabel}
+  {
+    feedHref && (
+      <a class="archive-feed-link" href={feedHref} title={feedTitle}>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 11a9 9 0 0 1 9 9" />
+          <path d="M4 4a16 16 0 0 1 16 16" />
+          <circle cx="5" cy="19" r="1" />
+        </svg>
+        <span class="sr-only">{feedTitle}</span>
+      </a>
+    )
+  }
+</p>
+
+<div class="archive-filters">
+  <div class="archive-filters-chips">
+    {
+      filters.map((filter) => (
+        <div
+          class="archive-chip-select"
+          data-chip-select={filter.name}
+          data-admin-only={filter.adminOnly ? true : undefined}
+          hidden={filter.adminOnly}
+        >
+          <button
+            type="button"
+            class="archive-chip"
+            data-chip-trigger
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-label={`按${filter.label}筛选`}
+          >
+            <svg
+              class="archive-chip-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              set:html={ICON_PATHS[filter.icon]}
+            />
+            <span class="archive-chip-label" data-chip-label hidden />
+            <svg
+              class="archive-chip-chevron"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4.5 6.5 8 10l3.5-3.5" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="archive-chip-clear"
+            data-chip-clear
+            aria-label={`清除${filter.label}筛选`}
+            hidden
+          >
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m4.5 4.5 7 7M11.5 4.5l-7 7" />
+            </svg>
+          </button>
+
+          <div class="archive-chip-menu" data-chip-menu hidden>
+            <div role="listbox" aria-label={filter.label}>
+              {filter.options.map((option, index) => (
+                <button
+                  type="button"
+                  class:list={[
+                    'archive-chip-option',
+                    index === 0 && 'is-active',
+                    option.indent && 'is-indented',
+                    option.empty && 'is-empty',
+                  ]}
+                  role="option"
+                  aria-selected={index === 0 ? 'true' : 'false'}
+                  data-chip-default={option.value === '' ? 'true' : undefined}
+                  data-chip-value={option.value}
+                >
+                  {option.icon ? (
+                    <svg
+                      class="archive-chip-option-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      set:html={ICON_PATHS[option.icon]}
+                    />
+                  ) : (
+                    <span class="archive-chip-option-icon" aria-hidden="true" />
+                  )}
+                  <span class="archive-chip-option-label">{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+  <slot name="trailing" />
+</div>

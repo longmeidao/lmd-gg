@@ -1,0 +1,101 @@
+---
+import { getCollection } from 'astro:content';
+import PostView from '@/components/feed/PostView.astro';
+import CollectionView from '@/components/feed/CollectionView.astro';
+import { buildCollectionIndex } from '@/helpers/collection';
+import { getPostDisplayTitle, getPostExcerpt } from '@/helpers/post';
+
+/**
+ * 站点根下的唯一动态路由：条目和合集都没有前缀，共用这一个 slug 空间。
+ * `/a-chuni-manifesto` 是条目，`/凉宫春日` 是合集，靠 getStaticPaths 分流。
+ */
+export async function getStaticPaths() {
+  const showPrototypes =
+    import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
+  const postEntries = await getCollection('post', ({ data }) => {
+    return showPrototypes || data.draft !== true;
+  });
+
+  const postPaths = postEntries.map((post) => {
+    const postCollections = new Set(post.data.collections ?? []);
+    const relatedPosts = postEntries
+      .filter(
+        (candidate) =>
+          candidate.id !== post.id && candidate.data.draft !== true,
+      )
+      .map((candidate) => ({
+        candidate,
+        score: (candidate.data.collections ?? []).filter((name) =>
+          postCollections.has(name),
+        ).length,
+      }))
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          (b.candidate.data.pubDate?.getTime() ?? 0) -
+            (a.candidate.data.pubDate?.getTime() ?? 0),
+      )
+      .filter(({ score }) => score > 0)
+      .slice(0, 3)
+      .map(({ candidate }) => ({
+        title: getPostDisplayTitle(candidate.data),
+        id: candidate.id,
+        kind: candidate.data.kind,
+        description: getPostExcerpt(candidate.body),
+        pubDate: candidate.data.pubDate,
+        collections: candidate.data.collections ?? [],
+      }));
+
+    return {
+      params: { slug: post.id },
+      props: { type: 'post' as const, post, relatedPosts },
+    };
+  });
+
+  const sorted = [...postEntries].sort(
+    (a, b) =>
+      (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
+  );
+  const takenSlugs = new Set(postPaths.map((entry) => entry.params.slug));
+
+  const collectionPaths = buildCollectionIndex(sorted)
+    .filter((entry) => {
+      // 合集 slug 撞上条目 slug 时让条目胜出，并在构建日志里说清楚
+      if (!takenSlugs.has(entry.slug)) return true;
+      console.warn(
+        `[routes] 合集「${entry.name}」的 slug "${entry.slug}" 与同名条目冲突，` +
+          `该合集页已跳过。请在 slate.config.ts 的 collectionSlugs 里改个 slug。`,
+      );
+      return false;
+    })
+    .map((entry) => ({
+      params: { slug: entry.slug },
+      props: {
+        type: 'collection' as const,
+        name: entry.name,
+        count: entry.count,
+        ids: entry.items.map((post) => post.id),
+      },
+    }));
+
+  return [...postPaths, ...collectionPaths];
+}
+
+type Props = Awaited<
+  ReturnType<typeof getStaticPaths>
+>[number]['props'];
+
+const props = Astro.props as Props;
+---
+
+{
+  props.type === 'collection' ? (
+    <CollectionView
+      name={props.name}
+      count={props.count}
+      ids={props.ids}
+    />
+  ) : (
+    <PostView post={props.post} relatedPosts={props.relatedPosts} />
+  )
+}

@@ -1,0 +1,89 @@
+---
+import Search from '@/components/search/Search.astro';
+
+const sessionEndpoint = import.meta.env.DEV
+  ? '/__lmd/session'
+  : '/api/admin/session';
+---
+
+<nav
+  class="header-actions"
+  aria-label="站点工具"
+  data-admin-session
+  data-session-endpoint={sessionEndpoint}
+>
+  <a
+    href="/write"
+    class="header-action"
+    aria-label="撰写"
+    data-admin-write
+    hidden
+  >
+    {/* 羽毛笔，同 jant 的 compose-prompt-avatar */}
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+      <line x1="16" y1="8" x2="2" y2="22"></line>
+      <line x1="17.5" y1="15" x2="9" y2="15"></line>
+    </svg>
+    <span>撰写</span>
+  </a>
+  <Search />
+</nav>
+
+<script>
+  /**
+   * 登录状态的显隐。
+   *
+   * 必须在 astro:page-load 上重跑：ClientRouter 换页后 DOM 是新的，
+   * 那批 [data-admin-only] 又是 hidden 的，只在模块顶层跑一次的话，
+   * 软跳转过去的页面就永远认不出登录状态。
+   */
+  type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
+
+  const revealAdmin = () => {
+    document
+      .querySelectorAll<HTMLElement>('[data-admin-write], [data-admin-only]')
+      .forEach((element) => {
+        element.hidden = false;
+      });
+    (window as AdminWindow).__lmdAdminAuthenticated = true;
+    document.dispatchEvent(new CustomEvent('lmd:admin-authenticated'));
+  };
+
+  // 没登录时不必每次换页都再问一遍服务端
+  let checked = false;
+
+  const applyAdminState = () => {
+    if ((window as AdminWindow).__lmdAdminAuthenticated) {
+      revealAdmin();
+      return;
+    }
+    if (checked) return;
+
+    const sessionRoot = document.querySelector<HTMLElement>(
+      '[data-admin-session]',
+    );
+    const endpoint = sessionRoot?.dataset.sessionEndpoint;
+    if (!endpoint) return;
+
+    checked = true;
+    const secret =
+      sessionStorage.getItem('lmd:admin-secret:session') ||
+      localStorage.getItem('lmd:admin-secret:persistent') ||
+      '';
+
+    void fetch(endpoint, {
+      headers: secret ? { authorization: `Bearer ${secret}` } : {},
+    })
+      .then(async (response) => {
+        const result = (await response.json().catch(() => ({}))) as {
+          authenticated?: boolean;
+        };
+        if (response.ok && result.authenticated) revealAdmin();
+      })
+      .catch(() => undefined);
+  };
+
+  applyAdminState();
+  document.addEventListener('astro:page-load', applyAdminState);
+</script>

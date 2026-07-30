@@ -1,0 +1,511 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import '@/assets/style/write.css';
+
+const isLocalWriter = import.meta.env.DEV;
+const posts = await getCollection('post');
+const collectionNames = [
+  ...new Set(posts.flatMap((post) => post.data.collections ?? [])),
+].sort((left, right) => left.localeCompare(right, 'zh-CN'));
+---
+
+<PageLayout
+  title="撰写"
+  description="通过私人管理入口撰写并实时预览本站内容。"
+  robots="noindex, nofollow, noarchive"
+>
+  <div slot="header"></div>
+  <div slot="footer"></div>
+
+  <main
+    class="writer-shell"
+    data-writer-root
+    data-local-writer={isLocalWriter ? 'true' : 'false'}
+    data-collections={JSON.stringify(collectionNames)}
+  >
+    <section class="writer-login" data-writer-login hidden>
+      <form class="writer-login-card" data-writer-login-form>
+        <a href="/" class="writer-login-back">← 返回首页</a>
+        <p class="writer-login-kicker">PRIVATE WRITING DESK</p>
+        <h1>撰写</h1>
+        <p>这是私人管理入口。验证通过后才会显示编辑器和文章管理功能。</p>
+        <label>
+          <span>访问密钥</span>
+          <input
+            name="secret"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <label class="writer-login-keep">
+          <input name="keepSignedIn" type="checkbox" />
+          <span>保持登录</span>
+        </label>
+        <small>勾选后密钥会保存在这台设备的浏览器中；共用设备请不要勾选。</small
+        >
+        <button type="submit">进入编辑器</button>
+        <output aria-live="polite"></output>
+      </form>
+    </section>
+
+    <section class="writer-window" data-writer-window hidden>
+      <header class="writer-topbar">
+        <button
+          class="writer-topbar-btn writer-close"
+          type="button"
+          data-writer-close
+          aria-label="关闭"
+          title="关闭（Esc）"
+        >
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.45"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m5.2 5.2 7.6 7.6M12.8 5.2l-7.6 7.6"></path>
+          </svg>
+        </button>
+
+        <div class="writer-topbar-center">
+          <div
+            class="writer-format-list"
+            role="group"
+            aria-label="内容形式"
+            data-header-formats
+          >
+            <span class="writer-format-pill" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="writer-format-button is-active"
+              data-header-kind="note"
+              aria-pressed="true"
+            >
+              随记
+            </button>
+            <button
+              type="button"
+              class="writer-format-button"
+              data-header-kind="link"
+              aria-pressed="false"
+            >
+              链接
+            </button>
+            <button
+              type="button"
+              class="writer-format-button"
+              data-header-kind="quote"
+              aria-pressed="false"
+            >
+              引文
+            </button>
+          </div>
+
+          <strong class="writer-thread-heading" data-thread-heading hidden
+            >新串文</strong
+          >
+        </div>
+
+        <div class="writer-topbar-actions">
+          <button
+            class="writer-topbar-btn"
+            type="button"
+            data-save-draft
+            aria-label="保存草稿"
+            title="保存草稿"
+          >
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.25"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3.85" y="3.45" width="7.85" height="8.35" rx="2.35"
+              ></rect>
+              <rect
+                x="6.15"
+                y="5.75"
+                width="7.85"
+                height="8.35"
+                rx="2.35"
+                fill="var(--w-icon-paper)"
+                stroke="none"></rect>
+              <rect x="6.15" y="5.75" width="7.85" height="8.35" rx="2.35"
+              ></rect>
+              <path d="M8.55 8.55h3.2" stroke-width="1.2"></path>
+              <path d="M8.55 10.8h3.95" stroke-width="1.2"></path>
+              <path d="M8.55 13.05h2.45" stroke-width="1.2"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="writer-workspace" data-preview-open="false">
+        <form class="writer-editor" data-writer-form>
+          <div class="writer-items" data-writer-items></div>
+
+          <div class="writer-thread-action-row">
+            <button
+              class="writer-add-thread"
+              type="button"
+              data-add-thread
+              disabled
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.65"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="8" cy="8" r="5.7"></circle>
+                <path d="M8 5.55v4.9M5.55 8h4.9"></path>
+              </svg>
+              加入串文
+            </button>
+          </div>
+
+          <div class="writer-bottom">
+            <div class="writer-collection-shell">
+              <button
+                class="writer-collection"
+                type="button"
+                data-collection-trigger
+                aria-expanded="false"
+                aria-haspopup="listbox"
+              >
+                <span class="writer-collection-icon" aria-hidden="true">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.35"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="5.05" width="10" height="8.15" rx="2.2"
+                    ></rect>
+                    <path
+                      d="M5.1 5.05V4.2a1.1 1.1 0 0 1 1.1-1.1h3.6a1.1 1.1 0 0 1 1.1 1.1v.85"
+                    ></path>
+                  </svg>
+                </span>
+                <span data-collection-label>合集</span>
+                <svg
+                  class="writer-collection-chevron"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.38"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5.1 6.45 8 9.3l2.9-2.85"></path>
+                </svg>
+              </button>
+              <div
+                class="writer-collection-popover"
+                data-collection-popover
+                hidden
+              >
+                <input
+                  type="search"
+                  data-collection-search
+                  aria-label="搜索合集"
+                  placeholder="搜索合集…"
+                />
+                <div
+                  class="writer-collection-options"
+                  role="listbox"
+                  aria-label="合集"
+                  aria-multiselectable="true"
+                  data-collection-options
+                >
+                </div>
+                <button type="button" data-add-collection
+                  >＋ 新建合集</button
+                >
+              </div>
+            </div>
+
+            <div class="writer-publish-shell">
+              <div class="writer-post-group">
+                <button
+                  class="writer-post-button"
+                  type="submit"
+                  data-writer-publish
+                  disabled
+                >
+                  发布
+                </button>
+                <button
+                  class="writer-post-menu-button"
+                  type="button"
+                  data-publish-settings-trigger
+                  aria-label="发布设置"
+                  aria-expanded="false"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.46"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5.1 6.45 8 9.3l2.9-2.85"></path>
+                  </svg>
+                </button>
+              </div>
+              <label class="writer-hide-latest">
+                <input type="checkbox" data-hide-latest />
+                <span>不出现在最新</span>
+              </label>
+
+              <section
+                class="writer-publish-popover"
+                role="dialog"
+                aria-label="发布设置"
+                data-publish-popover
+                hidden
+              >
+                <section class="writer-publish-section">
+                  <p class="writer-publish-section-label">可见性</p>
+                  <div
+                    class="writer-publish-chips"
+                    role="radiogroup"
+                    aria-label="可见性"
+                  >
+                    <button
+                      type="button"
+                      class="writer-publish-chip is-selected"
+                      role="radio"
+                      aria-checked="true"
+                      data-visibility="public"
+                    >
+                      <svg
+                        class="writer-publish-chip-icon"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.35"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="8" cy="8" r="5.15"></circle>
+                        <path d="M3.85 8h8.3"></path>
+                        <path
+                          d="M8 2.85c1.22 1.32 1.95 3.08 1.95 5.15S9.22 11.83 8 13.15"
+                        ></path>
+                        <path
+                          d="M8 2.85C6.78 4.17 6.05 5.93 6.05 8S6.78 11.83 8 13.15"
+                        ></path>
+                      </svg>
+                      <span class="writer-publish-chip-label">公开</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="writer-publish-chip"
+                      role="radio"
+                      aria-checked="false"
+                      data-visibility="hidden"
+                    >
+                      <svg
+                        class="writer-publish-chip-icon"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.35"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M2.55 8c1.38-2.18 3.44-3.4 5.45-3.4S12.07 5.82 13.45 8c-1.38 2.18-3.44 3.4-5.45 3.4S3.93 10.18 2.55 8Z"
+                        ></path>
+                        <path d="M4.35 11.1 11.65 4.9"></path>
+                      </svg>
+                      <span class="writer-publish-chip-label">不在最新</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="writer-publish-chip"
+                      role="radio"
+                      aria-checked="false"
+                      data-visibility="private"
+                    >
+                      <svg
+                        class="writer-publish-chip-icon"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.35"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="4.05" y="7.05" width="7.9" height="5.4" rx="1.75"
+                        ></rect>
+                        <path
+                          d="M5.95 7.05V5.9A2.05 2.05 0 0 1 8 3.85a2.05 2.05 0 0 1 2.05 2.05v1.15"
+                        ></path>
+                      </svg>
+                      <span class="writer-publish-chip-label">草稿</span>
+                    </button>
+                  </div>
+                  <p class="writer-publish-hint" data-visibility-description>
+                    会显示在首页最新内容中。
+                  </p>
+                </section>
+
+                <div class="writer-publish-divider" aria-hidden="true"></div>
+
+                <section class="writer-publish-section">
+                  <div class="writer-publish-section-copy">
+                    <p class="writer-publish-section-label">发布日期</p>
+                    <p class="writer-publish-hint">
+                      留空则使用当前日期；也可以为旧内容指定日期。
+                    </p>
+                  </div>
+                  <div class="writer-publish-field">
+                    <input type="date" data-publish-date aria-label="发布日期" />
+                  </div>
+                </section>
+
+                <div class="writer-publish-divider" aria-hidden="true"></div>
+
+                <section class="writer-publish-section">
+                  <div class="writer-publish-section-copy">
+                    <p class="writer-publish-section-label">自定义链接</p>
+                    <p class="writer-publish-hint">
+                      留空时会根据标题或内容自动生成。
+                    </p>
+                  </div>
+                  <div class="writer-publish-field">
+                    <span class="writer-publish-field-prefix" aria-hidden="true"
+                      >/</span
+                    >
+                    <input
+                      type="text"
+                      data-custom-slug
+                      aria-label="自定义链接"
+                      placeholder="your-post-link"
+                      autocomplete="off"
+                    />
+                  </div>
+                </section>
+
+                <div class="writer-publish-footer">
+                  <button type="button" data-copy-markdown>复制 Markdown</button>
+                  <button type="button" data-download-markdown>下载</button>
+                  <button
+                    type="button"
+                    class="writer-publish-done"
+                    data-publish-settings-done>完成</button
+                  >
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <p class="writer-status" data-writer-status aria-live="polite">
+            草稿会自动保存在此浏览器。
+          </p>
+        </form>
+
+        <aside class="writer-preview" data-preview-pane hidden>
+          <header>
+            <span>实时预览</span>
+            <button type="button" data-close-preview>关闭</button>
+          </header>
+          <article data-writer-preview></article>
+        </aside>
+      </div>
+
+      <div class="writer-attached-panel" data-attached-panel hidden>
+        <header class="writer-attached-header">
+          <button type="button" data-attached-cancel>取消</button>
+          <span>附文</span>
+          <button type="button" class="writer-attached-done" data-attached-done
+            >完成</button
+          >
+        </header>
+        <div class="writer-attached-body">
+          <textarea
+            data-attached-input
+            aria-label="附文"
+            placeholder="粘贴长文、AI 回答或任何文字…&#10;&#10;Markdown 格式会保留。"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="writer-confirm" data-writer-confirm hidden>
+        <div
+          class="writer-confirm-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="writer-confirm-title"
+        >
+          <div class="writer-confirm-header">
+            <p class="writer-confirm-title" id="writer-confirm-title">
+              保存到草稿？
+            </p>
+            <p class="writer-confirm-subtitle">
+              保存后可以稍后继续编辑并发布。
+            </p>
+          </div>
+          <button
+            type="button"
+            class="writer-confirm-action writer-confirm-save"
+            data-confirm-save>保存</button
+          >
+          <button
+            type="button"
+            class="writer-confirm-action writer-confirm-discard"
+            data-confirm-discard>不保存</button
+          >
+          <button
+            type="button"
+            class="writer-confirm-action writer-confirm-cancel"
+            data-confirm-cancel>取消</button
+          >
+        </div>
+      </div>
+    </section>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/writer';
+</script>

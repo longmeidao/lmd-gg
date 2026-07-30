@@ -1,0 +1,160 @@
+---
+interface Props {
+  dates: Date[];
+}
+
+const { dates } = Astro.props;
+const monthLabels = [
+  '一',
+  '二',
+  '三',
+  '四',
+  '五',
+  '六',
+  '七',
+  '八',
+  '九',
+  '十',
+  '十一',
+  '十二',
+];
+const counts = new Map<string, number>();
+
+for (const date of dates) {
+  const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
+  counts.set(key, (counts.get(key) ?? 0) + 1);
+}
+
+const years = [...new Set(dates.map((date) => date.getUTCFullYear()))].sort(
+  (a, b) => b - a,
+);
+const maxCount = Math.max(1, ...counts.values());
+const getLevel = (count: number) =>
+  count === 0 ? 0 : Math.max(1, Math.ceil((count / maxCount) * 4));
+---
+
+{
+  years.length > 0 && (
+    <section class="publishing-activity" aria-labelledby="activity-title">
+      <div class="activity-heading">
+        <h2 id="activity-title">发布频率</h2>
+        <span>按月统计</span>
+      </div>
+      <div class="activity-scroll">
+        <div
+          class="activity-grid"
+          role="img"
+          aria-label={`${years.at(-1)} 至 ${years[0]} 年的文章发布频率`}
+        >
+          <span aria-hidden="true" />
+          {monthLabels.map((month) => (
+            <span class="activity-month" aria-hidden="true">
+              {month}
+            </span>
+          ))}
+          {years.map((year) => (
+            <>
+              <span class="activity-year" aria-hidden="true">
+                {year}
+              </span>
+              {monthLabels.map((month, monthIndex) => {
+                const count = counts.get(`${year}-${monthIndex}`) ?? 0;
+                const label = `${year} 年${month}月：${count} 篇`;
+                return (
+                  <span
+                    class="activity-cell"
+                    data-level={getLevel(count)}
+                    aria-label={label}
+                    title={label}
+                  />
+                );
+              })}
+            </>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .publishing-activity {
+    margin-bottom: 3.5rem;
+  }
+
+  .activity-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.875rem;
+  }
+
+  /* 和「番组计划」那种标题保持一致：走正文 h2 的字号字重，
+     并把 .blog-content h2 的 mt-10 归零 —— 分节间距全由分隔点负责，
+     再叠一层 margin 会让分隔点上下不对称。 */
+  .activity-heading h2 {
+    margin: 0;
+    color: var(--color-slate12);
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 500;
+  }
+
+  .activity-heading span,
+  .activity-month,
+  .activity-year {
+    color: var(--color-slate8);
+    font-size: 0.75rem;
+  }
+
+  .activity-scroll {
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .activity-grid {
+    display: grid;
+    grid-template-columns: 2.75rem repeat(12, minmax(1rem, 1fr));
+    min-width: 34rem;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  .activity-month,
+  .activity-year {
+    text-align: center;
+  }
+
+  .activity-year {
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .activity-cell {
+    aspect-ratio: 1.35;
+    border: 1px solid var(--color-slate4);
+    border-radius: 0.25rem;
+    background: var(--color-slate2);
+  }
+
+  .activity-cell[data-level='1'] {
+    border-color: var(--color-indigo4);
+    background: var(--color-indigo3);
+  }
+
+  .activity-cell[data-level='2'] {
+    border-color: var(--color-indigo6);
+    background: var(--color-indigo5);
+  }
+
+  .activity-cell[data-level='3'] {
+    border-color: var(--color-indigo8);
+    background: var(--color-indigo7);
+  }
+
+  .activity-cell[data-level='4'] {
+    border-color: var(--color-indigo10);
+    background: var(--color-indigo9);
+  }
+</style>

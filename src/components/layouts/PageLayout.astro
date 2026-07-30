@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import HeadMeta from './HeadMeta.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
@@ -11,12 +12,14 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  robots?: string;
 }
 
 const {
   title = '',
   description = slateConfig.description,
   image = '/images/og_image.png',
+  robots,
 } = Astro.props;
 const fullTitle = getFullTitle(title);
 
@@ -34,28 +37,39 @@ const themeScript = `
 
     return presetTheme;
   }
-  const mode = getThemeMode();
-  document.documentElement.className = mode;
-  document.documentElement.dataset.theme = mode;
+  function applyTheme() {
+    const mode = getThemeMode();
+    document.documentElement.className = mode;
+    document.documentElement.dataset.theme = mode;
+  }
+  applyTheme();
+  document.addEventListener('astro:after-swap', applyTheme);
 `;
 ---
 
 <!doctype html>
 <html lang={slateConfig.lang}>
   <head>
-    <HeadMeta title={fullTitle} description={description} image={image} />
+    <HeadMeta
+      title={fullTitle}
+      description={description}
+      image={image}
+      robots={robots}
+    />
     <slot name="json-ld">
       <NormalJsonLd title={fullTitle} description={description} image={image} />
     </slot>
+    <slot name="head" />
     <script
       is:inline
       defer
       src="https://umami.lmd.gg/script.js"
       data-website-id="4e5cf502-20bc-4a44-89ee-31ea469e15b4"></script>
     <script is:inline set:html={themeScript} />
+    <ClientRouter />
   </head>
   <body class="bg-slate1">
-    <div class="m-auto flex min-h-dvh max-w-180 flex-col px-6 pt-18 pb-6">
+    <div class="site-shell flex min-h-dvh flex-col pt-18 pb-6">
       <slot name="header">
         <Header />
       </slot>

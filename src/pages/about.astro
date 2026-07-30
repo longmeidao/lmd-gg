@@ -1,42 +1,61 @@
 ---
+import { getCollection } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import Button from '@/components/button';
+import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import PublishingActivity from '@/components/publishing-activity/index.astro';
 import '@/assets/style/blog.css';
+import '@/assets/style/about.css';
 import '@/assets/style/bangumi.css';
 import 'remark-block-containers/css';
+
+const publishedArticles = await getCollection(
+  'post',
+  ({ data }) => data.draft !== true && data.kind === 'article',
+);
+const publishedDates = publishedArticles
+  .map((post) => post.data.pubDate)
+  .filter((date): date is Date => date instanceof Date);
 ---
 
 <PageLayout title="导览册">
-  <div class="mb-16" slot="header">
-    <Button id="back">←</Button>
+  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
+    <Button href="/">←</Button>
+    <HeaderActions />
   </div>
-  <div class="blog-content">
+  <main class="blog-content about-page">
     <div class="mb-16">
       <h1>导览册</h1>
     </div>
-    <div class="post-content">
-      <img
-        src="/images/rin.png"
-        alt="Avatar"
-        style="width: 7rem; height: 7rem; border: 4px solid white; border-radius: 9999px;"
-      />
-      <h3 style="text-align: center;">泷美道</h3>
-      <div class="flex items-center justify-center gap-3">
-        <del><a href="https://bento.me/lmd">Bento</a></del>
-        <span>·</span>
-        <a href="mailto:i@lmd.gg">寄信</a>
-      </div>
-      <hr />
-      <h3 style="text-align: center;">番组计划</h3>
-      <div class="bgm-container"></div>
+    <div class="post-content about-content">
+      <section class="about-profile" aria-labelledby="about-name">
+        <img class="about-avatar" src="/images/rin.png" alt="泷美道" />
+        <div>
+          <h2 id="about-name">泷美道</h2>
+          <p>在这里记录长文、随记，以及正在看的世界。</p>
+          <nav class="about-links" aria-label="个人链接">
+            <a href="mailto:i@lmd.gg">寄信</a>
+          </nav>
+        </div>
+      </section>
+
+      <div class="about-divider" aria-hidden="true"></div>
+
+      <section class="about-section about-activity">
+        <PublishingActivity dates={publishedDates} />
+      </section>
+
+      <div class="about-divider" aria-hidden="true"></div>
+
+      <section class="about-section" aria-labelledby="bangumi-title">
+        <header class="about-section-heading">
+          <h2 id="bangumi-title">番组计划</h2>
+          <p>最近的动画、游戏、书籍、影视与音乐收藏。</p>
+        </header>
+        <div class="bgm-container"></div>
+      </section>
     </div>
-  </div>
-  <script>
-    const backBtn = document.getElementById('back');
-    backBtn?.addEventListener('click', () => {
-      window.location.href = '/';
-    });
-  </script>
+  </main>
   <script is:inline>
     window.bgmConfig = {
       apiUrl: 'https://api.bgm.tv',

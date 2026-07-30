@@ -1,0 +1,335 @@
+---
+import { getPostPath } from '@/helpers/post';
+
+interface Props {
+  slug: string;
+  collections?: string[];
+  hiddenFromLatest?: boolean;
+  draft?: boolean;
+  featured?: boolean;
+  pinned?: boolean;
+}
+
+const {
+  slug,
+  collections = [],
+  hiddenFromLatest,
+  draft,
+  featured = false,
+  pinned = false,
+} = Astro.props;
+const postUrl = getPostPath(slug);
+const visibility = draft ? 'private' : hiddenFromLatest ? 'hidden' : 'public';
+const visibilityLabel =
+  visibility === 'private' ? '草稿' : visibility === 'hidden' ? '不在最新' : '公开';
+---
+
+<div
+  class="post-admin"
+  data-admin-only
+  data-post-admin={slug}
+  data-post-collections={JSON.stringify(collections)}
+  data-post-visibility={visibility}
+  data-post-featured={String(featured)}
+  data-post-pinned={String(pinned)}
+  hidden
+>
+  <a
+    class="post-admin-btn"
+    href={`/write?reply=${encodeURIComponent(slug)}`}
+    aria-label="回复"
+    title="回复"
+  >
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6.6 4.2 3 7.8l3.6 3.6"></path>
+      <path d="M3 7.8h6.9a4.5 4.5 0 0 1 4.5 4.5v1.5"></path>
+    </svg>
+  </a>
+
+  <div class="post-admin-menu" data-post-menu>
+    <button
+      type="button"
+      class="post-admin-btn"
+      data-post-menu-trigger
+      aria-haspopup="menu"
+      aria-expanded="false"
+      aria-label="更多操作"
+      title="更多操作"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <circle cx="4" cy="9" r="1.4"></circle>
+        <circle cx="9" cy="9" r="1.4"></circle>
+        <circle cx="14" cy="9" r="1.4"></circle>
+      </svg>
+    </button>
+
+    <div class="post-admin-popover" data-post-menu-popover hidden>
+      <div class="post-admin-pane" data-pane="root">
+        <a class="post-admin-row" href={`/write?edit=${encodeURIComponent(slug)}`}>
+          <span>编辑</span>
+          <svg
+            class="post-admin-row-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12.6 3.15a1.63 1.63 0 0 1 2.3 2.3L6.6 13.75l-3.05.75.75-3.05Z"
+            ></path>
+          </svg>
+        </a>
+
+        <button type="button" class="post-admin-row" data-goto-pane="collections">
+          <span>加入合集</span>
+          <svg
+            class="post-admin-row-icon post-admin-chevron"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.45"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m7 4.5 4.5 4.5L7 13.5"></path>
+          </svg>
+        </button>
+
+        <button type="button" class="post-admin-row" data-goto-pane="visibility">
+          <span>可见性</span>
+          <span class="post-admin-row-value" data-visibility-label
+            >{visibilityLabel}</span
+          >
+          <svg
+            class="post-admin-row-icon post-admin-chevron"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.45"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m7 4.5 4.5 4.5L7 13.5"></path>
+          </svg>
+        </button>
+
+        <div class="post-admin-separator" role="separator"></div>
+
+        <button type="button" class="post-admin-row" data-toggle-featured>
+          <span data-featured-label>{featured ? '取消精选' : '加入精选'}</span>
+          <svg
+            class="post-admin-row-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3 10.1 10.1 3 12l7.1 1.9L12 21l1.9-7.1L21 12l-7.1-1.9Z"
+            ></path>
+            {featured && <path d="M4 4 20 20"></path>}
+          </svg>
+        </button>
+
+        <button type="button" class="post-admin-row" data-toggle-pinned>
+          <span data-pinned-label>{pinned ? '取消置顶' : '置顶'}</span>
+          <svg
+            class="post-admin-row-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.55"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="12" x2="12" y1="17" y2="22"></line>
+            <path
+              d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"
+            ></path>
+          </svg>
+        </button>
+
+        <div class="post-admin-separator" role="separator"></div>
+
+        <button type="button" class="post-admin-row" data-copy-post-link={postUrl}>
+          <span>复制链接</span>
+          <svg
+            class="post-admin-row-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M7.6 10.4a2.9 2.9 0 0 0 4.1 0l2-2a2.9 2.9 0 1 0-4.1-4.1l-.8.8"
+            ></path>
+            <path d="M10.4 7.6a2.9 2.9 0 0 0-4.1 0l-2 2a2.9 2.9 0 1 0 4.1 4.1l.8-.8"
+            ></path>
+          </svg>
+        </button>
+
+        <div class="post-admin-separator" role="separator"></div>
+
+        <button
+          type="button"
+          class="post-admin-row post-admin-row-danger"
+          data-delete-post
+        >
+          <span>删除</span>
+          <svg
+            class="post-admin-row-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3.6 5.1h10.8"></path>
+            <path d="M7.2 5.1V3.9a.9.9 0 0 1 .9-.9h1.8a.9.9 0 0 1 .9.9v1.2"
+            ></path>
+            <path d="M5.1 5.1v8.1a1.2 1.2 0 0 0 1.2 1.2h5.4a1.2 1.2 0 0 0 1.2-1.2V5.1"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="post-admin-pane" data-pane="collections" hidden>
+        <button type="button" class="post-admin-back" data-goto-pane="root">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.45"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m11 4.5-4.5 4.5L11 13.5"></path>
+          </svg>
+          <span>合集</span>
+        </button>
+        <div class="post-admin-options" data-collection-options></div>
+        <button type="button" class="post-admin-row" data-new-collection>
+          <span>新建合集…</span>
+        </button>
+      </div>
+
+      <div class="post-admin-pane" data-pane="visibility" hidden>
+        <button type="button" class="post-admin-back" data-goto-pane="root">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.45"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m11 4.5-4.5 4.5L11 13.5"></path>
+          </svg>
+          <span>可见性</span>
+        </button>
+        <button type="button" class="post-admin-row" data-set-visibility="public">
+          <span>公开</span>
+          <svg
+            class="post-admin-check"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m4.5 9.2 3 3 6-6.4"></path>
+          </svg>
+        </button>
+        <button type="button" class="post-admin-row" data-set-visibility="hidden">
+          <span>不在最新</span>
+          <svg
+            class="post-admin-check"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m4.5 9.2 3 3 6-6.4"></path>
+          </svg>
+        </button>
+        <button type="button" class="post-admin-row" data-set-visibility="private">
+          <span>草稿</span>
+          <svg
+            class="post-admin-check"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m4.5 9.2 3 3 6-6.4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import '@/scripts/post-actions';
+</script>

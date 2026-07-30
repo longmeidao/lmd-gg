@@ -1,0 +1,85 @@
+---
+import { getCollection, render } from 'astro:content';
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import Button from '@/components/button';
+import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import { getPostPath } from '@/helpers/post';
+import '@/assets/style/home.css';
+
+const showPrototypes =
+  import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
+const featured = await getCollection(
+  'post',
+  ({ data }) =>
+    (showPrototypes || data.draft !== true) && data.featured === true,
+);
+
+const posts = await Promise.all(
+  [...featured]
+    .sort(
+      (a, b) =>
+        (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
+    )
+    .map(async (post) => {
+      const { Content } = await render(post);
+      return {
+        id: post.id,
+        url: getPostPath(post.id),
+        data: post.data,
+        Content,
+      };
+    }),
+);
+---
+
+<PageLayout title="精选" description="挑出来的、值得再读一次的内容。">
+  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
+    <Button href="/">←</Button>
+    <HeaderActions />
+  </div>
+
+  <main class="home-column">
+    <section class="collection-hero">
+      <h1 class="home-hero-title text-slate12">精选</h1>
+      <p class="home-hero-description text-slate10 mt-2">
+        {
+          posts.length > 0
+            ? `挑出来的 ${posts.length} 条内容。`
+            : '还没有精选内容。'
+        }
+      </p>
+    </section>
+
+    <section class="mb-16">
+      <div class="home-feed">
+        {
+          posts.map((item, index) => (
+            <div class="home-feed-cluster">
+              {index > 0 && (
+                <div class="home-group-divider" aria-hidden="true" />
+              )}
+              <section class="home-feed-group" data-visible-count="1">
+                <PostEntry item={item} isFirst isLast>
+                  <PostActions
+                    slug={item.id}
+                    collections={item.data.collections ?? []}
+                    hiddenFromLatest={item.data.hiddenFromLatest}
+                    draft={item.data.draft}
+                    featured={item.data.featured}
+                    pinned={item.data.pinned}
+                  />
+                </PostEntry>
+              </section>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/feed-typography';
+</script>

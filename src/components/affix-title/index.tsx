@@ -14,7 +14,7 @@ const AffixTitle = (props: AffixTitleProps) => {
   const [backdropOpacity, setBackdropOpacity] = useState(0);
 
   const classes = classNames(
-    'relative z-10 mx-auto flex h-16 max-w-180 transform items-center justify-between px-4 transition-all duration-300 ease-in-out',
+    'relative z-10 mx-auto flex h-16 max-w-[60rem] transform items-center justify-between px-6 transition-all duration-300 ease-in-out',
     isVisible
       ? ['pointer-events-auto', 'translate-y-0', 'opacity-100']
       : ['pointer-events-none', '-translate-y-full', 'opacity-0'],

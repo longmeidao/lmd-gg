@@ -1,0 +1,148 @@
+---
+import './search.css';
+---
+
+<button
+  type="button"
+  class="header-action site-search-trigger"
+  aria-label="搜索"
+  data-search-open
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="11" cy="11" r="6.5"></circle>
+    <path d="m16 16 4 4"></path>
+  </svg>
+  <span>搜索</span>
+</button>
+
+<dialog class="site-search-dialog" aria-label="搜索本站" data-search-dialog>
+  <section class="site-search-panel">
+    <div class="site-search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.5"></circle>
+        <path d="m16 16 4 4"></path>
+      </svg>
+      <input
+        type="search"
+        placeholder="搜索文章…"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="搜索文章"
+        data-search-input
+      />
+      <kbd>ESC</kbd>
+    </div>
+    <p class="site-search-status" aria-live="polite" data-search-status>
+      输入标题、正文或标签关键词
+    </p>
+    <ul class="site-search-results" data-search-results hidden></ul>
+  </section>
+</dialog>
+
+<script is:inline type="module">
+  const dialog = document.querySelector('[data-search-dialog]');
+  const openButton = document.querySelector('[data-search-open]');
+  const input = document.querySelector('[data-search-input]');
+  const status = document.querySelector('[data-search-status]');
+  const results = document.querySelector('[data-search-results]');
+
+  if (!dialog || !openButton || !input || !status || !results) {
+    throw new Error('Search UI is incomplete.');
+  }
+
+  let pagefindPromise;
+  let searchTimer;
+  let searchSequence = 0;
+
+  const loadPagefind = () => {
+    if (!pagefindPromise) {
+      pagefindPromise = import('/pagefind/pagefind.js').then(
+        async (pagefind) => {
+          await pagefind.init?.();
+          return pagefind;
+        },
+      );
+    }
+    return pagefindPromise;
+  };
+
+  const openSearch = () => {
+    if (!dialog.open) dialog.showModal();
+    input.focus();
+    void loadPagefind().catch(() => undefined);
+  };
+
+  const closeSearch = () => {
+    dialog.close();
+    openButton.focus();
+  };
+
+  const renderResults = (items) => {
+    results.replaceChildren();
+
+    for (const item of items) {
+      const listItem = document.createElement('li');
+      const anchor = document.createElement('a');
+      const title = document.createElement('strong');
+      const excerpt = document.createElement('span');
+      const path = document.createElement('small');
+
+      anchor.href = item.url;
+      title.textContent = item.meta?.title || '未命名文章';
+      excerpt.textContent =
+        item.plain_excerpt || item.excerpt || '打开这篇文章';
+      path.textContent = new URL(item.url, window.location.origin).pathname;
+      anchor.append(title, excerpt, path);
+      listItem.appendChild(anchor);
+      results.appendChild(listItem);
+    }
+
+    results.hidden = items.length === 0;
+  };
+
+  const runSearch = async () => {
+    const query = input.value.trim();
+    const sequence = ++searchSequence;
+
+    if (!query) {
+      results.replaceChildren();
+      results.hidden = true;
+      status.textContent = '输入标题、正文或标签关键词';
+      return;
+    }
+
+    status.textContent = '正在搜索…';
+
+    try {
+      const pagefind = await loadPagefind();
+      const response = await pagefind.search(query);
+      const items = await Promise.all(
+        response.results.slice(0, 8).map((result) => result.data()),
+      );
+      if (sequence !== searchSequence) return;
+      renderResults(items);
+      status.textContent =
+        items.length > 0 ? `找到 ${items.length} 个结果` : '没有找到相关内容';
+    } catch {
+      if (sequence !== searchSequence) return;
+      results.replaceChildren();
+      results.hidden = true;
+      status.textContent = '搜索暂时不可用，请稍后再试。';
+    }
+  };
+
+  openButton.addEventListener('click', openSearch);
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) closeSearch();
+  });
+  input.addEventListener('input', () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(runSearch, 160);
+  });
+  document.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      openSearch();
+    }
+  });
+</script>

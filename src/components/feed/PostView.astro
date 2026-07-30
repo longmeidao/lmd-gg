@@ -1,0 +1,211 @@
+---
+import dayjs from 'dayjs';
+import type { CollectionEntry } from 'astro:content';
+import { getCollection, render } from 'astro:content';
+import i18next from '@/i18n';
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import ArticleJsonLd from '@/components/json-ld/article.astro';
+import Button from '@/components/button';
+import RelatedPosts from '@/components/related-posts/index.astro';
+import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import CodeGroupEvent from '@/components/code-group-event';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import slateConfig from '~@/slate.config';
+import { getFullTitle } from '@/helpers/utils';
+import {
+  getPostDisplayTitle,
+  getPostExcerpt,
+  getPostPath,
+  type PostKind,
+} from '@/helpers/post';
+import 'remark-block-containers/css';
+import 'heti/umd/heti.min.css';
+import '@/assets/style/blog.css';
+import '@/assets/style/home.css';
+
+interface RelatedPost {
+  title: string;
+  id: string;
+  kind: PostKind;
+  description?: string;
+  pubDate?: Date;
+  collections: string[];
+}
+
+interface Props {
+  post: CollectionEntry<'post'>;
+  relatedPosts: RelatedPost[];
+}
+
+const { post, relatedPosts } = Astro.props;
+const { Content, remarkPluginFrontmatter } = await render(post);
+const postTitle = getPostDisplayTitle(post.data);
+const postDescription = getPostExcerpt(post.body);
+const lastModifiedDate = dayjs(
+  remarkPluginFrontmatter.lastModified
+    ? remarkPluginFrontmatter.lastModified
+    : undefined,
+);
+const lastModified = lastModifiedDate.format('YYYY年M月D日');
+const pubDate = dayjs(post.data.pubDate);
+const formattedPubDate = pubDate.format('YYYY年M月D日');
+
+/**
+ * 串文里的任意一条被点开时，整串都要展示出来，左侧锚点高亮当前这条。
+ * 点开的正好是最新一条时，把之前的压暗，突出最新的（参考 owenyoung.com 的串文页）。
+ */
+const showPrototypes =
+  import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
+const threadId = post.data.thread;
+const threadEntries = threadId
+  ? await Promise.all(
+      (
+        await getCollection(
+          'post',
+          ({ data }) =>
+            (showPrototypes || data.draft !== true) && data.thread === threadId,
+        )
+      )
+        .sort(
+          (a, b) =>
+            (a.data.pubDate?.getTime() ?? 0) - (b.data.pubDate?.getTime() ?? 0),
+        )
+        .map(async (entry) => ({
+          id: entry.id,
+          url: getPostPath(entry.id),
+          data: entry.data,
+          Content: (await render(entry)).Content,
+        })),
+    )
+  : [];
+
+const isThread = threadEntries.length > 1;
+const currentIndex = threadEntries.findIndex((entry) => entry.id === post.id);
+const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
+---
+
+<PageLayout title={postTitle} description={postDescription}>
+  <ArticleJsonLd
+    slot="json-ld"
+    title={getFullTitle(postTitle)}
+    description={postDescription}
+    pubDate={post.data.pubDate}
+    lastModified={lastModifiedDate.toDate()}
+  />
+  <CodeGroupEvent client:only="react" />
+
+  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
+    <Button href="/">←</Button>
+    <HeaderActions />
+  </div>
+
+  {
+    /* 串文视图必须放在 .blog-content 外面：blog.css 的正文样式（a / blockquote
+       那些）会套到 feed 的结构性元素上 —— 引文卡片被再包一层引用边框、日期和
+       合集链接变成蓝色带下划线、下划线还铺满整行。挪出来就一次性都干净了。 */
+    isThread && (
+      <section
+        class="thread-view home-column"
+        data-thread-view
+        data-emphasise-latest={isLatestInThread ? 'true' : 'false'}
+        aria-label={`这条串文共 ${threadEntries.length} 条内容`}
+      >
+        <div class="home-feed">
+          <div class="home-feed-cluster">
+            <section
+              class="home-feed-group"
+              data-thread-group={threadId}
+              data-visible-count={threadEntries.length}
+            >
+              {threadEntries.map((entry, index) => (
+                <PostEntry
+                  item={entry}
+                  isFirst={index === 0}
+                  isLast={index === threadEntries.length - 1}
+                  isThreadCurrent={entry.id === post.id}
+                  isDimmed={isLatestInThread && entry.id !== post.id}
+                />
+              ))}
+            </section>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <div class="blog-content">
+    <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
+      <h1>{postTitle}</h1>
+      <div class="post-header-meta text-slate10 flex items-center gap-2">
+        <span>{formattedPubDate}</span>
+        {
+          post.data.rating && (
+            <>
+              <span class="heti-skip">·</span>
+              <span aria-label={`${post.data.rating} 星评分`}>
+                {'★'.repeat(post.data.rating)}
+                {'☆'.repeat(5 - post.data.rating)}
+              </span>
+            </>
+          )
+        }
+        {!!slateConfig.readTime && <span class="heti-skip">·</span>}
+        {
+          slateConfig.readTime && (
+            <div>
+              {i18next.t('blog.readingTime', {
+                minutes: remarkPluginFrontmatter.minutesRead,
+              })}
+            </div>
+          )
+        }
+        <PostActions
+          slug={post.id}
+          collections={post.data.collections ?? []}
+          hiddenFromLatest={post.data.hiddenFromLatest}
+          draft={post.data.draft}
+          featured={post.data.featured}
+          pinned={post.data.pinned}
+        />
+      </div>
+    </div>
+    <div
+      class:list={['post-content', 'heti', isThread && 'sr-only']}
+      data-pagefind-body
+    >
+      <Content />
+      {
+        slateConfig.lastModified && (
+          <div class="post-footer-meta text-slate8">
+            {i18next.t('blog.lastModified')} {lastModified}
+          </div>
+        )
+      }
+    </div>
+    <RelatedPosts posts={relatedPosts} />
+  </div>
+</PageLayout>
+
+<script>
+  import Heti from 'heti/js/heti-addon.js';
+  import '@/scripts/feed-typography';
+
+
+  // 逐个根节点同步处理并打标记：autoSpacing() 延后查询，防不住重复执行，
+  // 跑第二遍会把 <heti-adjacent> 再包一层，句尾标点被压两次。
+  const heti = new Heti();
+
+  const applySpacing = () => {
+    document
+      .querySelectorAll<HTMLElement>('.post-header, .post-content.heti')
+      .forEach((root) => {
+        if (root.dataset.hetiDone === 'true') return;
+        root.dataset.hetiDone = 'true';
+        heti.spacingElement(root);
+      });
+  };
+
+  applySpacing();
+  document.addEventListener('astro:page-load', applySpacing);
+</script>

@@ -1,0 +1,350 @@
+---
+import { getCollection, render } from 'astro:content';
+import { getImage } from 'astro:assets';
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import Button from '@/components/button';
+import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import {
+  getPostDisplayTitle,
+  getPostExcerpt,
+  getPostPath,
+} from '@/helpers/post';
+import { getPostCollections } from '@/helpers/collection';
+import { buildFilters, detectMedia } from '@/helpers/filters';
+import FilterBar from '@/components/feed/FilterBar.astro';
+import '@/assets/style/home.css';
+import '@/assets/style/archive.css';
+
+/**
+ * 归档：按月分组的方格墙 + 顶部图标胶囊筛选（版式照 jant 的 /archive）。
+ * 列表视图直接复用首页的条目展示（jant 那边是 TimelineFeedItem，本站是 PostEntry）。
+ * 站点是静态输出，jant 的 URL 参数式服务端筛选换成前端筛选。
+ */
+const showPrototypes =
+  import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
+const postCollection = await getCollection(
+  'post',
+  ({ data }) => showPrototypes || data.draft !== true,
+);
+
+/**
+ * 正文里的第一张图，用作方格封面。
+ *
+ * md 里写的是相对路径（`../images/toa.jpg`），直接塞进 src 会 404 ——
+ * 那是源码路径，不是构建产物路径。所以用 glob 拿到 Astro 处理后的资源，
+ * 再把相对路径按文章所在目录解析过去。
+ */
+const contentImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/content/**/*.{jpg,jpeg,png,webp,avif,gif}',
+  { eager: true },
+);
+
+const firstImage = (postId: string, body: string | undefined) => {
+  const raw =
+    body?.match(/!\[[^\]]*\]\(\s*([^)\s]+)/)?.[1] ??
+    body?.match(/<img[^>]+src=["']([^"']+)/)?.[1] ??
+    '';
+  if (!raw) return undefined;
+  // 绝对路径和外链本来就能用
+  // 绝对路径和外链原样返回，交给浏览器
+  if (/^(?:https?:)?\/\//.test(raw) || raw.startsWith('/')) return raw;
+
+  const postDirectory = `/src/content/post/${postId}`.replace(/\/[^/]*$/, '');
+  const segments = `${postDirectory}/${raw}`.split('/');
+  const resolved: string[] = [];
+  segments.forEach((segment) => {
+    if (segment === '..') resolved.pop();
+    else if (segment !== '.' && segment !== '') resolved.push(segment);
+  });
+  return contentImages[`/${resolved.join('/')}`]?.default;
+};
+
+/** 方格只有一百多像素宽，别把原图（有的 1MB+）直接发下去 */
+const coverFor = async (postId: string, body: string | undefined) => {
+  const source = firstImage(postId, body);
+  if (!source) return '';
+  if (typeof source === 'string') return source;
+  const image = await getImage({
+    src: source,
+    width: 480,
+    height: 480,
+    fit: 'cover',
+    format: 'webp',
+  });
+  return image.src;
+};
+
+const entries = await Promise.all(
+  [...postCollection]
+    .sort(
+      (a, b) =>
+        (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
+    )
+    .map(async (post) => {
+      const date = post.data.pubDate;
+      const { Content } = await render(post);
+      return {
+        id: post.id,
+        url: getPostPath(post.id),
+        data: post.data,
+        Content,
+        kind: post.data.kind,
+        title: post.data.title?.trim() ?? '',
+        displayTitle: getPostDisplayTitle(post.data),
+        summary: getPostExcerpt(post.body, 96) ?? '',
+        externalUrl: post.data.externalUrl,
+        featured: post.data.featured === true,
+        collections: getPostCollections(post.data),
+        isThread: Boolean(post.data.thread),
+        hasTitle: Boolean(post.data.title?.trim()),
+        media: detectMedia(
+          post.body,
+          post.data.kind,
+          post.data.attached === true,
+        ),
+        cover: await coverFor(post.id, post.body),
+        visibility: post.data.draft
+          ? 'private'
+          : post.data.hiddenFromLatest
+            ? 'hidden'
+            : 'public',
+        year: date ? date.getFullYear() : 0,
+        monthKey: date ? `${date.getFullYear()}-${date.getMonth() + 1}` : '',
+        monthLabel: date
+          ? `${date.getFullYear()} 年 ${date.getMonth() + 1} 月`
+          : '未标日期',
+        shortDate: date ? `${date.getMonth() + 1} 月 ${date.getDate()} 日` : '',
+        iso: date?.toISOString(),
+      };
+    }),
+);
+
+/** 按月分组，保持整体的时间倒序 */
+const filters = buildFilters(entries);
+
+const months: Array<{ key: string; label: string; items: typeof entries }> = [];
+entries.forEach((entry) => {
+  const last = months.at(-1);
+  if (last && last.key === entry.monthKey) last.items.push(entry);
+  else
+    months.push({ key: entry.monthKey, label: entry.monthLabel, items: [entry] });
+});
+
+---
+
+<PageLayout title="归档" description="按月份排列的全部内容。">
+  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
+    <Button href="/">←</Button>
+    <HeaderActions />
+  </div>
+
+  <main class="archive-page">
+    <header class="archive-page-header">
+      <h1 class="archive-page-title">归档</h1>
+      <FilterBar filters={filters} count={entries.length} feedHref="/rss.xml">
+        <div
+          class="archive-view-toggle"
+          role="group"
+          aria-label="切换视图"
+          slot="trailing"
+        >
+          <button
+            type="button"
+            class="archive-view-btn is-active"
+            data-archive-view="grid"
+            aria-pressed="true"
+            aria-label="方格视图"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect width="7" height="7" x="3" y="3" rx="1" />
+              <rect width="7" height="7" x="14" y="3" rx="1" />
+              <rect width="7" height="7" x="14" y="14" rx="1" />
+              <rect width="7" height="7" x="3" y="14" rx="1" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="archive-view-btn"
+            data-archive-view="list"
+            aria-pressed="false"
+            aria-label="列表视图"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 5h.01" />
+              <path d="M3 12h.01" />
+              <path d="M3 19h.01" />
+              <path d="M8 5h13" />
+              <path d="M8 12h13" />
+              <path d="M8 19h13" />
+            </svg>
+          </button>
+        </div>
+      </FilterBar>
+    </header>
+
+    <div class="archive-body" data-archive-body data-view="grid">
+      {/* 方格视图 */}
+      <div class="archive-grid" data-archive-grid>
+        {
+          months.map((month) => (
+            <>
+              <div class="archive-month-header" data-month-header={month.key}>
+                <span class="archive-month-header-label">{month.label}</span>
+                <span class="archive-month-header-count">
+                  <span data-month-count={month.key}>{month.items.length}</span> 条
+                </span>
+              </div>
+              {month.items.map((entry) => (
+                <a
+                  class="archive-tile"
+                  href={entry.url}
+                  data-archive-item
+                  data-month={month.key}
+                  data-year={entry.year}
+                  data-kind={entry.kind}
+                  data-collections={JSON.stringify(entry.collections)}
+                  data-thread={String(entry.isThread)}
+                  data-has-title={String(entry.hasTitle)}
+                  data-media={entry.media.join(',')}
+                  data-visibility={entry.visibility}
+                  data-featured={String(entry.featured)}
+                >
+                  <div class="archive-tile-top-meta">
+                    <time class="archive-tile-date" datetime={entry.iso}>
+                      {entry.shortDate}
+                    </time>
+                    {entry.featured && (
+                      <span class="archive-tile-badge" aria-label="精选">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 3 10.1 10.1 3 12l7.1 1.9L12 21l1.9-7.1L21 12l-7.1-1.9Z" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  {entry.cover && (
+                    <img
+                      class="archive-tile-cover"
+                      src={entry.cover}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  <div
+                    class:list={[
+                      'archive-tile-content',
+                      entry.cover && 'has-cover',
+                    ]}
+                  >
+                    {entry.kind === 'quote' && (
+                      <span class="archive-tile-quote" aria-hidden="true">
+                        “
+                      </span>
+                    )}
+                    <div class="archive-tile-copy">
+                      {entry.title && (
+                        <span class="archive-tile-title">
+                          {entry.title}
+                          {entry.externalUrl && (
+                            <span
+                              class="archive-tile-link-indicator"
+                              aria-hidden="true"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M14 5h5v5M19 5l-9 9" />
+                              </svg>
+                            </span>
+                          )}
+                        </span>
+                      )}
+                      <span class="archive-tile-summary">
+                        {entry.summary || entry.displayTitle}
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </>
+          ))
+        }
+      </div>
+
+      {/* 列表视图：和首页一样的条目展示 */}
+      <div class="archive-list home-feed" data-archive-list>
+        {
+          entries.map((entry, index) => (
+            <div
+              class="home-feed-cluster"
+              data-archive-item
+              data-month={entry.monthKey}
+              data-year={entry.year}
+              data-kind={entry.kind}
+              data-collections={JSON.stringify(entry.collections)}
+              data-thread={String(entry.isThread)}
+              data-has-title={String(entry.hasTitle)}
+              data-media={entry.media.join(',')}
+              data-visibility={entry.visibility}
+              data-featured={String(entry.featured)}
+            >
+              {index > 0 && (
+                <div class="home-group-divider" aria-hidden="true" />
+              )}
+              <section class="home-feed-group" data-visible-count="1">
+                <PostEntry item={entry} isFirst isLast>
+                  <PostActions
+                    slug={entry.id}
+                    collections={entry.data.collections ?? []}
+                    hiddenFromLatest={entry.data.hiddenFromLatest}
+                    draft={entry.data.draft}
+                    featured={entry.data.featured}
+                    pinned={entry.data.pinned}
+                  />
+                </PostEntry>
+              </section>
+            </div>
+          ))
+        }
+      </div>
+
+      <p class="archive-empty" data-archive-empty hidden>没有符合条件的内容。</p>
+    </div>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/feed-typography';
+  import '@/scripts/archive';
+</script>

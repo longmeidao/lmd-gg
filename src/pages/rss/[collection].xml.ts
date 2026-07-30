@@ -11,24 +11,50 @@ import {
   getPostExcerpt,
   getPostPath,
 } from '@/helpers/post';
+import { buildCollectionIndex } from '@/helpers/collection';
 
 type PostEntry = CollectionEntry<'post'>;
 
-export async function GET(context: APIContext) {
-  const blog = await getCollection(
+/**
+ * 每个合集一份 RSS，地址是 `/rss/<合集 slug>.xml`。
+ *
+ * 和主 feed 不同，这里不限定 kind —— 合集里本来就混着随记、引文、链接，
+ * 只筛掉草稿。
+ */
+export async function getStaticPaths() {
+  const posts = await getCollection(
     'post',
-    ({ data }: PostEntry) => data.draft !== true && data.kind === 'article',
+    ({ data }: PostEntry) => data.draft !== true,
   );
+
+  return buildCollectionIndex(posts).map((entry) => ({
+    params: { collection: entry.slug },
+    props: { name: entry.name, ids: entry.items.map((post) => post.id) },
+  }));
+}
+
+interface Props {
+  name: string;
+  ids: string[];
+}
+
+export async function GET(context: APIContext) {
+  const { name, ids } = context.props as Props;
+  const all = await getCollection('post');
+  const posts = ids
+    .map((id) => all.find((post) => post.id === id))
+    .filter((post): post is PostEntry => Boolean(post));
+
   const renderers = await loadRenderers([mdxContainerRenderer()]);
   const container = await experimental_AstroContainer.create({ renderers });
 
-  const postItems: RSSFeedItem[] = await Promise.all(
-    blog
+  const items: RSSFeedItem[] = await Promise.all(
+    posts
       .sort(
-        (a: PostEntry, b: PostEntry) =>
+        (a, b) =>
           (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
       )
-      .map(async (post: PostEntry) => {
+      .map(async (post) => {
         const { Content } = await render(post);
         const html = await container.renderToString(Content);
 
@@ -47,19 +73,12 @@ export async function GET(context: APIContext) {
 
   const rssOptions: RSSOptions = {
     stylesheet: '/pretty-feed-v3.xsl',
-    title: slateConfig.title,
-    description: slateConfig.description,
+    title: `${name} - ${slateConfig.title}`,
+    description: `合集「${name}」下的内容。`,
     site: context.site ?? slateConfig.site,
     trailingSlash: false,
-    items: postItems,
+    items,
   };
-
-  if (slateConfig.follow) {
-    rssOptions.customData = `<follow_challenge>
-      <feedId>${slateConfig.follow.feedId}</feedId>
-      <userId>${slateConfig.follow.userId}</userId>
-    </follow_challenge>`;
-  }
 
   return rss(rssOptions);
 }

@@ -1,0 +1,127 @@
+---
+import { getCollection, render } from 'astro:content';
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import Button from '@/components/button';
+import HeaderActions from '@/components/layouts/HeaderActions.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import FilterBar from '@/components/feed/FilterBar.astro';
+import { getPostPath } from '@/helpers/post';
+import { getCollectionSlug, getPostCollections } from '@/helpers/collection';
+import { buildFilters, detectMedia } from '@/helpers/filters';
+import '@/assets/style/home.css';
+import '@/assets/style/archive.css';
+
+interface Props {
+  name: string;
+  count: number;
+  ids: string[];
+}
+
+const { name, count, ids } = Astro.props;
+
+const all = await getCollection('post');
+const posts = await Promise.all(
+  ids
+    .map((id) => all.find((post) => post.id === id)!)
+    .map(async (post) => {
+      const { Content } = await render(post);
+      const date = post.data.pubDate;
+      return {
+        id: post.id,
+        url: getPostPath(post.id),
+        data: post.data,
+        Content,
+        // 以下都是筛选用的：和归档页同一套判定，同一个脚本消费
+        kind: post.data.kind,
+        year: date ? date.getFullYear() : 0,
+        hasTitle: Boolean(post.data.title?.trim()),
+        isThread: Boolean(post.data.thread),
+        media: detectMedia(
+          post.body,
+          post.data.kind,
+          post.data.attached === true,
+        ),
+        collections: getPostCollections(post.data),
+        visibility: post.data.draft
+          ? 'private'
+          : post.data.hiddenFromLatest
+            ? 'hidden'
+            : 'public',
+      };
+    }),
+);
+
+// 页面本身就限定了合集，再给一个合集筛选没有意义
+const filters = buildFilters(posts, { includeCollection: false });
+const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
+---
+
+<PageLayout title={name} description={`合集「${name}」下的 ${count} 条内容。`}>
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/rss+xml"
+    title={`${name} 的 RSS`}
+    href={feedHref}
+  />
+  <div class="mb-16 flex h-14 items-start justify-between" slot="header">
+    <Button href="/">←</Button>
+    <HeaderActions />
+  </div>
+
+  <main class="home-column" data-archive-body>
+    <section class="collection-hero">
+      <h1 class="home-hero-title text-slate12">{name}</h1>
+      <FilterBar
+        filters={filters}
+        count={count}
+        feedHref={feedHref}
+        feedTitle={`订阅合集「${name}」`}
+      />
+    </section>
+
+    <section class="mb-16">
+      <div class="home-feed">
+        {
+          posts.map((item, index) => (
+            <div
+              class="home-feed-cluster"
+              data-archive-item
+              data-kind={item.kind}
+              data-year={String(item.year)}
+              data-has-title={String(item.hasTitle)}
+              data-thread={String(item.isThread)}
+              data-media={item.media.join(',')}
+              data-collections={JSON.stringify(item.collections)}
+              data-visibility={item.visibility}
+              data-featured={String(item.data.featured === true)}
+            >
+              {index > 0 && (
+                <div class="home-group-divider" aria-hidden="true" />
+              )}
+              <section class="home-feed-group" data-visible-count="1">
+                <PostEntry item={item} isFirst isLast>
+                  <PostActions
+                    slug={item.id}
+                    collections={item.data.collections ?? []}
+                    hiddenFromLatest={item.data.hiddenFromLatest}
+                    draft={item.data.draft}
+                    featured={item.data.featured}
+                    pinned={item.data.pinned}
+                  />
+                </PostEntry>
+              </section>
+            </div>
+          ))
+        }
+      </div>
+      <p class="archive-empty" data-archive-empty hidden>没有符合条件的内容。</p>
+    </section>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/feed-typography';
+  import '@/scripts/archive';
+</script>
