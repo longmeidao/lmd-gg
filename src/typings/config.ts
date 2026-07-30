@@ -54,16 +54,15 @@ export interface SlateConfig {
     label: string;
     href: string;
   }>;
+  /**
+   * 合集名 → URL slug 的映射。只在想要拉丁 slug（`/city-walks`）时才需要写；
+   * 没有映射的合集会按名字自动生成，中文名会保留原样。
+   */
+  collectionSlugs?: Record<string, string>;
   /** Whether to show reading time */
   readTime?: boolean;
   /** Whether to show last modified time */
   lastModified?: boolean;
-  /** Docsearch configuration */
-  algolia?: {
-    appId: string;
-    apiKey: string;
-    indexName: string;
-  };
   /** Website footer configuration */
   footer?: {
     copyright: string;
