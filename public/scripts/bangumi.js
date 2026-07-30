@@ -181,10 +181,9 @@ function initBangumiCollection(container) {
     collection.replaceChildren();
     collection.setAttribute('aria-busy', 'true');
     const loading = createElement('div', 'bgm-state');
-    const image = createElement('img', 'bgm-loading-image');
-    image.src = '/images/mona-loading.gif';
-    image.alt = '';
-    loading.append(image, createElement('span', '', '正在读取收藏…'));
+    const indicator = createElement('span', 'bgm-loading-indicator');
+    indicator.setAttribute('aria-hidden', 'true');
+    loading.append(indicator, createElement('span', '', '正在读取收藏…'));
     collection.appendChild(loading);
     navigator.hidden = true;
   }

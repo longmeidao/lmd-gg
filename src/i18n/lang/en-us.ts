@@ -1,6 +1,6 @@
 export default {
   common: {
-    /** all tags */
+    /** all collections */
     all: 'All',
   },
   /** blog page */

@@ -16,16 +16,16 @@ It also works seamlessly with [Obsidian](https://obsidian.md/), helping you turn
 - Quick setup with zero configuration required
 - Draft mode with local preview and automatic production filtering
 - Built-in RSS feed with Follow authentication
-- Integrated Algolia search functionality
+- Built-in Pagefind static full-text search
 - Comprehensive SEO optimization for better search rankings
 - Horizontal multi-image layout with automatic column distribution
 
 ## 🪜 Framework
 
-- Astro + React + Typescript  
+- Astro + React + Typescript
 - Tailwindcss + @radix-ui/colors
   - Updated to [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4) (Jan 10, 2025)
-- Docsearch
+- Pagefind
 
 ## 🔨 Usage
 
@@ -74,14 +74,12 @@ Theme configuration is done through `slate.config.ts` in the root directory.
 | lang | Language | `string` | `zh-CN` |
 | theme | Theme | `{ mode: 'auto' \| 'light' \| 'dark', enableUserChange: boolean }` | `{ mode: 'auto', enableUserChange: true }` |
 | avatar | Avatar | `string` | - |
-| sitemap | Website sitemap configuration | [SitemapOptions](https://docs.astro.build/en/guides/integrations-guide/sitemap/)  | - |
+| sitemap | Website sitemap configuration | [SitemapOptions](https://docs.astro.build/en/guides/integrations-guide/sitemap/) | - |
 | readTime | Show reading time | `boolean` | `false` |
 | lastModified | Show last modified time | `boolean` | `false` |
-| algolia | Docsearch configuration | `{ appId: string, apiKey: string, indexName: string }` | - |
 | follow | Follow subscription authentication configuration | `{ feedId: string, userId: string }` | - |
 | footer | Website footer configuration | `{ copyright: string }` | - |
 | socialLinks | Social Links Configuration | `{ icon: [SocialLinkIcon](#SocialLinkIcon), link: string, ariaLabel?: string }` | - |
-
 
 ### SocialLinkIcon
 
@@ -99,15 +97,12 @@ type SocialLinkIcon =
   | 'threads'
   | 'x'
   | 'youtube'
-  | { svg: string }
+  | { svg: string };
 ```
 
-### Algolia Application
+### Full-text Search
 
-1. Deploy your site first
-2. Apply for an `apiKey` at [algolia](https://docsearch.algolia.com/apply/)
-3. After successful application, configure `algolia` in `slate.config.ts`
-4. Redeploy your site
+`pnpm build` runs Pagefind after Astro's static build and generates a local index for published long-form articles. Search has no external service or API key dependency.
 
 ### Follow Subscription Authentication
 
@@ -120,8 +115,13 @@ type SocialLinkIcon =
 
 | Option | Description | Type | Required |
 | --- | --- | --- | --- |
-| title | Article title | `string` | Yes |
-| description | Article description | `string` | No |
+| title | Content title; required for articles and links | `string` | No |
+| kind | Content format | `'article' \| 'note' \| 'quote' \| 'link' \| 'photo'` | No |
+| externalUrl | Original URL for links or quotes | `string` | No |
+| source | Quote source | `string` | No |
+| commentary | Personal commentary on a link or quote | `string` | No |
+| thread | Thread identifier for related entries | `string` | No |
+| rating | One-to-five-star rating | `number` | No |
 | tags | Article tags | `string[]` | No |
 | draft | Whether it's a draft. When not provided or `false`, `pubDate` must be provided; drafts are only visible in local preview | `boolean` | No |
 | pubDate | Article publication date | `date` | No, required when `draft` is `false` |
@@ -133,7 +133,6 @@ type SocialLinkIcon =
 ```md
 ---
 title: 40 questions
-description: This repo maintains revisons and translations to the list of 40 questions I ask myself each year and each decade.
 tags:
   - Life
   - Thinking
@@ -147,49 +146,60 @@ pubDate: 2025-01-06
 In addition to standard Markdown syntax, the following extended syntax is supported:
 
 ### Basic Syntax
+
 - Headers, lists, blockquotes, code blocks and other basic syntax
 - Tables
 - Links and images
-- **Bold**, *italic*, and ~strikethrough~ text
+- **Bold**, _italic_, and ~~strikethrough~~ text
 
 ### Extended Syntax
+
 #### Container syntax
+
 Using `:::` markers
-  ```md
-  :::info
-  This is an information prompt
-  :::
-  ```
+
+```md
+:::info This is an information prompt :::
+```
 
 #### LaTeX Mathematical Formulas
-  - Inline formula: $E = mc^2$
-  - Block formula: $$ E = mc^2 $$
+
+- Inline formula: $E = mc^2$
+- Block formula: $$ E = mc^2 $$
 
 #### Support for image captions
-  ```md
-  ![Image caption](image-url)
-  ```
-  
+
+```md
+![Image caption](image-url)
+```
+
 ## Updates
+
 ### Version 1.3.0
+
 - Support Social Links
 - Optimize RSS article detail generation.
 - Add a script to synchronize the latest slate-blog version
-  
+
 ### Version 1.2.0
+
 - Support i18n (English and Chinese)
 - Fixed known issues
 
 ### Version 1.1.1
+
 - Fixed known issues
 
 ### Version 1.1.0
+
 - Upgraded to support [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4)
 - Added dark mode support
 - Fixed known issues
 
 ## Blogs using this theme
+
 Here are some blogs built with this theme:
+
 - [Bluepikachu](https://bluepika.life/)
 - [Chieh的随笔](https://blog.chieh.nyc.mn/)
 - [Feazur](https://blog.feazur.com/)

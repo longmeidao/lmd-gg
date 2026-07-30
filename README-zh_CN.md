@@ -3,6 +3,7 @@
 [English](./README.md) · 中文
 
 ## 我们为什么创作这样一个博客主题
+
 我们热爱写作与分享，也很欣赏精致的互联网产品。正因如此，我们创作了这个简洁的博客主题，它专注于内容本身，提供流畅、纯粹的写作与阅读体验。而基于各种现代的技术栈，也让其更快速、轻便和高效。
 
 它还能与 [Obsidian](https://obsidian.md/) 无缝结合，你可以轻松将笔记转化为精致的博客文章。
@@ -15,7 +16,7 @@
 - 0 基础快速配置和部署
 - 支持文章草稿，本地允许预览，生产构建自动过滤
 - 支持 RSS 订阅和 Follow 认证
-- 支持 Algolia 搜索
+- 支持 Pagefind 静态全文搜索
 - 完善的 SEO 支持
 - 横向多图布局，支持自动分栏排列
 
@@ -24,7 +25,7 @@
 - Astro + React + Typescript
 - Tailwindcss + @radix-ui/colors
   - 支持 [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4) (Jan 10, 2025)
-- Docsearch
+- Pagefind
 
 ## 🔨 使用
 
@@ -75,7 +76,6 @@ pnpm build
 | sitemap | 网站 sitemap 配置 | [SitemapOptions](https://docs.astro.build/zh-cn/guides/integrations-guide/sitemap/) | - |
 | readTime | 是否显示阅读时间 | `boolean` | `false` |
 | lastModified | 是否显示最后修改时间 | `boolean` | `false` |
-| algolia | docsearch 配置 | `{ appId: string, apiKey: string, indexName: string }` | - |
 | follow | follow 订阅认证配置 | `{ feedId: string, userId: string }` | - |
 | footer | 网站底部配置 | `{ copyright: string }` | - |
 | socialLinks | 社交链接配置 | `{ icon: [SocialLinkIcon](#SocialLinkIcon), link: string, ariaLabel?: string }` | - |
@@ -96,15 +96,12 @@ type SocialLinkIcon =
   | 'threads'
   | 'x'
   | 'youtube'
-  | { svg: string }
+  | { svg: string };
 ```
 
-### algolia 申请
+### 全文搜索
 
-1. 部署网站
-2. 在 [Algolia](https://docsearch.algolia.com/apply/) 申请应用 `apiKey`
-3. 申请完成后且通过，在 `slate.config.ts` 中配置 `algolia` 
-4. 重新部署网站
+`pnpm build` 会在 Astro 静态构建完成后运行 Pagefind，为已发布的长文生成本地索引。搜索不依赖外部服务，也不需要配置 API key。
 
 ### Follow 订阅认证
 
@@ -113,13 +110,17 @@ type SocialLinkIcon =
 3. 在 Follow 点击 `+` 号，选择 `RSS` 订阅，填入 `rss` 链接，一般为 `[site]/rss.xml`, `site` 为 `slate.config.ts` 配置文件中 `site` 的值。
 4. 重新部署网站
 
-
 ## 文章 frontmatter 说明
 
 | 选项 | 说明 | 类型 | 是否必须 |
 | --- | --- | --- | --- |
-| title | 文章标题 | `string` | 是 |
-| description | 文章描述 | `string` | 否 |
+| title | 内容标题；长文和链接必须填写 | `string` | 否 |
+| kind | 内容形式 | `'article' \| 'note' \| 'quote' \| 'link' \| 'photo'` | 否 |
+| externalUrl | 链接或引文的原地址 | `string` | 否 |
+| source | 引文来源 | `string` | 否 |
+| commentary | 对链接或引文的个人评论 | `string` | 否 |
+| thread | 串联相关内容的线程标识 | `string` | 否 |
+| rating | 一至五星评分 | `number` | 否 |
 | tags | 文章标签 | `string[]` | 否 |
 | draft | 是否是草稿，当不传或者为 `false` 时，`pubDate` 必须传；草稿仅本地预览可见 | `boolean` | 否 |
 | pubDate | 文章发布时间 | `date` | 否，当 `draft` 为 `false` 时，必须传 |
@@ -131,7 +132,6 @@ type SocialLinkIcon =
 ```md
 ---
 title: 40 questions
-description: This repo maintains revisons and translations to the list of 40 questions I ask myself each year and each decade.
 tags:
   - Life
   - Thinking
@@ -139,54 +139,66 @@ tags:
 pubDate: 2025-01-06
 ---
 ```
+
 ## Markdown 语法支持
 
 除了标准的 Markdown 语法外，我们还支持部分扩展语法。
 
 ### 基础语法
+
 - 标题、列表、引用、代码块等基础语法
 - 表格
 - 链接和图片
-- **粗体**、*斜体*和~删除线~文本
+- **粗体**、*斜体*和~~删除线~~文本
 
 ### 扩展语法
+
 #### 容器
+
 使用 `:::` 标记
-  ```md
-  :::info
-  这是一个信息提示
-  :::
-  ```
+
+```md
+:::info这是一个信息提示 :::
+```
 
 #### LaTeX 数学公式
-  - 行内公式: $E = mc^2$
-  - 块级公式: $$ E = mc^2 $$
+
+- 行内公式: $E = mc^2$
+- 块级公式: $$ E = mc^2 $$
 
 #### 支持图片说明
-  ```md
-  ![Image caption](image-url)
-  ```
-  
+
+```md
+![Image caption](image-url)
+```
+
 ## 更新日志
+
 ### 版本 1.3.0
+
 - 支持显示社交链接
 - 优化 RSS 生成
 - 添加同步最新版本脚本
 
 ### 版本 1.2.0
+
 - 支持多语言（中文和英语）
 - 修复已知问题
 
 ### 版本 1.1.1
+
 - 修复已知问题
 
 ### 版本 1.1.0
+
 - 升级支持 [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4)
 - 支持深色模式
 - 修复已知问题
 
 ## 使用本主题的博客
+
 以下是一些使用这个主题搭建的博客：
+
 - [Bluepikachu](https://bluepika.life/)
 - [Chieh的随笔](https://blog.chieh.nyc.mn/)
 - [Feazur](https://blog.feazur.com/)
