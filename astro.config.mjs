@@ -10,15 +10,23 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import codeImport from 'remark-code-import';
 import remarkBlockContainers from 'remark-block-containers';
+import remarkCjkFriendly from 'remark-cjk-friendly';
 import astroExpressiveCode from 'astro-expressive-code';
 import rehypeFigure from 'rehype-figure';
 
 import { remarkModifiedTime } from './plugins/remark-modified-time';
 import { remarkReadingTime } from './plugins/remark-reading-time';
+import { devWebWriter } from './plugins/dev-web-writer';
+import { legacyBlogRedirects } from './plugins/legacy-blog-redirects';
 import slateConfig from './slate.config';
 
 function generateAstroConfigure() {
   const remarkPlugins = [
+    // CommonMark 规定分隔符紧贴汉字又紧贴标点时不能开启强调，所以
+    // `工具*（包括…）*并没有` 认不出来，得靠空格/换行隔开，而那些空格又会
+    // 原样渲染成多余的空隙。这个插件按 CJK 规则放宽判定。
+    // 注意：只对 `*`/`**` 生效，`_` 在 CommonMark 里是刻意保持严格的。
+    remarkCjkFriendly,
     remarkGemoji,
     remarkMath,
     codeImport,
@@ -41,9 +49,15 @@ function generateAstroConfigure() {
       react(),
       sitemap({
         ...slateConfig.sitemap,
-        filter: (page) => !page.includes('/admin'),
+        filter: (page) => !page.includes('/write'),
       }),
+      legacyBlogRedirects(),
     ],
+    // 站内链接悬停即预取，换页几乎无等待
+    prefetch: {
+      prefetchAll: true,
+      defaultStrategy: 'hover',
+    },
     compressHTML: true,
     markdown: {
       processor: unified({
@@ -52,7 +66,14 @@ function generateAstroConfigure() {
       }),
     },
     vite: {
-      plugins: [svgr(), tailwindcss()],
+      plugins: [devWebWriter(), svgr(), tailwindcss()],
+      // emoji-mart 只在撰写面板里动态 import，dev 的依赖预打包扫不到它，
+      // 首次点击表情就会 504。显式列出来让它随服务启动一起预打包。
+      // 不含 @emoji-mart/data：那是个 JSON 数据包，预打包不了（会告警），
+      // 它本来也不走这条路径。
+      optimizeDeps: {
+        include: ['emoji-mart'],
+      },
     },
   };
 

@@ -16,13 +16,15 @@
   "bugs": {
     "url": "https://github.com/longmeidao/lmd-gg/issues"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/scripts/*.ts"
+  ],
   "author": "kim, bluepikachu",
   "scripts": {
     "prepare": "husky",
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro sync && pnpm run tsc && astro check && astro build && pnpm run verify:rss",
+    "build": "astro sync && pnpm run tsc && astro check && astro build && pnpm run search:index && pnpm run verify:rss",
     "preview": "astro preview",
     "astro": "astro",
     "tsc": "tsc --noEmit",
@@ -31,6 +33,7 @@
     "lint-fix:script": "pnpm run lint:script -- --fix",
     "lint:script": "eslint",
     "check:services": "node --use-env-proxy scripts/check-external-services.mjs",
+    "search:index": "pagefind --site dist",
     "verify:rss": "node scripts/verify-rss.mjs",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,astro}\"",
     "sync-latest": "./scripts/sync-latest-blog.sh"
@@ -41,14 +44,14 @@
     "@astrojs/react": "^6.0.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "@docsearch/css": "^4.6.3",
-    "@docsearch/react": "^4.6.3",
+    "@emoji-mart/data": "^1.2.1",
     "@radix-ui/colors": "^3.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.1.1",
     "astro-expressive-code": "^0.44.0",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.21",
+    "emoji-mart": "^5.6.0",
     "heti": "^0.9.6",
     "i18next": "^26.3.6",
     "mdast-util-to-string": "^4.0.0",
@@ -82,9 +85,11 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "globals": "^17.7.0",
     "husky": "^9.1.7",
+    "pagefind": "^1.5.2",
     "prettier": "^3.9.5",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "remark-cjk-friendly": "^2.3.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.64.0"
   }

@@ -10,6 +10,10 @@ overrides:
   katex@>=0.12.0 <=0.16.20: '>=0.16.21'
   mdast-util-to-hast@>=13.0.0 <13.2.1: '>=13.2.1'
   minimatch@<3.1.4: '>=3.1.4'
+  # 安全覆盖把 minimatch 抬到了 10.x，但 jsx-a11y 用的是 v3 的 CJS 默认导出，
+  # 会在任何含 <label> 的 .astro 文件上抛 "(0 , _minimatch.default) is not a function"。
+  # 单独把它钉在已修复 ReDoS 的 3.x 上；typescript-eslint 仍然用 10.x。
+  eslint-plugin-jsx-a11y>minimatch: '>=3.1.4 <4'
   nanoid@>=4.0.0 <5.0.9: '>=5.0.9'
   picomatch@<2.3.2: '>=2.3.2'
   postcss@<8.5.10: '>=8.5.10'
