@@ -37,6 +37,20 @@ git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`
   所以 `src/worker.ts` 从主 tsconfig 排除，单独走 `tsconfig.worker.json`。
 - 本地开发不受影响，仍走 `plugins/dev-web-writer.ts` 的 `/__lmd/*`。
 
+## 图片
+
+**图片一律放 R2,不进仓库。** `src/content/images/` 已清空并删除。
+
+- 正文写绝对地址:`https://media.lmd.gg/images/<name>.webp`
+- 上传前先压缩:最宽 1600px、webp q82(正文列约 588px,2 倍余量足够)
+- 同时生成 480px 小图放 `images/thumb/<name>.webp`,归档方格用它 ——
+  方格只有 170px 宽,塞原图是浪费
+- 撰写面板「插入媒体」上传的落在 `images/uploads/`,由 Worker 直接写 R2
+
+代价:失去 Astro 构建时的图片处理(尺寸属性、格式协商)。**当时它本来也没生成
+srcset**,只是转 webp 保持原分辨率(`follow.png` 2590px、257K 塞进 588px 的列),
+所以换成预压缩其实是净赚。
+
 ## 提交约定
 
 - **commitlint 拒绝 `chore:`**。允许的类型只有： `build / ci / docs / feat / fix / perf / refactor / revert / style / test`
