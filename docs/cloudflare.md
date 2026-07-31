@@ -44,11 +44,30 @@ npx wrangler r2 bucket domain add lmd-gg-media --domain media.lmd.gg --zone-id <
 
 ### 2. Zero Trust → Access 应用
 
-Zero Trust → Access → Applications → Add an application → Self-hosted：
+**这一步最容易配错，配错的后果是整个站点变成要登录才能看。**
 
-- Application domain：`lmd.gg`，Path 分别加 `write` 和 `api/admin`
-- Policy：Allow，条件选 Emails，填你自己的邮箱
-- 登录方式：One-time PIN（免费额度够用，不用接第三方 IdP）
+Access 的一个 self-hosted 应用 = 一个域名 + 一个可选路径。**路径留空就等于
+保护整个主机名**。所以要建**两个**应用，各自限定路径：
+
+| 应用 | Application domain | Path |
+|---|---|---|
+| 撰写页 | `lmd.gg` | `write` |
+| 后台接口 | `lmd.gg` | `api/admin` |
+
+两个都配同一条策略：Allow，条件 Emails，填你自己的邮箱；登录方式 One-time PIN。
+
+Path 不带前导斜杠。**千万不要把 domain 填成 `*.workers.dev` 或不填 path** ——
+那样首页、归档、RSS、pagefind 全会被拦去登录。
+
+验证方法（切完域名之后）：
+
+```bash
+# 公开页面必须是 200，不能是 302
+curl -sI https://lmd.gg/ | head -1
+curl -sI https://lmd.gg/rss.xml | head -1
+# 受保护的必须 302 到 cloudflareaccess.com
+curl -sI https://lmd.gg/write/ | grep -i location
+```
 
 建好之后回到应用的 Overview，复制 **Application Audience (AUD) Tag**，
 连同你的团队域名一起填进 `wrangler.jsonc`：
