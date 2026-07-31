@@ -38,37 +38,12 @@ async function readRequestBody(request: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-function safeEqual(left: string, right: string): boolean {
-  const leftBytes = new TextEncoder().encode(left);
-  const rightBytes = new TextEncoder().encode(right);
-  let difference = leftBytes.length ^ rightBytes.length;
-  const length = Math.max(leftBytes.length, rightBytes.length);
-
-  for (let index = 0; index < length; index += 1) {
-    difference |= (leftBytes[index] ?? 0) ^ (rightBytes[index] ?? 0);
-  }
-
-  return difference === 0;
-}
-
-function isAuthorized(request: IncomingMessage): boolean {
-  const expectedSecret = process.env.LMD_ADMIN_SECRET?.trim();
-  if (!expectedSecret) return true;
-
-  const authorization = request.headers.authorization ?? '';
-  const suppliedSecret = authorization.startsWith('Bearer ')
-    ? authorization.slice(7)
-    : '';
-  return safeEqual(suppliedSecret, expectedSecret);
-}
-
-function requireAuthorized(
-  request: IncomingMessage,
-  response: ServerResponse,
-): boolean {
-  if (isAuthorized(request)) return true;
-  respond(response, 401, { error: '访问密钥不正确。' });
-  return false;
+/**
+ * 本地开发直接放行。生产的身份由 Cloudflare Access 管（见 src/worker.ts），
+ * dev 服务器只监听本机，没必要再要一道密钥 —— 前端也已经不持有任何密钥了。
+ */
+function requireAuthorized(): boolean {
+  return true;
 }
 
 function postPath(contentDirectory: string, slug: string): string {
@@ -124,7 +99,7 @@ export function devWebWriter(): Plugin {
          * 所以这里只解决本地撰写，接口形状先对齐将来的 /api/admin/upload。
          */
         if (url.pathname === '/__lmd/upload') {
-          if (!requireAuthorized(request, response)) return;
+          if (!requireAuthorized()) return;
           if (request.method !== 'POST') {
             respond(response, 405, { error: '只接受 POST 请求。' });
             return;
@@ -184,7 +159,7 @@ export function devWebWriter(): Plugin {
           next();
           return;
         }
-        if (!requireAuthorized(request, response)) return;
+        if (!requireAuthorized()) return;
 
         try {
           if (request.method === 'GET') {

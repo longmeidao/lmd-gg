@@ -67,14 +67,8 @@ const sessionEndpoint = import.meta.env.DEV
     if (!endpoint) return;
 
     checked = true;
-    const secret =
-      sessionStorage.getItem('lmd:admin-secret:session') ||
-      localStorage.getItem('lmd:admin-secret:persistent') ||
-      '';
-
-    void fetch(endpoint, {
-      headers: secret ? { authorization: `Bearer ${secret}` } : {},
-    })
+    // 身份由 Cloudflare Access 管，Cookie 浏览器自动带
+    void fetch(endpoint, { credentials: 'same-origin' })
       .then(async (response) => {
         const result = (await response.json().catch(() => ({}))) as {
           authenticated?: boolean;

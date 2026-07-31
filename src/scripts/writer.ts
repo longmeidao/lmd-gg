@@ -33,10 +33,6 @@ interface StoredDraft extends WriterState {
 const root = document.querySelector<HTMLElement>('[data-writer-root]');
 
 if (root) {
-  const login = root.querySelector<HTMLElement>('[data-writer-login]');
-  const loginForm = root.querySelector<HTMLFormElement>(
-    '[data-writer-login-form]',
-  );
   const writerWindow = root.querySelector<HTMLElement>('[data-writer-window]');
   const form = root.querySelector<HTMLFormElement>('[data-writer-form]');
   const itemsHost = root.querySelector<HTMLElement>('[data-writer-items]');
@@ -90,8 +86,6 @@ if (root) {
   );
 
   if (
-    !login ||
-    !loginForm ||
     !writerWindow ||
     !form ||
     !itemsHost ||
@@ -121,8 +115,6 @@ if (root) {
   }
 
   const storageKey = 'lmd:writer-draft:v2';
-  const sessionKey = 'lmd:admin-secret:session';
-  const persistentKey = 'lmd:admin-secret:persistent';
   const localWriter = root.dataset.localWriter === 'true';
   const sessionEndpoint = localWriter ? '/__lmd/session' : '/api/admin/session';
   const writeEndpoint = localWriter ? '/__lmd/write' : '/api/admin/posts';
@@ -174,7 +166,6 @@ if (root) {
     pubDate: today,
     customSlug: '',
   };
-  let authenticatedSecret = '';
   let autosaveTimer = 0;
 
   const escapeHtml = (value: string) =>
@@ -634,18 +625,14 @@ if (root) {
     }
   };
 
-  const getSecret = () =>
-    sessionStorage.getItem(sessionKey) ||
-    localStorage.getItem(persistentKey) ||
-    '';
-
-  const authHeaders = (secret = authenticatedSecret): Record<string, string> =>
-    secret ? { authorization: `Bearer ${secret}` } : {};
-
-  const verifySession = async (secret: string) => {
+  /**
+   * 身份由 Cloudflare Access 管，浏览器自动带 CF_Authorization Cookie，
+   * 前端不再持有任何密钥。本地 dev 没有 Access，dev 端点直接放行。
+   */
+  const verifySession = async () => {
     try {
       const response = await fetch(sessionEndpoint, {
-        headers: authHeaders(secret),
+        credentials: 'same-origin',
       });
       const result = (await response.json().catch(() => ({}))) as {
         authenticated?: boolean;
@@ -656,9 +643,7 @@ if (root) {
     }
   };
 
-  const showWriter = async (secret: string) => {
-    authenticatedSecret = secret;
-    login.hidden = true;
+  const showWriter = async () => {
     writerWindow.hidden = false;
     confirmPanel.hidden = true;
     attachedPanel.hidden = true;
@@ -714,12 +699,13 @@ if (root) {
     closeWriter();
   };
 
-  const showLogin = (message = '') => {
+  /**
+   * 走到这里说明会话没通过。生产环境下 Access 会在页面加载前就把未登录的人
+   * 挡在外面，所以这多半是接口没部署或 Access 配错了。
+   */
+  const showUnavailable = () => {
     writerWindow.hidden = true;
-    login.hidden = false;
-    const output = loginForm.querySelector<HTMLOutputElement>('output');
-    if (output) output.textContent = message;
-    loginForm.querySelector<HTMLInputElement>('input[name="secret"]')?.focus();
+    setStatus('撰写接口不可用：请确认已登录，且 /api/admin 已部署。', true);
   };
 
   const parseScalar = (value: string) => {
@@ -859,7 +845,6 @@ if (root) {
     try {
       const response = await fetch(
         `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-        { headers: authHeaders() },
       );
       const result = (await response.json().catch(() => ({}))) as {
         content?: string;
@@ -893,7 +878,6 @@ if (root) {
   async function backfillReplyThread(slug: string) {
     const response = await fetch(
       `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-      { headers: authHeaders() },
     );
     const result = (await response.json().catch(() => ({}))) as {
       content?: string;
@@ -908,7 +892,7 @@ if (root) {
     const content = `---\n${lines.join('\n')}\n---\n\n${match[2]!.replace(/^\n+/, '')}`;
     await fetch(`${writeEndpoint}?slug=${encodeURIComponent(slug)}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json', ...authHeaders() },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ posts: [{ slug, content }] }),
     });
   }
@@ -918,7 +902,6 @@ if (root) {
     try {
       const response = await fetch(
         `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-        { headers: authHeaders() },
       );
       const result = (await response.json().catch(() => ({}))) as {
         content?: string;
@@ -1146,7 +1129,6 @@ if (root) {
           {
             method: 'POST',
             headers: {
-              ...authHeaders(),
               'content-type': file.type || 'application/octet-stream',
             },
             body: file,
@@ -1549,7 +1531,6 @@ if (root) {
           method: editSlug ? 'PUT' : 'POST',
           headers: {
             'content-type': 'application/json',
-            ...authHeaders(),
           },
           body: JSON.stringify({ posts }),
         },
@@ -1587,36 +1568,6 @@ if (root) {
     } finally {
       publishButton.disabled = !isReady();
       updateVisibilityControls();
-    }
-  });
-
-  loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const input = loginForm.querySelector<HTMLInputElement>(
-      'input[name="secret"]',
-    );
-    const keep = loginForm.querySelector<HTMLInputElement>(
-      'input[name="keepSignedIn"]',
-    );
-    const output = loginForm.querySelector<HTMLOutputElement>('output');
-    const button = loginForm.querySelector<HTMLButtonElement>(
-      'button[type="submit"]',
-    );
-    const secret = input?.value.trim() ?? '';
-    if (button) button.disabled = true;
-    if (output) output.textContent = '正在验证…';
-
-    if (await verifySession(secret)) {
-      sessionStorage.removeItem(sessionKey);
-      localStorage.removeItem(persistentKey);
-      (keep?.checked ? localStorage : sessionStorage).setItem(
-        keep?.checked ? persistentKey : sessionKey,
-        secret,
-      );
-      await showWriter(secret);
-    } else {
-      if (output) output.textContent = '访问密钥不正确，或管理接口尚未启用。';
-      if (button) button.disabled = false;
     }
   });
 
@@ -1709,11 +1660,10 @@ if (root) {
   });
 
   void (async () => {
-    const storedSecret = getSecret();
-    if (await verifySession(storedSecret)) {
-      await showWriter(storedSecret);
+    if (await verifySession()) {
+      await showWriter();
     } else {
-      showLogin();
+      showUnavailable();
     }
   })();
 }

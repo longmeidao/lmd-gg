@@ -18,7 +18,15 @@ export default [
     },
   },
   {
-    ignores: ['node_modules', 'dist', '.astro', 'src/env.d.ts', '**/.obsidian'],
+    ignores: [
+      'node_modules',
+      'dist',
+      '.astro',
+      'src/env.d.ts',
+      // wrangler types 生成的，已 gitignore
+      'worker-configuration.d.ts',
+      '**/.obsidian',
+    ],
   },
   {
     languageOptions: {

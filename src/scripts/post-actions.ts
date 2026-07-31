@@ -9,20 +9,10 @@ import { DEFAULT_COLLECTION } from '@/helpers/collection';
 
 type Visibility = 'public' | 'hidden' | 'private';
 
-const sessionKey = 'lmd:admin-secret:session';
-const persistentKey = 'lmd:admin-secret:persistent';
 const isLocalWriter = import.meta.env.DEV;
 const writeEndpoint = isLocalWriter ? '/__lmd/write' : '/api/admin/posts';
 
-const getSecret = () =>
-  sessionStorage.getItem(sessionKey) ||
-  localStorage.getItem(persistentKey) ||
-  '';
-
-const authHeaders = (): Record<string, string> => {
-  const secret = getSecret();
-  return secret ? { authorization: `Bearer ${secret}` } : {};
-};
+/** 身份由 Cloudflare Access 管，Cookie 浏览器自动带，前端不持有密钥 */
 
 const VISIBILITY_LABELS: Record<Visibility, string> = {
   public: '公开',
@@ -119,7 +109,6 @@ const setFlag = (content: string, key: 'featured' | 'pinned', on: boolean) => {
 const readPost = async (slug: string) => {
   const response = await fetch(
     `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-    { headers: authHeaders() },
   );
   const result = (await response.json().catch(() => ({}))) as {
     content?: string;
@@ -134,7 +123,7 @@ const readPost = async (slug: string) => {
 const writePost = async (slug: string, content: string) => {
   const response = await fetch(writeEndpoint, {
     method: 'PUT',
-    headers: { ...authHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ posts: [{ slug, content }] }),
   });
   if (!response.ok) {
@@ -148,7 +137,7 @@ const writePost = async (slug: string, content: string) => {
 const deletePost = async (slug: string) => {
   const response = await fetch(
     `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-    { method: 'DELETE', headers: authHeaders() },
+    { method: 'DELETE' },
   );
   if (!response.ok) {
     const result = (await response.json().catch(() => ({}))) as {

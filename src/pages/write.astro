@@ -24,32 +24,6 @@ const collectionNames = [
     data-local-writer={isLocalWriter ? 'true' : 'false'}
     data-collections={JSON.stringify(collectionNames)}
   >
-    <section class="writer-login" data-writer-login hidden>
-      <form class="writer-login-card" data-writer-login-form>
-        <a href="/" class="writer-login-back">← 返回首页</a>
-        <p class="writer-login-kicker">PRIVATE WRITING DESK</p>
-        <h1>撰写</h1>
-        <p>这是私人管理入口。验证通过后才会显示编辑器和文章管理功能。</p>
-        <label>
-          <span>访问密钥</span>
-          <input
-            name="secret"
-            type="password"
-            autocomplete="current-password"
-            required
-          />
-        </label>
-        <label class="writer-login-keep">
-          <input name="keepSignedIn" type="checkbox" />
-          <span>保持登录</span>
-        </label>
-        <small>勾选后密钥会保存在这台设备的浏览器中；共用设备请不要勾选。</small
-        >
-        <button type="submit">进入编辑器</button>
-        <output aria-live="polite"></output>
-      </form>
-    </section>
-
     <section class="writer-window" data-writer-window hidden>
       <header class="writer-topbar">
         <button
