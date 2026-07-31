@@ -11,6 +11,7 @@ import {
 } from '@/helpers/post';
 import { getPostCollections } from '@/helpers/collection';
 import { buildFilters, detectMedia } from '@/helpers/filters';
+import { resizeUrl, THUMB_WIDTH } from '@/helpers/media';
 import FilterBar from '@/components/feed/FilterBar.astro';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
@@ -30,20 +31,18 @@ const postCollection = await getCollection(
 /**
  * 正文里的第一张图，用作方格封面。
  *
- * 图片都在 R2 上、md 里写的就是绝对地址，所以不再需要解析相对路径。
- * 方格只有一百多像素宽，换用上传时一并生成的 480px 小图（同名，多一层
- * `thumb/`），别把 1600px 的原图塞进方格。
+ * 图片只在 R2 上存原件，尺寸由 Cloudflare 现场转换，所以这里只是把正文那张
+ * 的地址换个宽度重新生成 —— 方格才 170px，别用正文的 1200px 那份。
  */
 const firstImage = (body: string | undefined) =>
   body?.match(/!\[[^\]]*\]\(\s*([^)\s]+)/)?.[1] ??
   body?.match(/<img[^>]+src=["']([^"']+)/)?.[1] ??
   '';
 
-const coverFor = (body: string | undefined) =>
-  firstImage(body).replace(
-    /^(https:\/\/media\.lmd\.gg\/images\/)(?!thumb\/)/,
-    '$1thumb/',
-  );
+const coverFor = (body: string | undefined) => {
+  const source = firstImage(body);
+  return source ? resizeUrl(source, THUMB_WIDTH) : '';
+};
 
 const entries = await Promise.all(
   [...postCollection]

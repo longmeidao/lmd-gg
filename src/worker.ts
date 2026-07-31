@@ -337,7 +337,9 @@ const handleUpload = async (
   const extension = dot > 0 ? safeBase.slice(dot) : '';
   const stem = (dot > 0 ? safeBase.slice(0, dot) : safeBase) || 'file';
   const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
-  const key = `uploads/${stamp}-${stem}${extension}`;
+  // 只存原件。展示尺寸由 Cloudflare Image Transformations 现场生成，
+  // 所以这里不压缩也不生成变体（Worker 里也跑不了图像处理库）。
+  const key = `images/originals/${stamp}-${stem}${extension}`;
 
   // 先按 content-length 判断，再把 body 直接流给 R2。
   // `await request.arrayBuffer()` 会把整个文件读进内存，大文件直接把 Worker 撑爆。
@@ -355,8 +357,15 @@ const handleUpload = async (
     },
   });
 
+  // 返回转换地址而不是原件地址：直接引用原件的话，一张手机照片就会原样
+  // 发给读者。onerror=redirect 保证万一超出免费额度时回退到原件而不是裂图。
+  const origin = env.MEDIA_PUBLIC_URL.replace(/\/$/, '');
   return json(
-    { url: `${env.MEDIA_PUBLIC_URL.replace(/\/$/, '')}/${key}`, bytes: declared },
+    {
+      url: `${origin}/cdn-cgi/image/width=1200,format=auto,onerror=redirect/${key}`,
+      original: `${origin}/${key}`,
+      bytes: declared,
+    },
     201,
   );
 };

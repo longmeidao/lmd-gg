@@ -39,17 +39,24 @@ git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`
 
 ## 图片
 
-**图片一律放 R2,不进仓库。** `src/content/images/` 已清空并删除。
+**R2 里只存原件,不进仓库,也不存派生文件。** 展示尺寸由 Cloudflare Image
+Transformations 现场生成,地址形如:
 
-- 正文写绝对地址:`https://media.lmd.gg/images/<name>.webp`
-- 上传前先压缩:最宽 1600px、webp q82(正文列约 588px,2 倍余量足够)
-- 同时生成 480px 小图放 `images/thumb/<name>.webp`,归档方格用它 ——
-  方格只有 170px 宽,塞原图是浪费
-- 撰写面板「插入媒体」上传的落在 `images/uploads/`,由 Worker 直接写 R2
+```
+https://media.lmd.gg/cdn-cgi/image/width=1200,format=auto,onerror=redirect/images/originals/xxx.png
+```
 
-代价:失去 Astro 构建时的图片处理(尺寸属性、格式协商)。**当时它本来也没生成
-srcset**,只是转 webp 保持原分辨率(`follow.png` 2590px、257K 塞进 588px 的列),
-所以换成预压缩其实是净赚。
+- 原件在 `images/originals/`,撰写面板上传的也落在这里
+- 正文用 `width=1200`(列宽约 588px,2 倍余量),归档方格用 `width=340`
+- `format=auto` 自动发 AVIF/WebP,**计费上只算一次**转换
+- `onerror=redirect`:万一超出免费额度会回退到原件而不是裂图
+- 地址生成集中在 `src/helpers/media.ts`,别到处手拼
+
+**转换必须从 media.lmd.gg 发起** —— 走 lmd.gg 的话相对路径会解析到静态资源
+而不是 R2,直接 404。
+
+免费额度每月 5000 次唯一转换(按「图片 × 参数」每月算一次),这个站远远用不完。
+这套的好处是:以后想换尺寸、加格式、上 srcset,都不用重新上传。
 
 ## 提交约定
 
