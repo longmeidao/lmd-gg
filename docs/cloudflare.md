@@ -21,8 +21,8 @@
 
 - `src/worker.ts` —— 后台接口，`/api/admin/{session,posts,upload}`
 - `wrangler.jsonc` —— 绑定、变量、静态资源配置
-- R2 桶 `lmd-gg-media` —— 已创建
-- **Worker 已部署**：<https://lmd-gg.longmeidao.workers.dev>（未接管 lmd.gg）
+- R2 桶 `lmd-gg-media` —— 已创建，`media.lmd.gg` 已绑定（ssl active）
+- **Worker 已部署**，并已接管 lmd.gg
 - `pnpm cf:deploy` / `pnpm cf:dev`
 
 已在 workers.dev 上验证：静态页面全部 200、`_redirects` 的 `/blog/*` 301 生效、
@@ -31,16 +31,17 @@ pagefind 索引可取、`/write` 及其 JS/CSS 正常；`/api/admin/session` 返
 
 ## 你要在 Cloudflare 控制台做的
 
-### 1. R2 公开访问
-
-R2 → `lmd-gg-media` → Settings → Public access → 绑自定义域名 `media.lmd.gg`。
-绑好之后确认 `wrangler.jsonc` 里的 `MEDIA_PUBLIC_URL` 和它一致。
-
-命令行也行，但要 zone ID（在 lmd.gg 的 Overview 页右下角）：
+### 1. R2 公开访问（已完成）
 
 ```bash
 npx wrangler r2 bucket domain add lmd-gg-media --domain media.lmd.gg --zone-id <ZONE_ID>
 ```
+
+**只有撰写面板上传的媒体走 R2。** 仓库里 `src/content/images/*` 的图片仍然由
+Astro 在构建时处理成 `/_astro/*.webp`（多尺寸、内容哈希），这条链路没变，
+也不该变 —— 构建时优化比运行时从 R2 取更快。
+
+所以 `media.lmd.gg` 在传第一张图之前一直是 404，属正常。
 
 ### 2. Zero Trust → Access 应用
 
@@ -95,7 +96,9 @@ npx wrangler secret put GITHUB_TOKEN
 pnpm cf:deploy
 ```
 
-`wrangler.jsonc` 里的 `routes` 已启用，lmd.gg 由 Worker 服务。
+lmd.gg 的自定义域名是在**控制台**直接绑到 Worker 上的（Workers → Settings →
+Domains & Routes），`wrangler.jsonc` 里的 `routes` 保持注释。两种方式二选一，
+别同时配。
 
 切换后实测：公开页面（首页、归档、精选、合集、about、两个 RSS、pagefind）
 全部 200；`/write` 和 `/api/admin/*` 302 到 Access；`/blog/*` 301 到新地址。

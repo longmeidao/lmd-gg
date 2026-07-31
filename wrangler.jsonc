@@ -37,7 +37,8 @@
     "ACCESS_TEAM_DOMAIN": "https://longmeidao.cloudflareaccess.com",
     "ACCESS_AUD": "ca5c2be558643e14cc8515459ed875f65958999d367cdecb6c53acba9c2f6393",
 
-    // R2 桶的公开域名，还没绑，见 docs/cloudflare.md
+    // R2 桶的公开域名（已绑，ssl active）。只有撰写面板上传的媒体走这里；
+    // 仓库里 src/content/images 的图仍由 Astro 构建时处理成 /_astro/*.webp。
     "MEDIA_PUBLIC_URL": "https://media.lmd.gg"
   },
 
@@ -48,8 +49,9 @@
     "required": ["GITHUB_TOKEN"]
   }
 
-  // 域名先不接管。等在 *.workers.dev 上验证完再打开这段，
-  // 否则一部署就会从 Netlify 手里抢走 lmd.gg 的流量。
+  // lmd.gg 的自定义域名是在 Cloudflare 控制台直接绑到这个 Worker 上的
+  // （Workers → Settings → Domains & Routes），不是通过这里的 routes。
+  // 两种方式二选一即可，别同时配，否则容易互相覆盖。
   //
   // "routes": [{ "pattern": "lmd.gg", "custom_domain": true }]
 }
