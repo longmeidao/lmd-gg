@@ -20,11 +20,29 @@ export const BODY_WIDTH = 1200;
 export const THUMB_WIDTH = 340;
 
 /**
+ * 质量 95 而不是默认的 85 —— 截图里的文字对压缩最敏感，85 的 AVIF 边缘会发糊。
+ *
+ * 1200px 下实测（迁移前 Astro 发的 webp 作对照）：
+ *
+ *   图片                     原件   迁移前 | q85   q90   q92   q95
+ *   follow.png              1209K    257K | 123K  162K  185K  241K
+ *   win-shift-s-capture.png  388K    184K | 209K  318K  383K  555K
+ *   sharex-config.png        125K     62K |  44K   64K   76K  108K
+ *
+ * 代价集中在 win-shift-s-capture —— 那是张带照片背景的窗口截图，细节多，
+ * AVIF 在高质量下反而比原 PNG 还大。要在体积和画质之间重新取舍，改这一个
+ * 常量即可：q92 大致是平衡点，q85 是 Cloudflare 默认。
+ *
+ * 宽度不用调：正文列 588px CSS，2 倍屏需 1176 设备像素；手机列约 327px，
+ * 3 倍屏需 981 —— 1200 两种都覆盖得住。q100 会跳到 730K，收益递减。
+ *
  * `onerror=redirect`：万一某月超了免费额度，转换会返回 9422，
  * 这个参数让它回退到原件而不是裂图。源和转换同域时才可用，正好符合。
  */
+const QUALITY = 95;
+
 const transform = (width: number) =>
-  `width=${width},format=auto,onerror=redirect`;
+  `width=${width},quality=${QUALITY},format=auto,onerror=redirect`;
 
 /** 由原件的 key 生成展示地址 */
 export const mediaUrl = (key: string, width = BODY_WIDTH) =>
