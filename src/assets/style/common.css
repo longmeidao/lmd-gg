@@ -279,6 +279,7 @@ body {
   border-radius: 0.75rem;
   margin-block: 1.5rem;
   padding: 1rem;
+  font-size: 0.9rem;
   /* vendor 的 --block-text-color 是 #333（浅色主题假设）。<p> 被下面盖掉了，
      但列表、加粗这些非 p 的内容会变成深色背景上的深灰，几乎看不见。 */
   color: var(--color-slate12);
@@ -288,7 +289,7 @@ body {
 .home-entry-content .block-default p {
   margin-block: 0;
   color: var(--color-slate12);
-  font-size: 1.0667rem;
+  font-size: 0.9rem;
   line-height: 1.7;
 }
 

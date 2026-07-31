@@ -72,8 +72,12 @@
     @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
   }
 
+  /* 同 feed：换行时每段各画一个完整的框，默认 slice 会把边框圆角切开 */
   code {
     @apply border-slate4 bg-slate3 text-slate11 mx-0.5 rounded-lg border p-0.5 px-1 text-base;
+
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .code {

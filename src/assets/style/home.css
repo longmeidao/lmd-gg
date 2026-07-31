@@ -614,12 +614,16 @@
   background-image: none;
 }
 
+/* 换行时每段各画一个完整的框。默认的 slice 会把边框和圆角从中间切开：
+   前半截只有左边圆角、后半截只有右边，看着像被拦腰截断。 */
 .home-entry-content code {
   border: 1px solid var(--color-slate4);
   border-radius: 0.5rem;
   background: var(--color-slate3);
   margin-inline: 0.125rem;
   padding: 0.125rem 0.25rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   color: var(--color-slate11);
   font-size: 0.75em;
 }
