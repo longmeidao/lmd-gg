@@ -40,15 +40,15 @@ import './search.css';
 </dialog>
 
 <script is:inline type="module">
-  const dialog = document.querySelector('[data-search-dialog]');
-  const openButton = document.querySelector('[data-search-open]');
-  const input = document.querySelector('[data-search-input]');
-  const status = document.querySelector('[data-search-status]');
-  const results = document.querySelector('[data-search-results]');
-
-  if (!dialog || !openButton || !input || !status || !results) {
-    throw new Error('Search UI is incomplete.');
-  }
+  /*
+   * ClientRouter 换页后 DOM 是全新的，所以不能在模块顶层把元素引用抓死 ——
+   * 那样按钮的监听会留在已被移除的旧节点上，快捷键也会去开一个脱离文档的
+   * 旧 dialog，表现就是「点了没反应」。
+   *
+   * 做法：所有处理函数在调用时现查 DOM；每页元素级监听绑一次（用 data 标记
+   * 防重复）；document 级的快捷键因为 document 不会被换掉，只绑一次。
+   */
+  const q = (selector) => document.querySelector(selector);
 
   let pagefindPromise;
   let searchTimer;
@@ -67,17 +67,21 @@ import './search.css';
   };
 
   const openSearch = () => {
+    const dialog = q('[data-search-dialog]');
+    if (!dialog) return;
     if (!dialog.open) dialog.showModal();
-    input.focus();
+    q('[data-search-input]')?.focus();
     void loadPagefind().catch(() => undefined);
   };
 
   const closeSearch = () => {
-    dialog.close();
-    openButton.focus();
+    q('[data-search-dialog]')?.close();
+    q('[data-search-open]')?.focus();
   };
 
   const renderResults = (items) => {
+    const results = q('[data-search-results]');
+    if (!results) return;
     results.replaceChildren();
 
     for (const item of items) {
@@ -101,13 +105,18 @@ import './search.css';
   };
 
   const runSearch = async () => {
+    const input = q('[data-search-input]');
+    const status = q('[data-search-status]');
+    const results = q('[data-search-results]');
+    if (!input || !status || !results) return;
+
     const query = input.value.trim();
     const sequence = ++searchSequence;
 
     if (!query) {
       results.replaceChildren();
       results.hidden = true;
-      status.textContent = '输入标题、正文或标签关键词';
+      status.textContent = '输入标题或正文关键词';
       return;
     }
 
@@ -131,18 +140,36 @@ import './search.css';
     }
   };
 
-  openButton.addEventListener('click', openSearch);
-  dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) closeSearch();
-  });
-  input.addEventListener('input', () => {
-    window.clearTimeout(searchTimer);
-    searchTimer = window.setTimeout(runSearch, 160);
-  });
-  document.addEventListener('keydown', (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-      event.preventDefault();
-      openSearch();
-    }
-  });
+  /** 每页绑一次元素级监听 */
+  const setup = () => {
+    const dialog = q('[data-search-dialog]');
+    const openButton = q('[data-search-open]');
+    const input = q('[data-search-input]');
+    if (!dialog || !openButton || !input) return;
+    if (dialog.dataset.searchReady === 'true') return;
+    dialog.dataset.searchReady = 'true';
+
+    openButton.addEventListener('click', openSearch);
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) closeSearch();
+    });
+    input.addEventListener('input', () => {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(runSearch, 160);
+    });
+  };
+
+  // document 不会被 ClientRouter 换掉，快捷键只绑一次
+  if (!window.__lmdSearchShortcut) {
+    window.__lmdSearchShortcut = true;
+    document.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openSearch();
+      }
+    });
+  }
+
+  setup();
+  document.addEventListener('astro:page-load', setup);
 </script>
