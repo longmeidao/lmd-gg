@@ -1,0 +1,60 @@
+name: Deploy to Cloudflare Workers
+
+# 撰写面板发文章 = Worker 往仓库提交一次 commit，然后要靠这里重新构建部署。
+# 迁到 Cloudflare 之前这一步是 Netlify 自动做的，换过来之后一度没人接手，
+# 结果是 GitHub 收到了提交但站点不更新。
+on:
+  push:
+    branches: [main]
+    # 只排除跟站点产物无关的。**不能**写 `**/*.md` —— 文章就是 md，
+    # 那样一排除，发文章反而不会触发部署，等于白做。
+    # （paths-ignore 也不支持 `!` 取反。）
+    paths-ignore:
+      - docs/**
+      - README*.md
+      - CLAUDE.md
+      - .github/workflows/health-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 连着发几条时，只部署最新那次；但别打断进行中的部署
+concurrency:
+  group: deploy-workers
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          # remark-modified-time 要读每个文件的提交历史来算「最后修改」，
+          # 浅克隆会让它取不到，日期就全变成最近一次构建的时间。
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 这里跑的是完整的 build：tsc、astro check、pagefind 索引、verify:rss
+      # 都在内。构建失败就不会部署，坏内容进不了线上。
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

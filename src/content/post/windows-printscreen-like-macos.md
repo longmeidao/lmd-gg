@@ -5,11 +5,11 @@ pubDate: 2025-02-14
 
 在 macOS 上，妳可以使用 `⇧ + ⌘ + 5` 快捷键唤起系统自带的「截屏」应用，来截图、录屏。*（详见[在 Mac 上截屏或录屏](https://support.apple.com/zh-cn/guide/mac-help/mh26782/mac)。）*
 
-![macOS 上使用「截屏」应用截取的「Follow」窗口](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=95,format=auto,onerror=redirect/images/originals/follow.png)
+![macOS 上使用「截屏」应用截取的「Follow」窗口](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=92,format=webp,onerror=redirect/images/originals/follow.png)
 
 自 Windows 10 起，妳也可以使用 `Win + Shift + S` 快捷键来唤起系统自带的「截图工具」应用，来实现与 macOS 类似的截图体验。
 
-![Windows 上使用「截图工具」快捷键截取的「Typora」窗口](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=95,format=auto,onerror=redirect/images/originals/win-shift-s-capture.png)
+![Windows 上使用「截图工具」快捷键截取的「Typora」窗口](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=92,format=webp,onerror=redirect/images/originals/win-shift-s-capture.png)
 
 然而相似的只是截图体验，并非<span class="heti-em">截图效果</span>。「截图工具」捕获的窗口图片：
 
@@ -22,7 +22,7 @@ pubDate: 2025-02-14
 
 直到我在 LINUX DO 的一个[帖子](https://linux.do/t/topic/330335/5)里发现了「ShareX」，其截取活动窗口的功能在设置「截图窗口带阴影」后，截图图片才达到了类似 macOS 的截图效果：
 
-![ShareX 在调整设置后的截图结果](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=95,format=auto,onerror=redirect/images/originals/sharex-config.png)
+![ShareX 在调整设置后的截图结果](https://media.lmd.gg/cdn-cgi/image/width=1200,quality=92,format=webp,onerror=redirect/images/originals/sharex-config.png)
 
 ShareX 还支持功能强大的图像特效，官方提供了不少[例子](https://getsharex.com/image-effects)供参考。
 

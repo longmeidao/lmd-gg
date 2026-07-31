@@ -362,7 +362,7 @@ const handleUpload = async (
   const origin = env.MEDIA_PUBLIC_URL.replace(/\/$/, '');
   return json(
     {
-      url: `${origin}/cdn-cgi/image/width=1200,quality=95,format=auto,onerror=redirect/${key}`,
+      url: `${origin}/cdn-cgi/image/width=1200,quality=92,format=webp,onerror=redirect/${key}`,
       original: `${origin}/${key}`,
       bytes: declared,
     },

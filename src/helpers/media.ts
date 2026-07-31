@@ -20,29 +20,30 @@ export const BODY_WIDTH = 1200;
 export const THUMB_WIDTH = 340;
 
 /**
- * 质量 95 而不是默认的 85 —— 截图里的文字对压缩最敏感，85 的 AVIF 边缘会发糊。
+ * webp q92，不用 `format=auto`。
  *
- * 1200px 下实测（迁移前 Astro 发的 webp 作对照）：
+ * auto 在浏览器支持时会发 AVIF，但 AVIF 只在中低质量下省 —— 到了高质量档，
+ * 它的编码开销会反超 webp，而这个站的图基本都是截图。1200px 下实测：
  *
- *   图片                     原件   迁移前 | q85   q90   q92   q95
- *   follow.png              1209K    257K | 123K  162K  185K  241K
- *   win-shift-s-capture.png  388K    184K | 209K  318K  383K  555K
- *   sharex-config.png        125K     62K |  44K   64K   76K  108K
+ *   图片                     原件   迁移前 | avif q95  webp q92
+ *   follow.png              1209K    257K |     241K      176K
+ *   win-shift-s-capture.png  388K    184K |     555K      263K
+ *   sharex-config.png        125K     62K |     108K       66K
  *
- * 代价集中在 win-shift-s-capture —— 那是张带照片背景的窗口截图，细节多，
- * AVIF 在高质量下反而比原 PNG 还大。要在体积和画质之间重新取舍，改这一个
- * 常量即可：q92 大致是平衡点，q85 是 Cloudflare 默认。
+ * q95 的 avif 有两张比原件还大，压了个寂寞。webp q92 三张都压到原件以下，
+ * 且 q92 是拐点 —— 再往上 win-shift 会从 263K 跳到 463K。
  *
- * 宽度不用调：正文列 588px CSS，2 倍屏需 1176 设备像素；手机列约 327px，
- * 3 倍屏需 981 —— 1200 两种都覆盖得住。q100 会跳到 730K，收益递减。
+ * 代价：照片类内容 AVIF 本来更优（实测一张手机照 avif 53K / webp 65K），
+ * 但差额远小于截图那一侧，而这个站以截图为主。
  *
  * `onerror=redirect`：万一某月超了免费额度，转换会返回 9422，
  * 这个参数让它回退到原件而不是裂图。源和转换同域时才可用，正好符合。
  */
-const QUALITY = 95;
+const QUALITY = 92;
+const FORMAT = 'webp';
 
 const transform = (width: number) =>
-  `width=${width},quality=${QUALITY},format=auto,onerror=redirect`;
+  `width=${width},quality=${QUALITY},format=${FORMAT},onerror=redirect`;
 
 /** 由原件的 key 生成展示地址 */
 export const mediaUrl = (key: string, width = BODY_WIDTH) =>

@@ -40,23 +40,28 @@ git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`
 ## 图片
 
 **R2 里只存原件,不进仓库,也不存派生文件。** 展示尺寸由 Cloudflare Image
-Transformations 现场生成,地址形如:
-
-```
-https://media.lmd.gg/cdn-cgi/image/width=1200,format=auto,onerror=redirect/images/originals/xxx.png
-```
+Transformations 现场生成,地址集中在 `src/helpers/media.ts` 生成,别手拼。
 
 - 原件在 `images/originals/`,撰写面板上传的也落在这里
-- 正文用 `width=1200`(列宽约 588px,2 倍余量),归档方格用 `width=340`
-- `format=auto` 自动发 AVIF/WebP,**计费上只算一次**转换
-- `onerror=redirect`:万一超出免费额度会回退到原件而不是裂图
-- 地址生成集中在 `src/helpers/media.ts`,别到处手拼
+- 正文 `width=1200`(列宽 588px,2 倍屏需 1176、手机 3 倍屏需 981,都覆盖得住)
+- 归档方格 `width=340`
+- **用 `format=webp` 不用 `format=auto`** —— AVIF 只在中低质量下省,到高质量档
+  编码开销会反超 webp,而这个站的图基本是截图。实测 q95 的 AVIF 有两张比原件
+  还大。webp q92 是拐点,三张全部压到原件以下
+- `onerror=redirect`:超出免费额度时回退到原件,不裂图
 
-**转换必须从 media.lmd.gg 发起** —— 走 lmd.gg 的话相对路径会解析到静态资源
-而不是 R2,直接 404。
+免费额度每月 5000 次唯一转换(按「图片 × 参数」每月算一次),远远用不完。
+改尺寸/质量**不用重新上传**,改常量再部署一次即可。
 
-免费额度每月 5000 次唯一转换(按「图片 × 参数」每月算一次),这个站远远用不完。
-这套的好处是:以后想换尺寸、加格式、上 srcset,都不用重新上传。
+## 部署
+
+**push 到 main 会触发 `.github/workflows/deploy.yml` 自动构建部署。**
+撰写面板发文章 = Worker 往仓库提交 → 这个工作流重新构建 → 上线,约 1–2 分钟。
+
+- 需要仓库 secrets:`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`
+- checkout 必须 `fetch-depth: 0` —— `remark-modified-time` 要读每个文件的
+  提交历史算「最后修改」,浅克隆会让日期全变成最近一次构建时间
+- 手动部署仍可用 `pnpm cf:deploy`
 
 ## 提交约定
 
