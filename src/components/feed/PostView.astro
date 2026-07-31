@@ -39,6 +39,9 @@ interface Props {
 
 const { post, relatedPosts } = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
+const hasTitle = Boolean(post.data.title?.trim());
+// 页面标题、og、JSON-LD 仍然需要一个名字，所以这里保留兜底；
+// 但正文里只有 hasTitle 为真时才渲染 h1。
 const postTitle = getPostDisplayTitle(post.data);
 const postDescription = getPostExcerpt(post.body);
 const lastModifiedDate = dayjs(
@@ -49,6 +52,17 @@ const lastModifiedDate = dayjs(
 const lastModified = lastModifiedDate.format('YYYY年M月D日');
 const pubDate = dayjs(post.data.pubDate);
 const formattedPubDate = pubDate.format('YYYY年M月D日');
+/**
+ * 「编辑于」只在真的改过正文时才显示。remark-modified-time 取的是最后一次
+ * 改动正文的提交时间，刚发布时它就等于发布日期，那时候再显示一遍没意义。
+ */
+/** 只有一张图的随记算出来是 0 分钟，那行字没有意义 */
+const showReadTime =
+  Boolean(slateConfig.readTime) && remarkPluginFrontmatter.minutesRead > 0;
+
+const showLastModified =
+  Boolean(slateConfig.lastModified) &&
+  lastModifiedDate.format('YYYY-MM-DD') !== pubDate.format('YYYY-MM-DD');
 
 /**
  * 串文里的任意一条被点开时，整串都要展示出来，左侧锚点高亮当前这条。
@@ -131,54 +145,93 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
   }
 
   <div class="blog-content">
-    <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
-      <h1>{postTitle}</h1>
-      <div class="post-header-meta text-slate10 flex items-center gap-2">
-        <span>{formattedPubDate}</span>
-        {
-          post.data.rating && (
-            <>
-              <span class="heti-skip">·</span>
-              <span aria-label={`${post.data.rating} 星评分`}>
-                {'★'.repeat(post.data.rating)}
-                {'☆'.repeat(5 - post.data.rating)}
-              </span>
-            </>
-          )
-        }
-        {!!slateConfig.readTime && <span class="heti-skip">·</span>}
-        {
-          slateConfig.readTime && (
-            <div>
-              {i18next.t('blog.readingTime', {
-                minutes: remarkPluginFrontmatter.minutesRead,
-              })}
-            </div>
-          )
-        }
-        <PostActions
-          slug={post.id}
-          collections={post.data.collections ?? []}
-          hiddenFromLatest={post.data.hiddenFromLatest}
-          draft={post.data.draft}
-          featured={post.data.featured}
-          pinned={post.data.pinned}
-        />
-      </div>
-    </div>
+    {
+      /* 无标题的内容不造标题、也不在上面挂日期 —— 那一行对一条随记来说太重了。
+         日期和操作统一放到正文下面的信息栏（同 owen 的 /18oun）。 */
+      hasTitle && (
+        <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
+          <h1>{postTitle}</h1>
+          <div class="post-header-meta text-slate10 flex items-center gap-2">
+            <span>{formattedPubDate}</span>
+            {post.data.rating && (
+              <>
+                <span class="heti-skip">·</span>
+                <span aria-label={`${post.data.rating} 星评分`}>
+                  {'★'.repeat(post.data.rating)}
+                  {'☆'.repeat(5 - post.data.rating)}
+                </span>
+              </>
+            )}
+            {showReadTime && <span class="heti-skip">·</span>}
+            {showReadTime && (
+              <div>
+                {i18next.t('blog.readingTime', {
+                  minutes: remarkPluginFrontmatter.minutesRead,
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
     <div
       class:list={['post-content', 'heti', isThread && 'sr-only']}
       data-pagefind-body
     >
       <Content />
-      {
-        slateConfig.lastModified && (
-          <div class="post-footer-meta text-slate8">
-            {i18next.t('blog.lastModified')} {lastModified}
-          </div>
-        )
-      }
     </div>
+
+    {
+      /* 正文下面的信息栏。无标题的内容在这里第一次出现日期；有标题的上面已经
+         有发布日期了，这里只补「编辑于」。两者都把操作按钮放在这一行。 */
+      !isThread && (
+        <div class="post-meta-bar">
+          <div class="post-meta-bar-facts">
+            {!hasTitle && (
+              <>
+                <span>{formattedPubDate}</span>
+                {post.data.rating && (
+                  <>
+                    <span class="heti-skip">·</span>
+                    <span aria-label={`${post.data.rating} 星评分`}>
+                      {'★'.repeat(post.data.rating)}
+                      {'☆'.repeat(5 - post.data.rating)}
+                    </span>
+                  </>
+                )}
+                {showReadTime && (
+                  <>
+                    <span class="heti-skip">·</span>
+                    <span>
+                      {i18next.t('blog.readingTime', {
+                        minutes: remarkPluginFrontmatter.minutesRead,
+                      })}
+                    </span>
+                  </>
+                )}
+              </>
+            )}
+            {showLastModified && (
+              <>
+                {!hasTitle && <span class="heti-skip">·</span>}
+                <span>
+                  {i18next.t('blog.lastModified')} {lastModified}
+                </span>
+              </>
+            )}
+          </div>
+          <PostActions
+            slug={post.id}
+            collections={post.data.collections ?? []}
+            hiddenFromLatest={post.data.hiddenFromLatest}
+            draft={post.data.draft}
+            featured={post.data.featured}
+            pinned={post.data.pinned}
+          />
+        </div>
+      )
+    }
     <RelatedPosts posts={relatedPosts} />
   </div>
 </PageLayout>

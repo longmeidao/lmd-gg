@@ -1,10 +1,41 @@
 @reference "./common.css";
 
-/* 标题下的日期、正文末尾的更新时间：跟 owen 的 13.5/18.225 对齐（换算成本站 rem） */
+/* 标题下的日期、正文下面的信息栏：跟 owen 的 13.5/18.225 对齐（换算成本站 rem） */
 .post-header-meta,
-.post-footer-meta {
+.post-meta-bar {
   font-size: 0.9rem;
   line-height: 1.35;
+}
+
+/*
+ * 正文下面的信息栏。无标题的内容在这里第一次出现日期（上面那行对一条随记
+ * 来说太重了），操作按钮也从标题旁挪到了这里。
+ */
+.post-meta-bar {
+  display: flex;
+  max-width: 36.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+  color: var(--color-slate9);
+}
+
+.post-meta-bar-facts {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* 只有操作按钮、没有文字时，把按钮推到左边，别孤零零吊在右侧 */
+.post-meta-bar-facts:empty {
+  display: none;
+}
+
+.post-meta-bar-facts:empty + .post-admin {
+  margin-left: 0;
 }
 
 .blog-content {
