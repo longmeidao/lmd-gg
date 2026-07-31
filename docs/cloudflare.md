@@ -70,24 +70,36 @@ Zero Trust → Access → Applications → Add an application → Self-hosted：
 npx wrangler secret put GITHUB_TOKEN
 ```
 
-### 4. 填完变量后重新部署验证
+### 4. 部署
 
 ```bash
 pnpm cf:deploy
 ```
 
-这时 `wrangler.jsonc` 里的 `routes` 还是注释掉的，**不会碰 lmd.gg**，
-Netlify 继续正常服务。用返回的 `*.workers.dev` 地址测：
+`routes` 还注释着，所以**不会碰 lmd.gg**，Netlify 继续正常服务。
 
-- 打开 `/write` → 应该跳到 Access 登录页
-- 登录后 `/api/admin/session` → `{"authenticated":true}`
-- 没登录时直接请求 `/api/admin/posts` → 401
+> **workers.dev 上测不出 Access。** Access 是绑在 zone（lmd.gg）上的，
+> `*.workers.dev` 不属于这个 zone，所以那边打开 `/write` 不会跳登录页，
+> `/api/admin/session` 也永远是 `{"authenticated":false}`（拿不到 Access Cookie）。
+>
+> 在 workers.dev 上能验的只有：静态页面是否正常、后台接口是否**失败关闭**。
+> 登录流程必须等域名切过来之后才能测。
 
-### 5. 切换域名
+### 5. 切换域名，然后才测登录
 
-上面都通过之后，取消 `wrangler.jsonc` 里 `routes` 那段的注释，重新部署，
-再把 Netlify 上的域名解绑。**Netlify 的项目先留着别删**，
-万一要回滚，把 DNS 指回去就行。
+取消 `wrangler.jsonc` 里 `routes` 那段的注释，重新部署，再把 Netlify 上的域名解绑。
+
+切过来之后测：
+
+- 打开 `https://lmd.gg/write` → 跳 Access 登录页，收邮件验证码
+- 登录后 `https://lmd.gg/api/admin/session` → `{"authenticated":true}`
+- 换个无痕窗口直接请求 `/api/admin/posts` → 401
+
+**Netlify 的项目先留着别删**，万一要回滚，把 DNS 指回去就行。
+真被 Access 挡在外面也不影响发文章 —— 内容是 git 里的 markdown，直接 commit 就能发。
+
+排查用 `npx wrangler tail`：Access 没配好时 Worker 会打一条
+`access_not_configured` / `access_certs_failed` 的日志。
 
 ## 本地开发不受影响
 

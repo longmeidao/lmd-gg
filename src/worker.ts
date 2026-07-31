@@ -66,7 +66,17 @@ const accessKeys = async (env: Env): Promise<CryptoKey[]> => {
   const response = await fetch(
     `${env.ACCESS_TEAM_DOMAIN.replace(/\/$/, '')}/cdn-cgi/access/certs`,
   );
-  if (!response.ok) throw new Error('取 Access 证书失败');
+  if (!response.ok) {
+    // 没这条日志的话，配错了只会看到 authenticated:false，无从查起
+    console.error(
+      JSON.stringify({
+        event: 'access_certs_failed',
+        status: response.status,
+        teamDomain: env.ACCESS_TEAM_DOMAIN,
+      }),
+    );
+    throw new Error('取 Access 证书失败');
+  }
   const body = (await response.json()) as CertsResponse;
 
   const keys = await Promise.all(
@@ -92,6 +102,14 @@ const readToken = (request: Request): string => {
 };
 
 const verifyAccess = async (request: Request, env: Env): Promise<boolean> => {
+  if (
+    env.ACCESS_AUD.includes('REPLACE-ME') ||
+    env.ACCESS_TEAM_DOMAIN.includes('REPLACE-ME')
+  ) {
+    console.error(JSON.stringify({ event: 'access_not_configured' }));
+    return false;
+  }
+
   const token = readToken(request);
   if (!token) return false;
 
