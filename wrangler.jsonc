@@ -39,6 +39,9 @@
     "MEDIA_PUBLIC_URL": "https://media.lmd.gg"
   },
 
+  // Worker 已建好，这条守卫恢复：没设 GITHUB_TOKEN 就不让部署。
+  // （首次部署时它会挡住，因为 Worker 不存在就没法预先设密钥 ——
+  //  当时是临时摘掉这条完成引导的。）
   "secrets": {
     "required": ["GITHUB_TOKEN"]
   }

@@ -22,22 +22,27 @@
 - `src/worker.ts` —— 后台接口，`/api/admin/{session,posts,upload}`
 - `wrangler.jsonc` —— 绑定、变量、静态资源配置
 - R2 桶 `lmd-gg-media` —— 已创建
+- **Worker 已部署**：<https://lmd-gg.longmeidao.workers.dev>（未接管 lmd.gg）
 - `pnpm cf:deploy` / `pnpm cf:dev`
+
+已在 workers.dev 上验证：静态页面全部 200、`_redirects` 的 `/blog/*` 301 生效、
+pagefind 索引可取、`/write` 及其 JS/CSS 正常；`/api/admin/session` 返回
+`{"authenticated":false}`，其余后台接口一律 401 —— **失败关闭**。
 
 ## 你要在 Cloudflare 控制台做的
 
-### 1. 登录 wrangler
-
-```bash
-npx wrangler login
-```
-
-### 2. R2 公开访问
+### 1. R2 公开访问
 
 R2 → `lmd-gg-media` → Settings → Public access → 绑自定义域名 `media.lmd.gg`。
 绑好之后确认 `wrangler.jsonc` 里的 `MEDIA_PUBLIC_URL` 和它一致。
 
-### 3. Zero Trust → Access 应用
+命令行也行，但要 zone ID（在 lmd.gg 的 Overview 页右下角）：
+
+```bash
+npx wrangler r2 bucket domain add lmd-gg-media --domain media.lmd.gg --zone-id <ZONE_ID>
+```
+
+### 2. Zero Trust → Access 应用
 
 Zero Trust → Access → Applications → Add an application → Self-hosted：
 
@@ -56,7 +61,7 @@ Zero Trust → Access → Applications → Add an application → Self-hosted：
 > Worker 自己也会验一遍 JWT 签名。只靠 Access 在边缘拦截是不够的 ——
 > 绕过自定义域名直接打 `*.workers.dev` 就没人管了。
 
-### 4. GitHub token
+### 3. GitHub token
 
 生成一个 fine-grained PAT，**只授权 `longmeidao/lmd-gg` 这一个仓库**，
 权限只勾 `Contents: Read and write`，然后：
@@ -65,7 +70,7 @@ Zero Trust → Access → Applications → Add an application → Self-hosted：
 npx wrangler secret put GITHUB_TOKEN
 ```
 
-### 5. 先在 workers.dev 上验证
+### 4. 填完变量后重新部署验证
 
 ```bash
 pnpm cf:deploy
@@ -78,7 +83,7 @@ Netlify 继续正常服务。用返回的 `*.workers.dev` 地址测：
 - 登录后 `/api/admin/session` → `{"authenticated":true}`
 - 没登录时直接请求 `/api/admin/posts` → 401
 
-### 6. 切换域名
+### 5. 切换域名
 
 上面都通过之后，取消 `wrangler.jsonc` 里 `routes` 那段的注释，重新部署，
 再把 Netlify 上的域名解绑。**Netlify 的项目先留着别删**，
