@@ -11,6 +11,7 @@ import rehypeKatex from 'rehype-katex';
 import codeImport from 'remark-code-import';
 import remarkBlockContainers from 'remark-block-containers';
 import remarkCjkFriendly from 'remark-cjk-friendly';
+import remarkParentheticalEmphasis from './plugins/remark-parenthetical-emphasis';
 import astroExpressiveCode from 'astro-expressive-code';
 import rehypeFigure from 'rehype-figure';
 
@@ -27,6 +28,8 @@ function generateAstroConfigure() {
     // 原样渲染成多余的空隙。这个插件按 CJK 规则放宽判定。
     // 注意：只对 `*`/`**` 生效，`_` 在 CommonMark 里是刻意保持严格的。
     remarkCjkFriendly,
+    // 给 `*（…）*` 这种整段被括号包住的强调打上 em-aside，供样式区分旁注
+    remarkParentheticalEmphasis,
     remarkGemoji,
     remarkMath,
     codeImport,

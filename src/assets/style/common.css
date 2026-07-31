@@ -190,6 +190,14 @@ body {
   padding-inline: clamp(1.5rem, 12.5vw, 10rem) clamp(1.5rem, 4vw, 3.25rem);
 }
 
+/* 偏左的版式只在宽屏才成立：窄屏下左边 12.5vw 已经比右边的下限大出一截
+   （375px 时是 47px 对 24px），看着就是左右不等。移动端拉回对称。 */
+@media (max-width: 640px) {
+  .site-shell {
+    padding-inline: 1.5rem;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -242,9 +250,15 @@ body {
   font-family:
     'Times New Roman', times, serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol';
-  font-size: 0.95rem;
   font-weight: 400;
   font-style: italic;
+}
+
+/* 只有整段被括号包住的旁注才缩小，普通强调保持正文字号。
+   这个类由 plugins/remark-parenthetical-emphasis.ts 在构建时打上。 */
+.blog-content .heti em.em-aside,
+.home-entry-content em.em-aside {
+  font-size: 0.95rem;
 }
 
 .blog-content .heti .heti-em,
