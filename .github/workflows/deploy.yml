@@ -19,6 +19,12 @@ on:
 permissions:
   contents: read
 
+# 构建机器的时区决定「编辑于」显示成哪一天。runner 默认是 UTC，而 pubDate 是
+# 写作时的本地日期，两者一错位就会出现「发布 8月1日 · 编辑于 7月31日」——
+# 同一时刻被渲染成两个日期。钉死成写作所在时区。
+env:
+  TZ: Asia/Shanghai
+
 # 连着发几条时，只部署最新那次；但别打断进行中的部署
 concurrency:
   group: deploy-workers

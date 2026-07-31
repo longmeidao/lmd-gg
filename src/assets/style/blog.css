@@ -29,6 +29,13 @@
   gap: 0.4rem;
 }
 
+/* heti 会往文字里插 <heti-spacing>，它在 flex 容器下会被当成独立的 flex item
+   而散开。日期整段本来就在一个 span 里，这里把插入物拉回行内。 */
+.post-meta-bar-facts heti-spacing,
+.post-meta-bar-facts heti-adjacent {
+  display: inline;
+}
+
 /* 只有操作按钮、没有文字时，把按钮推到左边，别孤零零吊在右侧 */
 .post-meta-bar-facts:empty {
   display: none;

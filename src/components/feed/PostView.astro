@@ -52,17 +52,23 @@ const lastModifiedDate = dayjs(
 const lastModified = lastModifiedDate.format('YYYY年M月D日');
 const pubDate = dayjs(post.data.pubDate);
 const formattedPubDate = pubDate.format('YYYY年M月D日');
-/**
- * 「编辑于」只在真的改过正文时才显示。remark-modified-time 取的是最后一次
- * 改动正文的提交时间，刚发布时它就等于发布日期，那时候再显示一遍没意义。
- */
 /** 只有一张图的随记算出来是 0 分钟，那行字没有意义 */
 const showReadTime =
   Boolean(slateConfig.readTime) && remarkPluginFrontmatter.minutesRead > 0;
 
+/**
+ * 「编辑于」只在真的改过正文、且确实晚于发布日期时才显示。
+ *
+ * pubDate 是发布时写进 frontmatter 的本地日期，定死不变；而 remark-modified-time
+ * 读的是 git 提交时间戳，按构建机器的时区格式化。CI 的 runner 是 UTC，跨时区就会
+ * 把同一时刻渲染成前一天，显示成「2026年8月1日 · 编辑于 2026年7月31日」。
+ *
+ * 根治办法是在工作流里把 TZ 钉成 Asia/Shanghai（见 .github/workflows/deploy.yml）。
+ * 这里的「严格晚于」是兜底：万一哪天又有别的时区来源，也不会显示出倒流的日期。
+ */
 const showLastModified =
   Boolean(slateConfig.lastModified) &&
-  lastModifiedDate.format('YYYY-MM-DD') !== pubDate.format('YYYY-MM-DD');
+  lastModifiedDate.startOf('day').isAfter(pubDate.startOf('day'));
 
 /**
  * 串文里的任意一条被点开时，整串都要展示出来，左侧锚点高亮当前这条。
@@ -247,7 +253,9 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
 
   const applySpacing = () => {
     document
-      .querySelectorAll<HTMLElement>('.post-header, .post-content.heti')
+      .querySelectorAll<HTMLElement>(
+        '.post-header, .post-content.heti, .post-meta-bar-facts',
+      )
       .forEach((root) => {
         if (root.dataset.hetiDone === 'true') return;
         root.dataset.hetiDone = 'true';
