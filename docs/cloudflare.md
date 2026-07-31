@@ -78,12 +78,20 @@ pnpm cf:deploy
 
 `routes` 还注释着，所以**不会碰 lmd.gg**，Netlify 继续正常服务。
 
-> **workers.dev 上测不出 Access。** Access 是绑在 zone（lmd.gg）上的，
-> `*.workers.dev` 不属于这个 zone，所以那边打开 `/write` 不会跳登录页，
-> `/api/admin/session` 也永远是 `{"authenticated":false}`（拿不到 Access Cookie）。
+> **切域名之前，Access 一定不生效**，两个原因叠加：
 >
-> 在 workers.dev 上能验的只有：静态页面是否正常、后台接口是否**失败关闭**。
-> 登录流程必须等域名切过来之后才能测。
+> 1. `*.workers.dev` 不属于 lmd.gg 这个 zone，Access 管不到它。
+> 2. 更要紧的是 —— 现在 lmd.gg 的流量**根本不经过 Cloudflare**。
+>    `curl -I https://lmd.gg/` 返回 `server: Netlify` 且没有 `cf-ray`；
+>    对照 `https://sesese.se/` 是 `server: cloudflare` + `cf-ray`。
+>    DNS 记录是 DNS-only（灰云）直连 Netlify，Cloudflare 不在请求路径上，
+>    所以 Access 配得再对也拦不住任何东西。
+>
+> 切域名那步（`routes` + `custom_domain`）会由 wrangler 建一条**代理（橙云）**记录，
+> Cloudflare 这才进入请求路径，Access 随即开始生效。
+>
+> 所以在 workers.dev 上能验的只有：静态页面是否正常、后台接口是否**失败关闭**。
+> 登录流程必须等切完域名才能测。
 
 ### 5. 切换域名，然后才测登录
 

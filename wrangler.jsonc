@@ -33,9 +33,11 @@
     "GITHUB_REPO": "lmd-gg",
     "GITHUB_REF": "main",
 
-    // 下面三个要填成你自己的值，见 docs/cloudflare.md
-    "ACCESS_TEAM_DOMAIN": "https://REPLACE-ME.cloudflareaccess.com",
-    "ACCESS_AUD": "REPLACE-ME",
+    // Access 应用的团队域名和 AUD 标签（Zero Trust → 应用 Overview 里复制）
+    "ACCESS_TEAM_DOMAIN": "https://longmeidao.cloudflareaccess.com",
+    "ACCESS_AUD": "2c2b65ec5b76232af7871e089448a350109f01cf45a5a5927171bacad7903cac",
+
+    // R2 桶的公开域名，还没绑，见 docs/cloudflare.md
     "MEDIA_PUBLIC_URL": "https://media.lmd.gg"
   },
 
