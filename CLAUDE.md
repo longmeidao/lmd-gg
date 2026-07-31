@@ -1,6 +1,6 @@
 # lmd-gg
 
-Astro 个人站点 **lmd.gg**，Netlify 部署，slate-blog 主题。
+Astro 个人站点 **lmd.gg**，Cloudflare Workers 部署，slate-blog 主题。
 
 > 本文件从 Codex 历史记忆迁移并人工筛选（2026-07）。已剔除 commit SHA、PR 编号、一次性排障记录等时效性内容，保留可复用的约定与结论。历史会话存档在 `history/`（已加入 .gitignore）。
 
@@ -16,16 +16,25 @@ Astro 个人站点 **lmd.gg**，Netlify 部署，slate-blog 主题。
 
 - **CJK 里的强调用 `*` 不要用 `_`**。CommonMark 规定分隔符紧贴汉字又紧贴标点时不能开启强调，`工具_（…）_并没有` 认不出来，加空格/换行才行，而那些空格会渲染成多余空隙。`remark-cjk-friendly` 已接入，放宽了 `*`/`**` 的判定（`工具*（…）*并没有` 直接可用），但 `_` 在 CommonMark 里是刻意保持严格的，插件不动它。
 
-## Cloudflare（路线 A，迁移中）
+## Cloudflare（路线 A，已上线）
 
-站点仍是静态构建，`src/worker.ts` 只接管 `/api/*`，其余走静态资源。内容照旧是
+站点是静态构建，`src/worker.ts` 只接管 `/api/*`，其余走静态资源。内容照旧是
 git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`。
+
+- 后台鉴权走 **Cloudflare Access**：Zero Trust 里一个应用，Domain `lmd.gg` +
+  Path `write`。**Access 里没填 path 的记录会覆盖整个主机名** —— 踩过一次，
+  整站被锁在登录页后面，RSS 全断。改配置后必须 `curl -sI https://lmd.gg/`
+  确认是 200 不是 302。
+- Access 的 Cookie 按整个域名下发，所以 `/api/admin/*` 不用单独建应用，
+  Worker 自己验 JWT 就够。这也意味着**摘掉 Access 不会开出写入口**（验签失败即 401），
+  真出问题可以放心先停用 Access 恢复站点。
+- 部署 `pnpm cf:deploy`；查日志 `npx wrangler tail`。
+- Cloudflare 会在 robots.txt 前面注入一段托管内容（封 AI 爬虫），不是本仓库生成的。
 
 - `Env` 由 `wrangler types` 从 `wrangler.jsonc` 生成到 `worker-configuration.d.ts`
   （538K，已 gitignore，`pnpm run tsc` 会自动重建）。**改了绑定不用手写接口。**
 - Worker 的类型体系和浏览器 DOM 冲突（`HTMLSelectElement.remove()` 签名不同），
   所以 `src/worker.ts` 从主 tsconfig 排除，单独走 `tsconfig.worker.json`。
-- 域名接管那段 `routes` 先注释着 —— 一旦打开就会从 Netlify 手里抢走 lmd.gg。
 - 本地开发不受影响，仍走 `plugins/dev-web-writer.ts` 的 `/__lmd/*`。
 
 ## 提交约定
@@ -48,7 +57,7 @@ git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`
 
 ## 已决策事项
 
-- Decap CMS、Netlify Identity 与 Git Gateway 已决定移除；网页撰写将迁移到 Cloudflare 上的认证写作链路
+- Decap CMS、Netlify Identity 与 Git Gateway 已移除；网页撰写已迁到 Cloudflare（Access + Worker + R2）
 
 ## 工作方式
 

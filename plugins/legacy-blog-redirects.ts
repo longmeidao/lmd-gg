@@ -29,7 +29,8 @@ const walk = async (dir: string, base = dir): Promise<string[]> => {
 
 /**
  * 条目地址从 `/blog/<slug>` 换成了无前缀的 `/<slug>`，旧地址已经被搜索引擎收录过，
- * 所以构建完往 dist 里写一份 Netlify `_redirects`，给出真正的 301。
+ * 所以构建完往 dist 里写一份 `_redirects`，给出真正的 301。
+ * 这个格式 Netlify 和 Cloudflare 静态资源都认，换平台不用改。
  * （Astro 自带的 redirects 在静态输出下只会生成 meta refresh 页面，对 SEO 更弱。）
  */
 export function legacyBlogRedirects(): AstroIntegration {

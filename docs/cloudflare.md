@@ -89,46 +89,20 @@ curl -sI https://lmd.gg/write/ | grep -i location
 npx wrangler secret put GITHUB_TOKEN
 ```
 
-### 4. 部署
+### 4. 部署与切换（已完成）
 
 ```bash
 pnpm cf:deploy
 ```
 
-`routes` 还注释着，所以**不会碰 lmd.gg**，Netlify 继续正常服务。
+`wrangler.jsonc` 里的 `routes` 已启用，lmd.gg 由 Worker 服务。
 
-> **切域名之前，Access 一定不生效**，两个原因叠加：
->
-> 1. `*.workers.dev` 不属于 lmd.gg 这个 zone，Access 管不到它。
-> 2. 更要紧的是 —— 现在 lmd.gg 的流量**根本不经过 Cloudflare**。
->    `curl -I https://lmd.gg/` 返回 `server: Netlify` 且没有 `cf-ray`；
->    对照 `https://sesese.se/` 是 `server: cloudflare` + `cf-ray`。
->    DNS 记录是 DNS-only（灰云）直连 Netlify，Cloudflare 不在请求路径上，
->    所以 Access 配得再对也拦不住任何东西。
->
-> 切域名那步（`routes` + `custom_domain`）会由 wrangler 建一条**代理（橙云）**记录，
-> Cloudflare 这才进入请求路径，Access 随即开始生效。
->
-> 所以在 workers.dev 上能验的只有：静态页面是否正常、后台接口是否**失败关闭**。
-> 登录流程必须等切完域名才能测。
+切换后实测：公开页面（首页、归档、精选、合集、about、两个 RSS、pagefind）
+全部 200；`/write` 和 `/api/admin/*` 302 到 Access；`/blog/*` 301 到新地址。
 
-### 5. 切换域名，然后才测登录
+### 5. 回滚
 
-取消 `wrangler.jsonc` 里 `routes` 那段的注释，重新部署，再把 Netlify 上的域名解绑。
+Netlify 项目仍然留着。真要回滚：把 lmd.gg 的 DNS 记录改回指向 Netlify 即可。
 
-切过来之后测：
-
-- 打开 `https://lmd.gg/write` → 跳 Access 登录页，收邮件验证码
-- 登录后 `https://lmd.gg/api/admin/session` → `{"authenticated":true}`
-- 换个无痕窗口直接请求 `/api/admin/posts` → 401
-
-**Netlify 的项目先留着别删**，万一要回滚，把 DNS 指回去就行。
-真被 Access 挡在外面也不影响发文章 —— 内容是 git 里的 markdown，直接 commit 就能发。
-
-排查用 `npx wrangler tail`：Access 没配好时 Worker 会打一条
-`access_not_configured` / `access_certs_failed` 的日志。
-
-## 本地开发不受影响
-
-`astro dev` 时走的仍然是 `plugins/dev-web-writer.ts` 里的 `/__lmd/*`，
-不需要 Access 也不需要 token。前端会按 `import.meta.env.DEV` 自动选端点。
+就算 Access 出问题也不必回滚 —— 停用 Access 只会让 `/write` 页面变公开，
+写接口仍由 Worker 验签拦住（401）。内容在 git 里，直接 commit 照样能发。
