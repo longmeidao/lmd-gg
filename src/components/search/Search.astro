@@ -50,6 +50,85 @@ import './search.css';
    */
   const q = (selector) => document.querySelector(selector);
 
+  /**
+   * 把查询切成词。pagefind 会把匹配不上的词悄悄丢掉再返回结果 ——
+   * 「香蕉截图」和「截图」拿到的结果和分数完全一样，所以得自己校验。
+   */
+  const termsOf = (query) => {
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
+      return [...segmenter.segment(query)]
+        .filter((part) => part.isWordLike)
+        .map((part) => part.segment.toLowerCase());
+    }
+    return query.toLowerCase().split(/\s+/).filter(Boolean);
+  };
+
+  /** 每个词都得在正文或标题里出现，才算命中（pagefind 默认是「或」） */
+  const matchesAll = (item, terms) => {
+    const haystack = `${item.raw_content ?? ''} ${item.meta?.title ?? ''}`
+      .toLowerCase();
+    return terms.every((term) => haystack.includes(term));
+  };
+
+  /** pagefind 的 excerpt 自带 <mark>，只放行 mark 和文本，其余一律当文本 */
+  const appendHighlighted = (target, html) => {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    parsed.body.childNodes.forEach((node) => {
+      const isMark = node.nodeName === 'MARK';
+      const text = node.textContent ?? '';
+      if (!isMark) {
+        target.append(text);
+        return;
+      }
+      // pagefind 会把「凉宫」标成两个相邻的 mark，各自带内边距就中间裂开了
+      const previous = target.lastChild;
+      if (previous && previous.nodeName === 'MARK') {
+        previous.textContent += text;
+        return;
+      }
+      const mark = document.createElement('mark');
+      mark.textContent = text;
+      target.append(mark);
+    });
+  };
+
+  /** 标题里 pagefind 不给 mark，自己标 */
+  const appendMarkedTitle = (target, title, terms) => {
+    const lower = title.toLowerCase();
+    const hits = [];
+    terms.forEach((term) => {
+      let from = 0;
+      for (;;) {
+        const at = lower.indexOf(term, from);
+        if (at < 0) break;
+        hits.push([at, at + term.length]);
+        from = at + term.length;
+      }
+    });
+    if (hits.length === 0) {
+      target.textContent = title;
+      return;
+    }
+    hits.sort((a, b) => a[0] - b[0]);
+    // 合并重叠区间，免得同一段字被标两次
+    const merged = [];
+    hits.forEach(([start, end]) => {
+      const last = merged.at(-1);
+      if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+      else merged.push([start, end]);
+    });
+    let cursor = 0;
+    merged.forEach(([start, end]) => {
+      if (start > cursor) target.append(title.slice(cursor, start));
+      const mark = document.createElement('mark');
+      mark.textContent = title.slice(start, end);
+      target.append(mark);
+      cursor = end;
+    });
+    if (cursor < title.length) target.append(title.slice(cursor));
+  };
+
   let pagefindPromise;
   let searchTimer;
   let searchSequence = 0;
@@ -79,7 +158,7 @@ import './search.css';
     q('[data-search-open]')?.focus();
   };
 
-  const renderResults = (items) => {
+  const renderResults = (items, terms) => {
     const results = q('[data-search-results]');
     if (!results) return;
     results.replaceChildren();
@@ -92,9 +171,9 @@ import './search.css';
       const path = document.createElement('small');
 
       anchor.href = item.url;
-      title.textContent = item.meta?.title || '未命名文章';
-      excerpt.textContent =
-        item.plain_excerpt || item.excerpt || '打开这篇文章';
+      appendMarkedTitle(title, item.meta?.title || '未命名文章', terms);
+      if (item.excerpt) appendHighlighted(excerpt, item.excerpt);
+      else excerpt.textContent = item.plain_excerpt || '打开这篇文章';
       path.textContent = new URL(item.url, window.location.origin).pathname;
       anchor.append(title, excerpt, path);
       listItem.appendChild(anchor);
@@ -125,11 +204,15 @@ import './search.css';
     try {
       const pagefind = await loadPagefind();
       const response = await pagefind.search(query);
-      const items = await Promise.all(
-        response.results.slice(0, 8).map((result) => result.data()),
+      const terms = termsOf(query);
+      const fetched = await Promise.all(
+        response.results.slice(0, 20).map((result) => result.data()),
       );
       if (sequence !== searchSequence) return;
-      renderResults(items);
+      const items = fetched
+        .filter((item) => matchesAll(item, terms))
+        .slice(0, 8);
+      renderResults(items, terms);
       status.textContent =
         items.length > 0 ? `找到 ${items.length} 个结果` : '没有找到相关内容';
     } catch {

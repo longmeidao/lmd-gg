@@ -626,6 +626,8 @@
   -webkit-box-decoration-break: clone;
   color: var(--color-slate11);
   font-size: 0.75em;
+  /* 快捷键这类短代码不该被拆到两行；万一真有超长的，clone 兜底 */
+  white-space: nowrap;
 }
 
 .home-entry-content pre {

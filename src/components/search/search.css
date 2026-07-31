@@ -134,6 +134,19 @@
   -webkit-line-clamp: 2;
 }
 
+/* 命中的词。默认的 <mark> 是亮黄底黑字，深色界面里太刺眼 */
+.site-search-results mark {
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--color-indigo9) 26%, transparent);
+  padding: 0 0.1em;
+  color: inherit;
+}
+
+.site-search-results strong mark {
+  background: color-mix(in srgb, var(--color-indigo9) 32%, transparent);
+  color: var(--color-slate12);
+}
+
 .site-search-results small {
   color: var(--color-slate8);
   font-size: 0.68rem;
