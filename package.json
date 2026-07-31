@@ -27,7 +27,7 @@
     "build": "astro sync && pnpm run tsc && astro check && astro build && pnpm run search:index && pnpm run verify:rss",
     "preview": "astro preview",
     "astro": "astro",
-    "tsc": "tsc --noEmit",
+    "tsc": "pnpm run cf:types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "lint": "pnpm run tsc && pnpm run lint:script && astro check",
     "lint-fix": "pnpm run lint-fix:script",
     "lint-fix:script": "pnpm run lint:script -- --fix",
@@ -36,7 +36,10 @@
     "search:index": "pagefind --site dist",
     "verify:rss": "node scripts/verify-rss.mjs",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,astro}\"",
-    "sync-latest": "./scripts/sync-latest-blog.sh"
+    "sync-latest": "./scripts/sync-latest-blog.sh",
+    "cf:deploy": "pnpm build && wrangler deploy",
+    "cf:dev": "wrangler dev",
+    "cf:types": "wrangler types"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.2.1",
@@ -91,6 +94,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "remark-cjk-friendly": "^2.3.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.64.0"
+    "typescript-eslint": "^8.64.0",
+    "wrangler": "^4.116.0"
   }
 }

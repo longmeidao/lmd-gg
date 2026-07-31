@@ -16,6 +16,18 @@ Astro 个人站点 **lmd.gg**，Netlify 部署，slate-blog 主题。
 
 - **CJK 里的强调用 `*` 不要用 `_`**。CommonMark 规定分隔符紧贴汉字又紧贴标点时不能开启强调，`工具_（…）_并没有` 认不出来，加空格/换行才行，而那些空格会渲染成多余空隙。`remark-cjk-friendly` 已接入，放宽了 `*`/`**` 的判定（`工具*（…）*并没有` 直接可用），但 `_` 在 CommonMark 里是刻意保持严格的，插件不动它。
 
+## Cloudflare（路线 A，迁移中）
+
+站点仍是静态构建，`src/worker.ts` 只接管 `/api/*`，其余走静态资源。内容照旧是
+git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`。
+
+- `Env` 由 `wrangler types` 从 `wrangler.jsonc` 生成到 `worker-configuration.d.ts`
+  （538K，已 gitignore，`pnpm run tsc` 会自动重建）。**改了绑定不用手写接口。**
+- Worker 的类型体系和浏览器 DOM 冲突（`HTMLSelectElement.remove()` 签名不同），
+  所以 `src/worker.ts` 从主 tsconfig 排除，单独走 `tsconfig.worker.json`。
+- 域名接管那段 `routes` 先注释着 —— 一旦打开就会从 Netlify 手里抢走 lmd.gg。
+- 本地开发不受影响，仍走 `plugins/dev-web-writer.ts` 的 `/__lmd/*`。
+
 ## 提交约定
 
 - **commitlint 拒绝 `chore:`**。允许的类型只有： `build / ci / docs / feat / fix / perf / refactor / revert / style / test`

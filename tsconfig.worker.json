@@ -1,0 +1,15 @@
+{
+  "extends": "astro/tsconfigs/base",
+  "include": [
+    "worker-configuration.d.ts",
+    "src/worker.ts"
+  ],
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "types": [],
+    "lib": [
+      "ES2022"
+    ],
+    "noEmit": true
+  }
+}

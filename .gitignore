@@ -30,3 +30,6 @@ pnpm-debug.log*
 .MWebMetaData/
 TODO.md
 history/
+
+# wrangler types 生成的绑定类型（538K），构建时自动重建
+worker-configuration.d.ts
