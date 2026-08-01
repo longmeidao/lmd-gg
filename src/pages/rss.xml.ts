@@ -6,7 +6,7 @@ import { buildRssItems } from '@/helpers/feed';
 
 export async function GET(context: APIContext) {
   const postItems = await buildRssItems(
-    await getSitePosts(({ data }) => data.kind === 'article'),
+    await getSitePosts(({ data }) => data.featured === true),
   );
 
   const rssOptions: RSSOptions = {

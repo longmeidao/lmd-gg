@@ -31,15 +31,15 @@ function readFrontmatter(source) {
   return match?.[1] ?? '';
 }
 
-const expectedArticleIds = new Set();
+const expectedFeaturedIds = new Set();
 for (const filePath of await getMarkdownFiles(contentDirectory)) {
   const source = await readFile(filePath, 'utf8');
   const frontmatter = readFrontmatter(source);
   const isDraft = /^draft:\s*true\s*$/m.test(frontmatter);
-  const kind = frontmatter.match(/^kind:\s*['"]?([^'"\s]+)['"]?\s*$/m)?.[1];
+  const isFeatured = /^featured:\s*true\s*$/m.test(frontmatter);
 
-  if (!isDraft && (kind === undefined || kind === 'article')) {
-    expectedArticleIds.add(
+  if (!isDraft && isFeatured) {
+    expectedFeaturedIds.add(
       path
         .relative(contentDirectory, filePath)
         .replaceAll(path.sep, '/')
@@ -48,7 +48,7 @@ for (const filePath of await getMarkdownFiles(contentDirectory)) {
   }
 }
 
-const rssArticleIds = new Set();
+const rssFeaturedIds = new Set();
 for (const link of itemLinks) {
   const url = new URL(link);
 
@@ -79,21 +79,21 @@ for (const link of itemLinks) {
   const id = decodeURIComponent(url.pathname)
     .replace(/^\//, '')
     .replace(/\/$/, '');
-  rssArticleIds.add(id);
-  if (!expectedArticleIds.has(id)) {
+  rssFeaturedIds.add(id);
+  if (!expectedFeaturedIds.has(id)) {
     throw new Error(
-      `RSS validation failed: ${link} is not a published long-form article.`,
+      `RSS validation failed: ${link} is not a published featured item.`,
     );
   }
 }
 
-const missingArticleIds = [...expectedArticleIds].filter(
-  (id) => !rssArticleIds.has(id),
+const missingFeaturedIds = [...expectedFeaturedIds].filter(
+  (id) => !rssFeaturedIds.has(id),
 );
-if (missingArticleIds.length > 0) {
+if (missingFeaturedIds.length > 0) {
   throw new Error(
-    `RSS validation failed: missing long-form articles: ${missingArticleIds.join(', ')}`,
+    `RSS validation failed: missing featured items: ${missingFeaturedIds.join(', ')}`,
   );
 }
 
-console.log(`Validated ${itemLinks.length} long-form-only RSS item links.`);
+console.log(`Validated ${itemLinks.length} featured RSS item links.`);

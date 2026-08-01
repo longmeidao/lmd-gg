@@ -22,7 +22,7 @@ const postCollection = defineCollection({
       thread: z.string().optional(),
       /** Published and addressable, but omitted from the homepage feed */
       hiddenFromLatest: z.boolean().optional(),
-      /** 精选：额外收进 /featured 页 */
+      /** 精选辑标记：收进 /featured，并进入默认 RSS */
       featured: z.boolean().optional(),
       /**
        * 附文：正文最后一段 `---` 之后的内容是补充说明（撰写面板的「附文」）。

@@ -98,7 +98,7 @@ const setVisibility = (content: string, visibility: Visibility) => {
   return joinPost(next, body);
 };
 
-/** 精选 / 置顶都是布尔开关：开就写 `key: true`，关就把这行删掉 */
+/** 精选辑 / 置顶都是布尔开关：开就写 `key: true`，关就把这行删掉 */
 const setFlag = (content: string, key: 'featured' | 'pinned', on: boolean) => {
   const { lines, body } = splitFrontmatter(content);
   const next = dropKey(lines, key);
@@ -302,7 +302,7 @@ const setupPostActions = (root: HTMLElement) => {
 
     if (target.closest('[data-toggle-featured]')) {
       const on = root.dataset.postFeatured !== 'true';
-      await withPost(on ? '加入精选' : '取消精选', (content) =>
+      await withPost(on ? '加入精选辑' : '移出精选辑', (content) =>
         setFlag(content, 'featured', on),
       );
       return;

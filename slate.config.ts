@@ -26,7 +26,7 @@ export default defineConfig({
   },
   navigations: [
     {
-      label: '精选',
+      label: '精选辑',
       href: '/featured',
     },
     {

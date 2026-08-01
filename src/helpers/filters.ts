@@ -230,7 +230,7 @@ export const buildFilters = (
       options: [
         { value: '', label: '全部可见性', icon: 'scanEye' },
         { value: 'public', label: '公开', icon: 'globe' },
-        { value: 'featured', label: '精选', icon: 'sparkle' },
+        { value: 'featured', label: '精选辑', icon: 'sparkle' },
         { value: 'hidden', label: '不在最新', icon: 'eyeOff' },
         { value: 'private', label: '草稿', icon: 'lock' },
       ],
@@ -276,7 +276,7 @@ export const ICON_PATHS: Record<string, string> = {
   eyeOff:
     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /> <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /> <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /> <path d="m2 2 20 20" />',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" />',
-  // 精选沿用 jant 自绘的星芒（不是 lucide 的 star）
+  // 精选辑沿用 jant 自绘的星芒（不是 lucide 的 star）
   sparkle:
     '<path d="M12 3 10.1 10.1 3 12l7.1 1.9L12 21l1.9-7.1L21 12l-7.1-1.9Z" />',
 };

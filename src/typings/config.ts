@@ -63,7 +63,7 @@ export interface SlateConfig {
   readTime?: boolean;
   /** Whether to show last modified time */
   lastModified?: boolean;
-  /** 首页、精选和合集页每页显示的内容组数；串文按一个内容组计算 */
+  /** 首页、精选辑和合集页每页显示的内容组数；串文按一个内容组计算 */
   pagination?: {
     pageSize: number;
   };

@@ -37,14 +37,14 @@ const getLevel = (count: number) =>
   years.length > 0 && (
     <section class="publishing-activity" aria-labelledby="activity-title">
       <div class="activity-heading">
-        <h2 id="activity-title">发布频率</h2>
+        <h2 id="activity-title">更新频率</h2>
         <span>按月统计</span>
       </div>
       <div class="activity-scroll">
         <div
           class="activity-grid"
           role="img"
-          aria-label={`${years.at(-1)} 至 ${years[0]} 年的文章发布频率`}
+          aria-label={`${years.at(-1)} 至 ${years[0]} 年的内容更新频率`}
         >
           <span aria-hidden="true" />
           {monthLabels.map((month) => (
