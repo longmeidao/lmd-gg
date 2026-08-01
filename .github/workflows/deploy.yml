@@ -36,17 +36,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # remark-modified-time 要读每个文件的提交历史来算「最后修改」，
           # 浅克隆会让它取不到，日期就全变成最近一次构建的时间。
           fetch-depth: 0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: pnpm
@@ -54,13 +54,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 这里跑的是完整的 build：tsc、astro check、pagefind 索引、verify:rss
-      # 都在内。构建失败就不会部署，坏内容进不了线上。
-      - name: Build
-        run: pnpm build
+      # 格式、Worker 单测、浏览器冒烟、类型、Astro 检查和完整构建全部通过才部署。
+      - name: Verify and build
+        run: pnpm verify
 
       - name: Deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

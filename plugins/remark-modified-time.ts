@@ -52,7 +52,13 @@ const normalize = (source: string): string =>
     .trim();
 
 const lastContentChange = (filepath: string): string | null => {
-  const log = git(['log', `-${MAX_COMMITS}`, '--format=%H%x09%cI', '--', `"${filepath}"`]);
+  const log = git([
+    'log',
+    `-${MAX_COMMITS}`,
+    '--format=%H%x09%cI',
+    '--',
+    `"${filepath}"`,
+  ]);
   if (!log) return null;
 
   const commits = log
@@ -67,7 +73,9 @@ const lastContentChange = (filepath: string): string | null => {
   // git show 要的是相对仓库根的路径
   const root = git(['rev-parse', '--show-toplevel'])?.trim();
   const relative =
-    root && filepath.startsWith(root) ? filepath.slice(root.length + 1) : filepath;
+    root && filepath.startsWith(root)
+      ? filepath.slice(root.length + 1)
+      : filepath;
 
   for (const { hash, date } of commits) {
     const after = git(['show', `${hash}:"${relative}"`]);

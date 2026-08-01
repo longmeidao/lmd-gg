@@ -55,6 +55,11 @@ for (const link of itemLinks) {
   if (url.pathname.split('/').some((part) => part === 'undefined')) {
     throw new Error(`RSS validation failed: invalid item URL ${link}`);
   }
+  if (url.pathname !== '/' && url.pathname.endsWith('/')) {
+    throw new Error(
+      `RSS validation failed: item URL is not canonical (unexpected trailing slash): ${link}`,
+    );
+  }
 
   const pagePath = path.join(
     outputDirectory,

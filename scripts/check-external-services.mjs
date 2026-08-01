@@ -1,8 +1,8 @@
 const SITE_URL = 'https://lmd.gg';
-const REQUEST_TIMEOUT_MS = Number(process.env.HEALTHCHECK_TIMEOUT_MS || 15_000);
+const REQUEST_TIMEOUT_MS = Number(process.env.HEALTHCHECK_TIMEOUT_MS || 20_000);
 
 const checks = [];
-const MAX_REQUEST_ATTEMPTS = 3;
+const MAX_REQUEST_ATTEMPTS = 4;
 
 function addCheck(name, check) {
   checks.push({ name, check });
@@ -36,7 +36,7 @@ async function request(url, options = {}, expectedStatuses = [200]) {
     }
 
     if (attempt < MAX_REQUEST_ATTEMPTS) {
-      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2_000));
     }
   }
 
@@ -57,7 +57,7 @@ function parseJson(body, label) {
 addCheck('Production site and About integration', async () => {
   const [{ body: home }, { body: about }] = await Promise.all([
     request(`${SITE_URL}/`),
-    request(`${SITE_URL}/about/`),
+    request(`${SITE_URL}/about`),
   ]);
 
   if (!home.includes('三墩冰室'))

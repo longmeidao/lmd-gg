@@ -2,6 +2,7 @@
 dist/
 # generated types
 .astro/
+.wrangler/
 
 # dependencies
 node_modules/
@@ -11,6 +12,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.pnpm-store/
+test-results/
+playwright-report/
 
 
 # environment variables
@@ -22,9 +26,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
-
-# Obsidian config
-.obsidian/
 
 #MWeb
 .MWebMetaData/

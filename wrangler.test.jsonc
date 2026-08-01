@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lmd-gg-test",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-07-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "lmd-gg-media-test",
+    },
+  ],
+  "vars": {
+    "GITHUB_OWNER": "longmeidao",
+    "GITHUB_REPO": "lmd-gg",
+    "GITHUB_REF": "main",
+    "ACCESS_TEAM_DOMAIN": "https://longmeidao.cloudflareaccess.com",
+    "ACCESS_AUD": "test-audience",
+    "MEDIA_PUBLIC_URL": "https://media.example.test",
+  },
+}

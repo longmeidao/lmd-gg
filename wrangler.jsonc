@@ -8,7 +8,7 @@
 
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "head_sampling_rate": 1,
   },
 
   // 站点仍然是 `pnpm build` 出来的静态产物；Worker 只在 /api/* 前面插一脚，
@@ -17,15 +17,15 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"],
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
   },
 
   "r2_buckets": [
     {
       "binding": "MEDIA",
-      "bucket_name": "lmd-gg-media"
-    }
+      "bucket_name": "lmd-gg-media",
+    },
   ],
 
   "vars": {
@@ -39,15 +39,15 @@
 
     // R2 桶的公开域名（已绑，ssl active）。只有撰写面板上传的媒体走这里；
     // 仓库里 src/content/images 的图仍由 Astro 构建时处理成 /_astro/*.webp。
-    "MEDIA_PUBLIC_URL": "https://media.lmd.gg"
+    "MEDIA_PUBLIC_URL": "https://media.lmd.gg",
   },
 
   // Worker 已建好，这条守卫恢复：没设 GITHUB_TOKEN 就不让部署。
   // （首次部署时它会挡住，因为 Worker 不存在就没法预先设密钥 ——
   //  当时是临时摘掉这条完成引导的。）
   "secrets": {
-    "required": ["GITHUB_TOKEN"]
-  }
+    "required": ["GITHUB_TOKEN"],
+  },
 
   // lmd.gg 的自定义域名是在 Cloudflare 控制台直接绑到这个 Worker 上的
   // （Workers → Settings → Domains & Routes），不是通过这里的 routes。

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.pagefind/
+playwright-report/
+test-results/
+worker-configuration.d.ts
+pnpm-lock.yaml
+src/content/post/
+public/pretty-feed-v3.xsl

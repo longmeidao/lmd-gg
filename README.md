@@ -1,216 +1,74 @@
-# Slate blog
+# lmd.gg
 
-English · [中文](./README-zh_CN.md)
+三墩冰室的源码。项目最初基于 Slate Blog，目前已经整合 jant 的内容形式、串文、归档筛选与网页撰写体验，并迁移到 Cloudflare Workers。
 
-## Why We build it?
+## 技术栈
 
-We love writing and sharing, and we appreciate well-crafted products. That’s why we created this minimalist theme, focusing on content itself, providing a smooth and pure writing and reading experience. Built on the latest framework, it’s faster, lighter, and more efficient.
+- Astro 7 静态站点、TypeScript、React 19
+- Tailwind CSS 4、Radix Colors、Heti
+- Markdown/MDX、Remark/Rehype、KaTeX、Expressive Code
+- Pagefind 静态全文搜索、Astro RSS 与 Sitemap
+- Cloudflare Workers、Access、R2、Image Transformations
+- GitHub Git Data API 原子提交与 Actions 自动部署
+- pnpm 10、ESLint、Prettier、Vitest/Miniflare、Playwright
 
-It also works seamlessly with [Obsidian](https://obsidian.md/), helping you turn your notes into published posts effortlessly.
-
-## ✨ Features
-
-- Minimalist design theme
-- Mobile-first responsive layout
-- Light and dark mode support
-- Quick setup with zero configuration required
-- Draft mode with local preview and automatic production filtering
-- Built-in RSS feed with Follow authentication
-- Built-in Pagefind static full-text search
-- Comprehensive SEO optimization for better search rankings
-- Horizontal multi-image layout with automatic column distribution
-
-## 🪜 Framework
-
-- Astro + React + Typescript
-- Tailwindcss + @radix-ui/colors
-  - Updated to [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4) (Jan 10, 2025)
-- Pagefind
-
-## 🔨 Usage
+## 本地开发
 
 ```bash
-# Start local server
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-
-# Build
-npm run build
-# or
-yarn build
-# or
-pnpm build
 ```
 
-> If you fork the repository and set it to private, you will lose the association with the upstream repository by default. You can sync the latest version of Slate Blog by running `pnpm sync-latest`.
+本地 `/write` 直接绕过生产鉴权，内容写入 `src/content/post/`，媒体写入 `public/media/uploads/`。生产环境由 Cloudflare Access 与 Worker 再次验签，内容以单个 Git commit 提交到 GitHub，媒体写入 R2。
 
-## 🗂 Directory Structure
+## 验证
 
-```
-- plugins/            # Custom plugins
-- src/
-  ├── assets/         # Asset files
-  ├── components/     # Components
-  ├── content/        # Content collections
-  ├── helpers/        # Business logic
-  ├── pages/          # Pages
-  └── typings/        # Common types
+```bash
+pnpm verify
 ```
 
-> Articles are stored in the `src/content/post` directory, supporting markdown and mdx formats. The filename is the path name. For example, `src/content/post/my-first-post.md` => `https://your-blog.com/blog/my-first-post`.
+该命令依次检查格式、运行 Worker/纯逻辑单测、Chrome 冒烟测试、TypeScript、ESLint、Astro 检查和完整静态构建。
 
-## Configuration
+## 内容与 URL
 
-Theme configuration is done through `slate.config.ts` in the root directory.
+- 内容位于 `src/content/post/`，支持 Markdown 与 MDX。
+- 文件 `src/content/post/example.md` 的规范地址是 `/example`。
+- 站内 HTML 页面统一不使用尾斜杠；根路径 `/` 除外。
+- 旧 `/blog/:slug` 由 `public/_redirects` 301 到 `/:slug`。
+- 草稿使用 `draft: true`，生产静态构建不会生成公开页面；登录后可在归档页的“可见性 → 草稿”中管理。
 
-| Option | Description | Type | Default |
-| --- | --- | --- | --- |
-| site | Final deployment link | `string` | - |
-| title | Website title | `string` | - |
-| description | Website description | `string` | - |
-| lang | Language | `string` | `zh-CN` |
-| theme | Theme | `{ mode: 'auto' \| 'light' \| 'dark', enableUserChange: boolean }` | `{ mode: 'auto', enableUserChange: true }` |
-| avatar | Avatar | `string` | - |
-| sitemap | Website sitemap configuration | [SitemapOptions](https://docs.astro.build/en/guides/integrations-guide/sitemap/) | - |
-| readTime | Show reading time | `boolean` | `false` |
-| lastModified | Show last modified time | `boolean` | `false` |
-| follow | Follow subscription authentication configuration | `{ feedId: string, userId: string }` | - |
-| footer | Website footer configuration | `{ copyright: string }` | - |
-| socialLinks | Social Links Configuration | `{ icon: [SocialLinkIcon](#SocialLinkIcon), link: string, ariaLabel?: string }` | - |
+主要 frontmatter 字段：
 
-### SocialLinkIcon
+| 字段               | 说明                                        |
+| ------------------ | ------------------------------------------- |
+| `title`            | 标题；无标题随记可省略                      |
+| `kind`             | `article`、`note`、`quote`、`link`、`photo` |
+| `pubDate`          | 发布日期；公开内容必填                      |
+| `draft`            | 草稿标记                                    |
+| `collections`      | 合集列表                                    |
+| `thread`           | 串文标识                                    |
+| `externalUrl`      | 链接或引文来源地址                          |
+| `source`           | 引文来源名称                                |
+| `featured`         | 精选标记                                    |
+| `hiddenFromLatest` | 不在首页最新列表显示                        |
 
-```ts
-type SocialLinkIcon =
-  | 'dribbble'
-  | 'facebook'
-  | 'figma'
-  | 'github'
-  | 'instagram'
-  | 'link'
-  | 'mail'
-  | 'notion'
-  | 'rss'
-  | 'threads'
-  | 'x'
-  | 'youtube'
-  | { svg: string };
+## 目录
+
+```text
+plugins/             Astro/Vite 本地开发插件
+public/              原样复制的静态文件与重定向规则
+scripts/             构建后验证、外部服务健康检查
+src/components/      Astro/React 组件
+src/content/         内容集合与 Markdown
+src/domain/          Worker 与本地开发共用的内容契约
+src/helpers/         页面查询、RSS、URL、筛选等共享逻辑
+src/pages/           静态页面与动态路由
+src/scripts/         浏览器脚本与撰写器模块
+src/worker.ts        只接管 /api/* 的 Cloudflare Worker
+tests/               Vitest/Workers 测试
+e2e/                 Playwright 浏览器冒烟测试
 ```
 
-### Full-text Search
+## 部署
 
-`pnpm build` runs Pagefind after Astro's static build and generates a local index for published long-form articles. Search has no external service or API key dependency.
-
-### Follow Subscription Authentication
-
-1. Register a [follow](https://follow.is/) account
-2. Deploy your site
-3. Click the `+` button on Follow, select `RSS` subscription, and enter the `rss` link (usually `[site]/rss.xml`, where `site` is the value of `site` in `slate.config.ts`)
-4. Redeploy
-
-## Article Frontmatter Description
-
-| Option | Description | Type | Required |
-| --- | --- | --- | --- |
-| title | Content title; required for articles and links | `string` | No |
-| kind | Content format | `'article' \| 'note' \| 'quote' \| 'link' \| 'photo'` | No |
-| externalUrl | Original URL for links or quotes | `string` | No |
-| source | Quote source | `string` | No |
-| commentary | Personal commentary on a link or quote | `string` | No |
-| thread | Thread identifier for related entries | `string` | No |
-| rating | One-to-five-star rating | `number` | No |
-| tags | Article tags | `string[]` | No |
-| draft | Whether it's a draft. When not provided or `false`, `pubDate` must be provided; drafts are only visible in local preview | `boolean` | No |
-| pubDate | Article publication date | `date` | No, required when `draft` is `false` |
-
-**For more details, check the `src/content/config.ts` file**
-
-### Example
-
-```md
----
-title: 40 questions
-tags:
-  - Life
-  - Thinking
-  - Writing
-pubDate: 2025-01-06
----
-```
-
-## Markdown Syntax Support
-
-In addition to standard Markdown syntax, the following extended syntax is supported:
-
-### Basic Syntax
-
-- Headers, lists, blockquotes, code blocks and other basic syntax
-- Tables
-- Links and images
-- **Bold**, _italic_, and ~~strikethrough~~ text
-
-### Extended Syntax
-
-#### Container syntax
-
-Using `:::` markers
-
-```md
-:::info This is an information prompt :::
-```
-
-#### LaTeX Mathematical Formulas
-
-- Inline formula: $E = mc^2$
-- Block formula: $$ E = mc^2 $$
-
-#### Support for image captions
-
-```md
-![Image caption](image-url)
-```
-
-## Updates
-
-### Version 1.3.0
-
-- Support Social Links
-- Optimize RSS article detail generation.
-- Add a script to synchronize the latest slate-blog version
-
-### Version 1.2.0
-
-- Support i18n (English and Chinese)
-- Fixed known issues
-
-### Version 1.1.1
-
-- Fixed known issues
-
-### Version 1.1.0
-
-- Upgraded to support [Tailwind CSS v4.0](https://tailwindcss.com/blog/tailwindcss-v4)
-- Added dark mode support
-- Fixed known issues
-
-## Blogs using this theme
-
-Here are some blogs built with this theme:
-
-- [Bluepikachu](https://bluepika.life/)
-- [Chieh的随笔](https://blog.chieh.nyc.mn/)
-- [Feazur](https://blog.feazur.com/)
-- [Folay's Blog](https://www.folay.top/)
-- [LeeZhian](https://leezhian.com/)
-- [nmsisecho](https://astro-example-liard.vercel.app/)
-- [Randy's Blog](https://lutaonan.com/)
-- [Sulle orme dell'Alfiere Nero](https://sulleormedellalfierenero.pusi77.eu.org/)
-- [三墩冰室](https://lmd.gg/)
-- [小企鹅爸爸的生活](https://www.penguinpapa.life/)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=SlateDesign/slate-blog&type=Date)](https://www.star-history.com/#SlateDesign/slate-blog&Date)
+推送到 `main` 后，`.github/workflows/deploy.yml` 会执行 `pnpm verify`，通过后由 Wrangler 部署到 Cloudflare。Worker 所需绑定与变量见 `wrangler.jsonc`，详细配置见 `docs/cloudflare.md`。

@@ -18,7 +18,6 @@ import rehypeFigure from 'rehype-figure';
 import { remarkModifiedTime } from './plugins/remark-modified-time';
 import { remarkReadingTime } from './plugins/remark-reading-time';
 import { devWebWriter } from './plugins/dev-web-writer';
-import { legacyBlogRedirects } from './plugins/legacy-blog-redirects';
 import slateConfig from './slate.config';
 
 function generateAstroConfigure() {
@@ -46,6 +45,12 @@ function generateAstroConfigure() {
 
   const astroConfig = {
     site: slateConfig.site,
+    trailingSlash: 'never',
+    // 本地调试不需要 Astro 工具栏；也避免旧的 Vite 预打包哈希让浏览器
+    // 请求到 504 的工具栏模块，继而中断其他 island 的水合。
+    devToolbar: {
+      enabled: false,
+    },
     integrations: [
       astroExpressiveCode(),
       mdx(),
@@ -54,7 +59,6 @@ function generateAstroConfigure() {
         ...slateConfig.sitemap,
         filter: (page) => !page.includes('/write'),
       }),
-      legacyBlogRedirects(),
     ],
     // 站内链接悬停即预取，换页几乎无等待
     prefetch: {
