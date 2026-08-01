@@ -1,6 +1,7 @@
 ---
 title: 在 Windows 上像 macOS 一样截图
 pubDate: 2025-02-14
+featured: true
 ---
 
 在 macOS 上，妳可以使用 `⇧ + ⌘ + 5` 快捷键唤起系统自带的「截屏」应用，来截图、录屏。*（详见[在 Mac 上截屏或录屏](https://support.apple.com/zh-cn/guide/mac-help/mh26782/mac)。）*

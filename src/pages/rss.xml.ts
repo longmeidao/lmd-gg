@@ -12,7 +12,8 @@ export async function GET(context: APIContext) {
   const rssOptions: RSSOptions = {
     stylesheet: '/pretty-feed-v3.xsl',
     title: slateConfig.title,
-    description: slateConfig.description,
+    // RSS 2.0 强制要求频道 description；没有站点标语时用站名占位。
+    description: slateConfig.title,
     site: context.site ?? slateConfig.site,
     trailingSlash: false,
     items: postItems,

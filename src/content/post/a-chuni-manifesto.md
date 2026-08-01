@@ -1,6 +1,7 @@
 ---
 title: 为什么我会喜欢《凉宫春日系列》，或曰中二宣言
 pubDate: 2021-07-07
+featured: true
 ---
 
 ::: info

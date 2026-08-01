@@ -8,7 +8,6 @@ export default defineConfig({
   lang: 'zh-CN',
   avatar: '/images/logo.png',
   title: '三墩冰室',
-  description: '五年饮冰，来份烧仙草。',
   lastModified: true,
   readTime: true,
   pagination: {
@@ -31,7 +30,7 @@ export default defineConfig({
       href: '/featured',
     },
     {
-      label: '归档',
+      label: '档案室',
       href: '/archive',
     },
     {

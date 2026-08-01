@@ -1,6 +1,7 @@
 ---
 title: 「不太懂」就好了
 pubDate: 2021-08-30
+featured: true
 ---
 
 ::: info

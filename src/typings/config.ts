@@ -48,7 +48,7 @@ export interface SlateConfig {
   /** Website title */
   title: string;
   /** Website description */
-  description: string;
+  description?: string;
   /** 导航栏配置 */
   navigations?: Array<{
     label: string;
