@@ -1,5 +1,5 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
@@ -12,6 +12,7 @@ import {
 import { getPostCollections } from '@/helpers/collection';
 import { buildFilters, detectMedia } from '@/helpers/filters';
 import { resizeUrl, THUMB_WIDTH } from '@/helpers/media';
+import { byPubDateDesc, getSitePosts } from '@/helpers/content';
 import FilterBar from '@/components/feed/FilterBar.astro';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
@@ -21,12 +22,7 @@ import '@/assets/style/archive.css';
  * 列表视图直接复用首页的条目展示（jant 那边是 TimelineFeedItem，本站是 PostEntry）。
  * 站点是静态输出，jant 的 URL 参数式服务端筛选换成前端筛选。
  */
-const showPrototypes =
-  import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
-const postCollection = await getCollection(
-  'post',
-  ({ data }) => showPrototypes || data.draft !== true,
-);
+const postCollection = await getSitePosts();
 
 /**
  * 正文里的第一张图，用作方格封面。
@@ -45,48 +41,43 @@ const coverFor = (body: string | undefined) => {
 };
 
 const entries = await Promise.all(
-  [...postCollection]
-    .sort(
-      (a, b) =>
-        (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
-    )
-    .map(async (post) => {
-      const date = post.data.pubDate;
-      const { Content } = await render(post);
-      return {
-        id: post.id,
-        url: getPostPath(post.id),
-        data: post.data,
-        Content,
-        kind: post.data.kind,
-        title: post.data.title?.trim() ?? '',
-        displayTitle: getPostDisplayTitle(post.data),
-        summary: getPostExcerpt(post.body, 96) ?? '',
-        externalUrl: post.data.externalUrl,
-        featured: post.data.featured === true,
-        collections: getPostCollections(post.data),
-        isThread: Boolean(post.data.thread),
-        hasTitle: Boolean(post.data.title?.trim()),
-        media: detectMedia(
-          post.body,
-          post.data.kind,
-          post.data.attached === true,
-        ),
-        cover: coverFor(post.body),
-        visibility: post.data.draft
-          ? 'private'
-          : post.data.hiddenFromLatest
-            ? 'hidden'
-            : 'public',
-        year: date ? date.getFullYear() : 0,
-        monthKey: date ? `${date.getFullYear()}-${date.getMonth() + 1}` : '',
-        monthLabel: date
-          ? `${date.getFullYear()} 年 ${date.getMonth() + 1} 月`
-          : '未标日期',
-        shortDate: date ? `${date.getMonth() + 1} 月 ${date.getDate()} 日` : '',
-        iso: date?.toISOString(),
-      };
-    }),
+  [...postCollection].sort(byPubDateDesc).map(async (post) => {
+    const date = post.data.pubDate;
+    const { Content } = await render(post);
+    return {
+      id: post.id,
+      url: getPostPath(post.id),
+      data: post.data,
+      Content,
+      kind: post.data.kind,
+      title: post.data.title?.trim() ?? '',
+      displayTitle: getPostDisplayTitle(post.data),
+      summary: getPostExcerpt(post.body, 96) ?? '',
+      externalUrl: post.data.externalUrl,
+      featured: post.data.featured === true,
+      collections: getPostCollections(post.data),
+      isThread: Boolean(post.data.thread),
+      hasTitle: Boolean(post.data.title?.trim()),
+      media: detectMedia(
+        post.body,
+        post.data.kind,
+        post.data.attached === true,
+      ),
+      cover: coverFor(post.body),
+      visibility: post.data.draft
+        ? 'private'
+        : post.data.hiddenFromLatest
+          ? 'hidden'
+          : 'public',
+      year: date ? date.getFullYear() : 0,
+      monthKey: date ? `${date.getFullYear()}-${date.getMonth() + 1}` : '',
+      monthLabel: date
+        ? `${date.getFullYear()} 年 ${date.getMonth() + 1} 月`
+        : '未标日期',
+      shortDate: date ? `${date.getMonth() + 1} 月 ${date.getDate()} 日` : '',
+      iso: date?.toISOString(),
+    };
+  }),
 );
 
 /** 按月分组，保持整体的时间倒序 */
@@ -168,7 +159,14 @@ entries.forEach((entry) => {
       </FilterBar>
     </header>
 
-    <div class="archive-body" data-archive-body data-view="grid">
+    <div
+      class="archive-body"
+      data-archive-body
+      data-view="grid"
+      data-drafts-endpoint={import.meta.env.DEV
+        ? '/__lmd/write?view=drafts'
+        : '/api/admin/posts?view=drafts'}
+    >
       {/* 方格视图 */}
       <div class="archive-grid" data-archive-grid>
         {
@@ -186,6 +184,7 @@ entries.forEach((entry) => {
                   class="archive-tile"
                   href={entry.url}
                   data-archive-item
+                  data-slug={entry.id}
                   data-month={month.key}
                   data-year={entry.year}
                   data-kind={entry.kind}
@@ -287,6 +286,7 @@ entries.forEach((entry) => {
             <div
               class="home-feed-cluster"
               data-archive-item
+              data-slug={entry.id}
               data-month={entry.monthKey}
               data-year={entry.year}
               data-kind={entry.kind}

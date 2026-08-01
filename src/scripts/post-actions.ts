@@ -27,9 +27,9 @@ const knownCollections = () => {
     .querySelectorAll<HTMLElement>('[data-post-admin]')
     .forEach((element) => {
       try {
-        (JSON.parse(element.dataset.postCollections || '[]') as string[]).forEach(
-          (tag) => names.add(tag),
-        );
+        (
+          JSON.parse(element.dataset.postCollections || '[]') as string[]
+        ).forEach((tag) => names.add(tag));
       } catch {
         /* 忽略坏掉的属性 */
       }
@@ -261,7 +261,9 @@ const setupPostActions = (root: HTMLElement) => {
       return;
     }
 
-    const copyButton = target.closest<HTMLButtonElement>('[data-copy-post-link]');
+    const copyButton = target.closest<HTMLButtonElement>(
+      '[data-copy-post-link]',
+    );
     if (copyButton) {
       const path = copyButton.dataset.copyPostLink;
       if (!path) return;
@@ -286,9 +288,7 @@ const setupPostActions = (root: HTMLElement) => {
       const next = currentCollections().includes(name)
         ? currentCollections().filter((item) => item !== name)
         : [...currentCollections(), name];
-      await withPost('更新合集', (content) =>
-        setCollections(content, next),
-      );
+      await withPost('更新合集', (content) => setCollections(content, next));
       return;
     }
 
@@ -296,9 +296,7 @@ const setupPostActions = (root: HTMLElement) => {
       const name = window.prompt('新的合集名称')?.trim();
       if (!name) return;
       const next = [...new Set([...currentCollections(), name])];
-      await withPost('更新合集', (content) =>
-        setCollections(content, next),
-      );
+      await withPost('更新合集', (content) => setCollections(content, next));
       return;
     }
 

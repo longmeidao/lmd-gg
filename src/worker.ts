@@ -20,12 +20,17 @@
  * 绑定与变量：MEDIA(R2) / ASSETS / GITHUB_* / ACCESS_* / MEDIA_PUBLIC_URL
  */
 
-const CONTENT_DIR = 'src/content/post';
-/** 和 dev 端一致：只允许小写字母、数字、连字符和一层子目录 */
-const SLUG_PATTERN =
-  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?$/;
-const MAX_POST_BYTES = 256 * 1024;
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+import {
+  CONTENT_DIR,
+  MAX_UPLOAD_BYTES,
+  makeUploadName,
+  parseDraftSummary,
+  postRelativePath,
+  readWriteItems,
+  type DraftSummary,
+  type WriteItem,
+  type WritePayload,
+} from './domain/content-contract';
 
 interface MediaCandidate {
   url: string;
@@ -165,21 +170,67 @@ const contentsUrl = (env: Env, path: string) =>
   `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
 
 const postPath = (slug: string) => {
-  if (!SLUG_PATTERN.test(slug)) throw new Error('INVALID_SLUG');
-  return `${CONTENT_DIR}/${slug}.md`;
-};
-
-const encodeContent = (text: string): string => {
-  const bytes = new TextEncoder().encode(text);
-  let binary = '';
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
+  return postRelativePath(slug);
 };
 
 const decodeContent = (base64: string): string =>
   new TextDecoder().decode(base64UrlToBytes(base64.replace(/\n/g, '')));
+
+interface GithubContentEntry {
+  type: 'file' | 'dir';
+  path: string;
+  name: string;
+}
+
+const githubDirectory = async (
+  env: Env,
+  directory: string,
+): Promise<GithubContentEntry[]> => {
+  const response = await fetch(
+    `${contentsUrl(env, directory)}?ref=${encodeURIComponent(env.GITHUB_REF)}`,
+    { headers: githubHeaders(env) },
+  );
+  if (!response.ok)
+    throw new Error(`读取 ${directory} 失败：${response.status}`);
+  return (await response.json()) as GithubContentEntry[];
+};
+
+const githubFile = async (env: Env, file: string): Promise<string> => {
+  const response = await fetch(
+    `${contentsUrl(env, file)}?ref=${encodeURIComponent(env.GITHUB_REF)}`,
+    { headers: githubHeaders(env) },
+  );
+  if (!response.ok) throw new Error(`读取 ${file} 失败：${response.status}`);
+  const body = (await response.json()) as { content?: string };
+  return decodeContent(body.content ?? '');
+};
+
+const listMarkdownFiles = async (
+  env: Env,
+  directory = CONTENT_DIR,
+): Promise<string[]> => {
+  const entries = await githubDirectory(env, directory);
+  const nested = await Promise.all(
+    entries.map(async (entry) => {
+      if (entry.type === 'dir') return listMarkdownFiles(env, entry.path);
+      return /\.mdx?$/.test(entry.name) ? [entry.path] : [];
+    }),
+  );
+  return nested.flat();
+};
+
+const listDrafts = async (env: Env): Promise<DraftSummary[]> => {
+  const files = await listMarkdownFiles(env);
+  const drafts = await Promise.all(
+    files.map(async (file) => {
+      const slug = file.slice(`${CONTENT_DIR}/`.length).replace(/\.mdx?$/, '');
+      return parseDraftSummary(slug, await githubFile(env, file));
+    }),
+  );
+  return drafts
+    .filter((draft): draft is DraftSummary => draft !== null)
+    .sort((left, right) => right.pubDate.localeCompare(left.pubDate));
+};
 
 /** 已存在就返回它的 sha（更新时必须带上），不存在返回 null */
 const fileSha = async (env: Env, path: string): Promise<string | null> => {
@@ -193,68 +244,148 @@ const fileSha = async (env: Env, path: string): Promise<string | null> => {
   return body.sha ?? null;
 };
 
-const putFile = async (
+const gitUrl = (env: Env, path: string) =>
+  `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/git/${path}`;
+
+const branchPath = (branch: string) =>
+  branch.split('/').map(encodeURIComponent).join('/');
+
+const githubJson = async <T>(
   env: Env,
-  path: string,
-  content: string,
-  message: string,
-  sha: string | null,
-) => {
-  const response = await fetch(contentsUrl(env, path), {
-    method: 'PUT',
-    headers: { ...githubHeaders(env), 'content-type': 'application/json' },
-    body: JSON.stringify({
-      message,
-      content: encodeContent(content),
-      branch: env.GITHUB_REF,
-      ...(sha ? { sha } : {}),
-    }),
+  url: string,
+  init?: RequestInit,
+  request: typeof fetch = fetch,
+): Promise<T> => {
+  const response = await request(url, {
+    ...init,
+    headers: {
+      ...githubHeaders(env),
+      ...(init?.body ? { 'content-type': 'application/json' } : {}),
+    },
   });
   if (!response.ok) {
-    throw new Error(`写入 ${path} 失败：${response.status}`);
+    throw new Error(`GITHUB_API:${response.status}`);
+  }
+  return (await response.json()) as T;
+};
+
+interface GitTreeEntry {
+  path: string;
+  type: 'blob' | 'tree';
+  sha: string;
+}
+
+/**
+ * 一次提交整批 Markdown：先创建不可见的 blob/tree/commit，最后才移动分支指针。
+ * 任一步失败都不会让线上分支只出现半条串文。
+ */
+export const commitFilesAtomically = async (
+  env: Env,
+  items: WriteItem[],
+  defaultOperation: 'create' | 'update',
+  request: typeof fetch = fetch,
+) => {
+  const ref = branchPath(env.GITHUB_REF);
+  const refBody = await githubJson<{ object: { sha: string } }>(
+    env,
+    gitUrl(env, `ref/heads/${ref}`),
+    undefined,
+    request,
+  );
+  const baseCommitSha = refBody.object.sha;
+  const commitBody = await githubJson<{ tree: { sha: string } }>(
+    env,
+    gitUrl(env, `commits/${baseCommitSha}`),
+    undefined,
+    request,
+  );
+  const baseTreeSha = commitBody.tree.sha;
+  const treeBody = await githubJson<{
+    tree: GitTreeEntry[];
+    truncated?: boolean;
+  }>(
+    env,
+    `${gitUrl(env, `trees/${baseTreeSha}`)}?recursive=1`,
+    undefined,
+    request,
+  );
+  if (treeBody.truncated) throw new Error('GITHUB_TREE_TRUNCATED');
+
+  const existingPaths = new Set(
+    treeBody.tree
+      .filter((entry) => entry.type === 'blob')
+      .map((entry) => entry.path),
+  );
+  for (const item of items) {
+    const exists = existingPaths.has(postPath(item.slug));
+    const operation = item.operation ?? defaultOperation;
+    if (operation === 'create' && exists) {
+      throw new Error(`POST_EXISTS:${item.slug}`);
+    }
+    if (operation === 'update' && !exists) {
+      throw new Error(`POST_MISSING:${item.slug}`);
+    }
+  }
+
+  const blobs = await Promise.all(
+    items.map((item) =>
+      githubJson<{ sha: string }>(
+        env,
+        gitUrl(env, 'blobs'),
+        {
+          method: 'POST',
+          body: JSON.stringify({ content: item.content, encoding: 'utf-8' }),
+        },
+        request,
+      ),
+    ),
+  );
+  const newTree = await githubJson<{ sha: string }>(
+    env,
+    gitUrl(env, 'trees'),
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: items.map((item, index) => ({
+          path: postPath(item.slug),
+          mode: '100644',
+          type: 'blob',
+          sha: blobs[index]!.sha,
+        })),
+      }),
+    },
+    request,
+  );
+  const label = items.length === 1 ? items[0]!.slug : `${items.length} posts`;
+  const newCommit = await githubJson<{ sha: string }>(
+    env,
+    gitUrl(env, 'commits'),
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `docs: publish ${label}`,
+        tree: newTree.sha,
+        parents: [baseCommitSha],
+      }),
+    },
+    request,
+  );
+
+  const updateResponse = await request(gitUrl(env, `refs/heads/${ref}`), {
+    method: 'PATCH',
+    headers: { ...githubHeaders(env), 'content-type': 'application/json' },
+    body: JSON.stringify({ sha: newCommit.sha, force: false }),
+  });
+  if (updateResponse.status === 409 || updateResponse.status === 422) {
+    throw new Error('BRANCH_CHANGED');
+  }
+  if (!updateResponse.ok) {
+    throw new Error(`GITHUB_API:${updateResponse.status}`);
   }
 };
 
 /* ── 路由 ──────────────────────────────────────────────────────────────── */
-
-interface PostItem {
-  slug: string;
-  content: string;
-}
-
-const readItems = (payload: {
-  slug?: unknown;
-  content?: unknown;
-  posts?: unknown;
-}): PostItem[] => {
-  const legacy =
-    typeof payload.slug === 'string' && typeof payload.content === 'string'
-      ? [{ slug: payload.slug.trim(), content: payload.content }]
-      : [];
-  const items = Array.isArray(payload.posts)
-    ? payload.posts
-        .filter(
-          (item): item is PostItem =>
-            typeof item === 'object' &&
-            item !== null &&
-            typeof (item as PostItem).slug === 'string' &&
-            typeof (item as PostItem).content === 'string',
-        )
-        .map((item) => ({ slug: item.slug.trim(), content: item.content }))
-    : legacy;
-
-  if (items.length === 0) throw new Error('没有要保存的内容。');
-  const seen = new Set<string>();
-  items.forEach((item) => {
-    if (!SLUG_PATTERN.test(item.slug)) throw new Error('INVALID_SLUG');
-    if (!item.content.startsWith('---\n'))
-      throw new Error('缺少 frontmatter。');
-    if (item.content.length > MAX_POST_BYTES) throw new Error('内容过大。');
-    if (seen.has(item.slug)) throw new Error('DUPLICATE_SLUG');
-    seen.add(item.slug);
-  });
-  return items;
-};
 
 const handlePosts = async (
   request: Request,
@@ -262,6 +393,9 @@ const handlePosts = async (
   url: URL,
 ): Promise<Response> => {
   if (request.method === 'GET') {
+    if (url.searchParams.get('view') === 'drafts') {
+      return json({ drafts: await listDrafts(env) });
+    }
     const slug = url.searchParams.get('slug')?.trim() ?? '';
     const path = postPath(slug);
     const response = await fetch(
@@ -300,32 +434,20 @@ const handlePosts = async (
     return json({ error: '只接受 GET、POST、PUT 或 DELETE 请求。' }, 405);
   }
 
-  const items = readItems(
-    (await request.json()) as {
-      slug?: unknown;
-      content?: unknown;
-      posts?: unknown;
-    },
-  );
+  const items = readWriteItems((await request.json()) as WritePayload);
 
-  // GitHub 的 contents API 一次只能改一个文件，串文就是几条几次提交
-  for (const item of items) {
-    const path = postPath(item.slug);
-    const sha = await fileSha(env, path);
-    if (request.method === 'POST' && sha) {
-      return json({ error: `${item.slug} 已存在。` }, 409);
-    }
-    await putFile(
-      env,
-      path,
-      item.content,
-      `${sha ? 'docs: update' : 'docs: add'} ${item.slug}`,
-      sha,
-    );
-  }
+  await commitFilesAtomically(
+    env,
+    items,
+    request.method === 'POST' ? 'create' : 'update',
+  );
   // POST 表示新建，回 201；PUT 是保存，回 200
   return json(
-    { saved: items.map((item) => item.slug) },
+    {
+      saved: items.map((item) => item.slug),
+      files: items.map((item) => postPath(item.slug)),
+      urls: items.map((item) => `/${item.slug}`),
+    },
     request.method === 'POST' ? 201 : 200,
   );
 };
@@ -338,20 +460,10 @@ const handleUpload = async (
   if (request.method !== 'POST') {
     return json({ error: '只接受 POST 请求。' }, 405);
   }
-  const rawName = url.searchParams.get('name') ?? 'file';
-  const safeBase = rawName
-    .split(/[\\/]/)
-    .pop()!
-    .replace(/[^\w.-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
-  const dot = safeBase.lastIndexOf('.');
-  const extension = dot > 0 ? safeBase.slice(dot) : '';
-  const stem = (dot > 0 ? safeBase.slice(0, dot) : safeBase) || 'file';
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
+  const fileName = makeUploadName(url.searchParams.get('name') ?? 'file');
   // 只存原件。展示尺寸由 Cloudflare Image Transformations 现场生成，
   // 所以这里不压缩也不生成变体（Worker 里也跑不了图像处理库）。
-  const key = `images/originals/${stamp}-${stem}${extension}`;
+  const key = `images/originals/${fileName}`;
 
   // 先按 content-length 判断，再把 body 直接流给 R2。
   // `await request.arrayBuffer()` 会把整个文件读进内存，大文件直接把 Worker 撑爆。
@@ -480,8 +592,28 @@ export default {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : '操作失败。';
-      const status = message === 'INVALID_SLUG' ? 400 : 500;
-      return json({ error: message }, status);
+      if (message.startsWith('POST_EXISTS:')) {
+        return json({ error: `${message.slice(12)} 已存在。` }, 409);
+      }
+      if (message.startsWith('POST_MISSING:')) {
+        return json({ error: `${message.slice(13)} 不存在。` }, 404);
+      }
+      if (message === 'BRANCH_CHANGED') {
+        return json({ error: '仓库刚刚发生变化，请重新发布。' }, 409);
+      }
+      if (
+        [
+          'INVALID_SLUG',
+          'INVALID_CONTENT',
+          'INVALID_ITEM_COUNT',
+          'INVALID_OPERATION',
+          'DUPLICATE_SLUG',
+        ].includes(message)
+      ) {
+        return json({ error: '发布内容或链接名称无效。' }, 400);
+      }
+      console.error(JSON.stringify({ event: 'admin_api_failed', message }));
+      return json({ error: '后台操作失败。' }, 502);
     }
 
     return json({ error: '没有这个接口。' }, 404);

@@ -1,34 +1,25 @@
 import Heti from 'heti/js/heti-addon.js';
-
-type WriterKind = 'note' | 'link' | 'quote';
-type Visibility = 'public' | 'hidden' | 'private';
-
-interface WriterItem {
-  id: string;
-  kind: WriterKind;
-  title: string;
-  body: string;
-  externalUrl: string;
-  source: string;
-  commentary: string;
-  attachedText: string;
-  rating: string;
-  showTitle: boolean;
-  showRating: boolean;
-}
-
-interface WriterState {
-  items: WriterItem[];
-  activeIndex: number;
-  collections: string[];
-  visibility: Visibility;
-  pubDate: string;
-  customSlug: string;
-}
-
-interface StoredDraft extends WriterState {
-  version: 2;
-}
+import {
+  blankWriterItem,
+  makeWriterId,
+  type StoredDraft,
+  type Visibility,
+  type WriterItem,
+  type WriterKind,
+  type WriterState,
+} from './writer/model';
+import {
+  escapeAttribute,
+  escapeHtml,
+  formatDisplayDomain,
+  markdownBlocks,
+  stripDirectives,
+} from './writer/markdown';
+import { parseExistingPost, setPostThread } from './writer/frontmatter';
+import {
+  generatedSlug as makeGeneratedSlug,
+  markdownFor as serializeMarkdown,
+} from './writer/publish';
 
 const root = document.querySelector<HTMLElement>('[data-writer-root]');
 
@@ -124,9 +115,10 @@ if (root) {
   const searchParams = new URLSearchParams(window.location.search);
   const editSlug = searchParams.get('edit');
   const replySlug = searchParams.get('reply');
-  // 回复目标所在的串文；目标本身还没有串文时会新建一个，并在发布时补写回目标
+  // 回复目标所在的串文；新建串文时与回复内容同一次提交
   let replyThreadId = '';
   let replyNeedsBackfill = false;
+  let replyTargetContent = '';
   let editThreadId = '';
   /** 回复时渲染在编辑区上方的「上文」，作为串文的第一个节点 */
   let replyContextHtml = '';
@@ -136,23 +128,8 @@ if (root) {
     '.writer-reply-context-body, .writer-reply-context-meta, [data-writer-preview]',
   );
 
-  const makeId = () =>
-    globalThis.crypto?.randomUUID?.() ??
-    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-  const blankItem = (kind: WriterKind = 'note'): WriterItem => ({
-    id: makeId(),
-    kind,
-    title: '',
-    body: '',
-    externalUrl: '',
-    source: '',
-    commentary: '',
-    attachedText: '',
-    rating: '',
-    showTitle: false,
-    showRating: false,
-  });
+  const makeId = makeWriterId;
+  const blankItem = blankWriterItem;
 
   const today = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Asia/Taipei',
@@ -167,23 +144,6 @@ if (root) {
     customSlug: '',
   };
   let autosaveTimer = 0;
-
-  const escapeHtml = (value: string) =>
-    value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-
-  const escapeAttribute = escapeHtml;
-  const formatDisplayDomain = (value: string) => {
-    try {
-      return new URL(value).hostname.replace(/^www\./i, '');
-    } catch {
-      return value.replace(/^https?:\/\//i, '').split('/')[0] ?? value;
-    }
-  };
 
   // 图标取自 jant 的 compose 工具栏（18×18 视口，1.55 线宽），保持视觉一致
   const icon = (
@@ -478,7 +438,8 @@ if (root) {
   };
 
   const renderItems = (focusIndex?: number) => {
-    itemsHost.innerHTML = replyContextHtml + state.items.map(renderItem).join('');
+    itemsHost.innerHTML =
+      replyContextHtml + state.items.map(renderItem).join('');
     // 回复时上文本身就是串文的第一节，所以也要走串文版式
     const threadMode = state.items.length > 1 || Boolean(replyContextHtml);
     headerFormats.hidden = threadMode;
@@ -507,35 +468,6 @@ if (root) {
     }
   };
 
-  const inlineMarkdown = (value: string) =>
-    escapeHtml(value)
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(
-        /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-      )
-      .replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  const markdownBlocks = (value: string) =>
-    value
-      .trim()
-      .split(/\n{2,}/)
-      .filter(Boolean)
-      .map((block) => {
-        if (/^!\[.*\]\(https?:\/\/.+\)$/.test(block.trim())) {
-          const match = block.trim().match(/^!\[(.*)\]\((https?:\/\/.+)\)$/);
-          return match
-            ? `<figure><img src="${escapeAttribute(match[2]!)}" alt="${escapeAttribute(match[1]!)}" /></figure>`
-            : '';
-        }
-        if (block.startsWith('> ')) {
-          return `<blockquote>${inlineMarkdown(block.replace(/^> ?/gm, ''))}</blockquote>`;
-        }
-        return `<p>${inlineMarkdown(block).replaceAll('\n', '<br />')}</p>`;
-      })
-      .join('');
-
   function updatePreview() {
     const item = state.items[state.activeIndex] ?? state.items[0];
     if (!item) return;
@@ -563,7 +495,7 @@ if (root) {
           <h2>${escapeHtml(item.title || '链接标题')}</h2>
         </div>
         ${markdownBlocks(item.commentary)}
-        <footer>${date}${rating}</footer>
+        <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
       `;
       return;
     }
@@ -576,14 +508,14 @@ if (root) {
           ${item.externalUrl ? `<a href="${escapeAttribute(item.externalUrl)}" aria-label="打开来源链接">↗</a>` : ''}
         </blockquote>
         ${markdownBlocks(item.commentary)}
-        <footer>${date}${rating}</footer>
+        <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
       `;
       return;
     }
     preview!.innerHTML = `
       ${item.showTitle && item.title ? `<h1>${escapeHtml(item.title)}</h1>` : ''}
       ${markdownBlocks(item.body || '内容会实时显示在这里。')}
-      <footer>${date}${rating}</footer>
+      <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
     `;
     typography.autoSpacing();
   }
@@ -630,6 +562,9 @@ if (root) {
    * 前端不再持有任何密钥。本地 dev 没有 Access，dev 端点直接放行。
    */
   const verifySession = async () => {
+    // 本地 dev 端点只监听开发服务器，直接进入编辑器，不依赖 Access/session。
+    if (localWriter) return true;
+
     try {
       const response = await fetch(sessionEndpoint, {
         credentials: 'same-origin',
@@ -708,105 +643,10 @@ if (root) {
     setStatus('撰写接口不可用：请确认已登录，且 /api/admin 已部署。', true);
   };
 
-  const parseScalar = (value: string) => {
-    const trimmed = value.trim();
-    if (
-      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
-    ) {
-      try {
-        return JSON.parse(trimmed);
-      } catch {
-        return trimmed.slice(1, -1);
-      }
-    }
-    return trimmed;
-  };
-
-  const parseExistingPost = (content: string) => {
-    const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-    if (!match) throw new Error('这篇内容的 Frontmatter 无法识别。');
-    const frontmatter = new Map<string, string>();
-    const frontmatterLines = match[1]!.split('\n');
-    const blockTags: string[] = [];
-    let readingTags = false;
-    for (const line of frontmatterLines) {
-      if (line.trim() === 'collections:') {
-        readingTags = true;
-        continue;
-      }
-      if (readingTags) {
-        const tag = line.match(/^\s*-\s+(.+)$/);
-        if (tag) {
-          blockTags.push(parseScalar(tag[1]!));
-          continue;
-        }
-        readingTags = false;
-      }
-      const field = line.match(/^([A-Za-z][\w-]*):\s*(.*)$/);
-      if (field) frontmatter.set(field[1]!, parseScalar(field[2]!));
-    }
-    const kind = (frontmatter.get('kind') || 'article') as
-      WriterKind | 'article';
-    const rawCollections = frontmatter.get('collections') || '[]';
-    let parsedCollections: string[] = [];
-    if (blockTags.length > 0) {
-      parsedCollections = blockTags;
-    } else {
-      try {
-        parsedCollections = JSON.parse(rawCollections) as string[];
-      } catch {
-        parsedCollections = [];
-      }
-    }
-    const existingBody = match[2]!.trim();
-    const normalizedBody =
-      kind === 'quote'
-        ? existingBody.replace(/^>\s?/gm, '')
-        : kind === 'link'
-          ? ''
-          : existingBody;
-    const normalizedCommentary =
-      kind === 'link' && existingBody
-        ? [existingBody, frontmatter.get('commentary') || '']
-            .filter(Boolean)
-            .join('\n\n')
-        : frontmatter.get('commentary') || '';
-
-    return {
-      item: {
-        ...blankItem(kind === 'article' ? 'note' : kind),
-        title: frontmatter.get('title') || '',
-        body: normalizedBody,
-        externalUrl: frontmatter.get('externalUrl') || '',
-        source: frontmatter.get('source') || '',
-        commentary: normalizedCommentary,
-        rating: frontmatter.get('rating') || '',
-        showTitle: kind === 'article',
-      },
-      collections: parsedCollections,
-      visibility:
-        frontmatter.get('draft') === 'true'
-          ? ('private' as Visibility)
-          : frontmatter.get('hiddenFromLatest') === 'true'
-            ? ('hidden' as Visibility)
-            : ('public' as Visibility),
-      pubDate: (frontmatter.get('pubDate') || today).slice(0, 10),
-      thread: frontmatter.get('thread') || '',
-    };
-  };
-
   /**
    * 上文只用编辑器里那套精简 markdown 渲染，站点的 remark 插件语法（`::: info`
    * 这类容器指令）在这里没有对应实现，直接丢掉外壳只留内容，免得露出源码。
    */
-  const stripDirectives = (value: string) =>
-    value
-      .split('\n')
-      .filter((line) => !/^\s*:::/.test(line))
-      .join('\n')
-      .replace(/(^|[\s(])_([^_\n]+)_(?=[\s.,;:!?)]|$)/g, '$1*$2*');
-
   /** 上文的只读预览：结构和首页条目一致，但不可编辑 */
   const replyContextMarkup = (
     parsed: ReturnType<typeof parseExistingPost>,
@@ -839,7 +679,7 @@ if (root) {
     `;
   };
 
-  /** 打开回复：拿到目标所在的串文 id；目标还没有串文就新建一个，发布时再补写回去 */
+  /** 打开回复：读取上文及串文 id。 */
   async function loadReplyTarget(slug: string) {
     setStatus('正在读取要回复的内容…');
     try {
@@ -853,7 +693,8 @@ if (root) {
       if (!response.ok || !result.content) {
         throw new Error(result.error || '无法读取要回复的内容。');
       }
-      const parsed = parseExistingPost(result.content);
+      replyTargetContent = result.content;
+      const parsed = parseExistingPost(result.content, today);
       if (parsed.thread) {
         replyThreadId = parsed.thread;
         replyNeedsBackfill = false;
@@ -874,29 +715,6 @@ if (root) {
     }
   }
 
-  /** 目标原本没有串文时，把新建的串文 id 写回目标，两条才会串起来 */
-  async function backfillReplyThread(slug: string) {
-    const response = await fetch(
-      `${writeEndpoint}?slug=${encodeURIComponent(slug)}`,
-    );
-    const result = (await response.json().catch(() => ({}))) as {
-      content?: string;
-    };
-    if (!response.ok || !result.content) return;
-    const match = result.content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-    if (!match) return;
-    const lines = match[1]!
-      .split('\n')
-      .filter((line) => !/^thread:/.test(line));
-    lines.push(`thread: ${yamlString(replyThreadId)}`);
-    const content = `---\n${lines.join('\n')}\n---\n\n${match[2]!.replace(/^\n+/, '')}`;
-    await fetch(`${writeEndpoint}?slug=${encodeURIComponent(slug)}`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ posts: [{ slug, content }] }),
-    });
-  }
-
   async function loadPostForEditing(slug: string) {
     setStatus('正在读取文章…');
     try {
@@ -910,7 +728,7 @@ if (root) {
       if (!response.ok || !result.content) {
         throw new Error(result.error || '无法读取这篇文章。');
       }
-      const parsed = parseExistingPost(result.content);
+      const parsed = parseExistingPost(result.content, today);
       state.items = [parsed.item];
       state.activeIndex = 0;
       state.collections = parsed.collections;
@@ -1146,16 +964,12 @@ if (root) {
         scheduleDraftSave();
         setStatus(`已插入 ${file.name}`);
       } catch (error) {
-        setStatus(
-          error instanceof Error ? error.message : '上传失败。',
-          true,
-        );
+        setStatus(error instanceof Error ? error.message : '上传失败。', true);
         return;
       }
     }
     updatePreview();
   };
-
 
   const insertAtCursor = (field: HTMLTextAreaElement, value: string): void => {
     const start = field.selectionStart;
@@ -1165,69 +979,17 @@ if (root) {
     field.focus();
   };
 
-  const slugify = (value: string) =>
-    value
-      .normalize('NFKD')
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .replace(/[\u4e00-\u9fff]/g, '')
-      .replace(/-+/g, '-')
-      .slice(0, 72);
+  const generatedSlug = (item: WriterItem, index: number) =>
+    makeGeneratedSlug(item, index, state.customSlug);
 
-  const generatedSlug = (item: WriterItem, index: number) => {
-    if (index === 0 && state.customSlug) return slugify(state.customSlug);
-    const fromTitle = slugify(item.title);
-    if (fromTitle) return index === 0 ? fromTitle : `${fromTitle}-${index + 1}`;
-    const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 12);
-    return `${item.kind}-${stamp}-${index + 1}`;
-  };
-
-  const yamlString = (value: string) => JSON.stringify(value);
-
-  const markdownFor = (item: WriterItem, threadId?: string) => {
-    const kind =
-      item.kind === 'note' && item.showTitle && item.title.trim()
-        ? 'article'
-        : item.kind;
-    const primaryBody =
-      item.kind === 'quote'
-        ? item.body
-            .trim()
-            .split('\n')
-            .map((line) => `> ${line}`)
-            .join('\n')
-        : item.body.trim();
-    const body =
-      item.kind === 'link'
-        ? ''
-        : [primaryBody, item.attachedText.trim()]
-            .filter(Boolean)
-            .join('\n\n---\n\n');
-    const frontmatter = [
-      item.title.trim() ? `title: ${yamlString(item.title.trim())}` : '',
-      // 记下「后面那段是附文」，归档页的媒介筛选靠它，别去猜正文里的 ---
-      item.kind !== 'link' && item.attachedText.trim() ? 'attached: true' : '',
-      `kind: ${kind}`,
-      item.externalUrl.trim()
-        ? `externalUrl: ${yamlString(item.externalUrl.trim())}`
-        : '',
-      item.source.trim() ? `source: ${yamlString(item.source.trim())}` : '',
-      item.commentary.trim()
-        ? `commentary: ${yamlString(item.commentary.trim())}`
-        : '',
-      threadId ? `thread: ${yamlString(threadId)}` : '',
-      item.rating ? `rating: ${Number(item.rating)}` : '',
-      state.collections.length
-        ? `collections: ${JSON.stringify(state.collections)}`
-        : '',
-      state.visibility === 'hidden' ? 'hiddenFromLatest: true' : '',
-      state.visibility === 'private'
-        ? 'draft: true'
-        : `pubDate: ${state.pubDate || today}`,
-    ].filter(Boolean);
-    return `---\n${frontmatter.join('\n')}\n---\n\n${body}${body ? '\n' : ''}`;
-  };
+  const markdownFor = (item: WriterItem, threadId?: string) =>
+    serializeMarkdown(item, {
+      collections: state.collections,
+      visibility: state.visibility,
+      pubDate: state.pubDate,
+      today,
+      threadId,
+    });
 
   const makePublishPayload = () => {
     syncAllItems();
@@ -1416,7 +1178,6 @@ if (root) {
       scheduleDraftSave();
       return;
     }
-
   });
 
   headerFormats.addEventListener('click', (event) => {
@@ -1523,6 +1284,19 @@ if (root) {
     );
 
     try {
+      const publishItems: Array<{
+        slug: string;
+        content: string;
+        operation?: 'create' | 'update';
+      }> = [...posts];
+      if (replySlug && replyNeedsBackfill) {
+        if (!replyTargetContent) throw new Error('无法读取要回复的内容。');
+        publishItems.push({
+          slug: replySlug,
+          content: setPostThread(replyTargetContent, replyThreadId),
+          operation: 'update' as const,
+        });
+      }
       const response = await fetch(
         editSlug
           ? `${writeEndpoint}?slug=${encodeURIComponent(editSlug)}`
@@ -1532,7 +1306,7 @@ if (root) {
           headers: {
             'content-type': 'application/json',
           },
-          body: JSON.stringify({ posts }),
+          body: JSON.stringify({ posts: publishItems }),
         },
       );
       const result = (await response.json().catch(() => ({}))) as {
@@ -1541,15 +1315,12 @@ if (root) {
       };
       if (!response.ok) throw new Error(result.error || '发布失败。');
 
-      if (replySlug && replyNeedsBackfill) {
-        await backfillReplyThread(replySlug);
-        replyNeedsBackfill = false;
-      }
+      replyNeedsBackfill = false;
 
       localStorage.removeItem(storageKey);
       const urls =
-        result.urls ??
-        posts.map((post) => `/${state.items[0]?.kind ?? 'note'}/${post.slug}`);
+        result.urls?.slice(0, posts.length) ??
+        posts.map((post) => `/${post.slug}`);
       setStatus(
         `${editSlug ? '已更新' : posts.length > 1 ? '串文已发布' : '已发布'}：${urls.join('、')}`,
       );
@@ -1588,7 +1359,9 @@ if (root) {
     );
     if (!toggle) return;
     replyContextExpanded = !replyContextExpanded;
-    const context = itemsHost.querySelector<HTMLElement>('[data-reply-context]');
+    const context = itemsHost.querySelector<HTMLElement>(
+      '[data-reply-context]',
+    );
     if (!context) return;
     context.dataset.expanded = String(replyContextExpanded);
     toggle.textContent = replyContextExpanded ? '收起' : '展开全部';

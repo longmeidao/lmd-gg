@@ -8,23 +8,175 @@
 /** 每个筛选维度保存一组已选值 —— 筛选是多选的（同 jant，胶囊上显示计数 + 清除） */
 type Filters = Record<string, Set<string>>;
 
+interface DraftSummary {
+  slug: string;
+  title: string;
+  kind: string;
+  pubDate: string;
+  collections: string[];
+  thread: boolean;
+  featured: boolean;
+}
+
+type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
+
+/** 模块只注册一组全局监听；软导航再多次也不会叠加。 */
+const closeMenus = (except?: HTMLElement) => {
+  document
+    .querySelectorAll<HTMLElement>('[data-chip-select]')
+    .forEach((select) => {
+      if (select === except) return;
+      const menu = select.querySelector<HTMLElement>('[data-chip-menu]');
+      const trigger = select.querySelector<HTMLElement>('[data-chip-trigger]');
+      if (menu) menu.hidden = true;
+      trigger?.setAttribute('aria-expanded', 'false');
+    });
+};
+
+const applyDraftData = (element: HTMLElement, draft: DraftSummary) => {
+  const date = draft.pubDate ? new Date(draft.pubDate) : null;
+  const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
+  element.dataset.archiveItem = '';
+  element.dataset.slug = draft.slug;
+  element.dataset.month = 'drafts';
+  element.dataset.year = validDate ? String(validDate.getFullYear()) : '';
+  element.dataset.kind = draft.kind;
+  element.dataset.collections = JSON.stringify(draft.collections);
+  element.dataset.thread = String(draft.thread);
+  element.dataset.hasTitle = String(Boolean(draft.title));
+  element.dataset.media = '';
+  element.dataset.visibility = 'private';
+  element.dataset.featured = String(draft.featured);
+};
+
+const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
+  const existing = new Set(
+    [...body.querySelectorAll<HTMLElement>('[data-slug]')].map(
+      (item) => item.dataset.slug,
+    ),
+  );
+  const missing = drafts.filter((draft) => !existing.has(draft.slug));
+  if (missing.length === 0) return;
+
+  const grid = body.querySelector<HTMLElement>('[data-archive-grid]');
+  const list = body.querySelector<HTMLElement>('[data-archive-list]');
+  if (!grid || !list) return;
+
+  const gridItems = document.createDocumentFragment();
+  const header = document.createElement('div');
+  header.className = 'archive-month-header archive-drafts-header';
+  header.dataset.monthHeader = 'drafts';
+  const headerLabel = document.createElement('span');
+  headerLabel.className = 'archive-month-header-label';
+  headerLabel.textContent = '草稿';
+  const headerCount = document.createElement('span');
+  headerCount.className = 'archive-month-header-count';
+  const count = document.createElement('span');
+  count.dataset.monthCount = 'drafts';
+  count.textContent = String(missing.length);
+  headerCount.append(count, ' 条');
+  header.append(headerLabel, headerCount);
+  gridItems.append(header);
+
+  const listItems = document.createDocumentFragment();
+  missing.forEach((draft) => {
+    const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
+    const date = draft.pubDate ? new Date(draft.pubDate) : null;
+    const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
+    const dateLabel = validDate
+      ? `${validDate.getMonth() + 1} 月 ${validDate.getDate()} 日`
+      : '未标日期';
+
+    const tile = document.createElement('a');
+    tile.className = 'archive-tile archive-draft-tile';
+    tile.href = editUrl;
+    applyDraftData(tile, draft);
+    const top = document.createElement('div');
+    top.className = 'archive-tile-top-meta';
+    const time = document.createElement('time');
+    time.className = 'archive-tile-date';
+    time.textContent = dateLabel;
+    if (validDate) time.dateTime = validDate.toISOString();
+    top.append(time);
+    const content = document.createElement('div');
+    content.className = 'archive-tile-content';
+    const copy = document.createElement('div');
+    copy.className = 'archive-tile-copy';
+    const title = document.createElement('span');
+    title.className = 'archive-tile-title';
+    title.textContent = draft.title || draft.slug;
+    const summary = document.createElement('span');
+    summary.className = 'archive-tile-summary';
+    summary.textContent = '草稿 · 点击继续编辑';
+    copy.append(title, summary);
+    content.append(copy);
+    tile.append(top, content);
+    gridItems.append(tile);
+
+    const row = document.createElement('div');
+    row.className = 'home-feed-cluster archive-draft-row';
+    applyDraftData(row, draft);
+    const link = document.createElement('a');
+    link.className = 'archive-draft-link';
+    link.href = editUrl;
+    const rowTitle = document.createElement('strong');
+    rowTitle.textContent = draft.title || draft.slug;
+    const rowMeta = document.createElement('span');
+    rowMeta.textContent = `${dateLabel} · 草稿 · 点击继续编辑`;
+    link.append(rowTitle, rowMeta);
+    row.append(link);
+    listItems.append(row);
+  });
+
+  grid.prepend(gridItems);
+  list.prepend(listItems);
+};
+
+const loadDrafts = async (body: HTMLElement) => {
+  const endpoint = body.dataset.draftsEndpoint;
+  if (
+    !endpoint ||
+    body.dataset.draftsLoaded === 'true' ||
+    body.dataset.draftsLoading === 'true'
+  ) {
+    return;
+  }
+  body.dataset.draftsLoading = 'true';
+  try {
+    const response = await fetch(endpoint, { credentials: 'same-origin' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = (await response.json()) as { drafts?: DraftSummary[] };
+    addDrafts(body, result.drafts ?? []);
+    body.dataset.draftsLoaded = 'true';
+    body.dispatchEvent(new CustomEvent('lmd:archive-items-changed'));
+  } catch (error) {
+    console.warn('草稿列表加载失败', error);
+  } finally {
+    delete body.dataset.draftsLoading;
+  }
+};
+
 const setup = () => {
   const body = document.querySelector<HTMLElement>('[data-archive-body]');
   if (!body || body.dataset.archiveReady === 'true') return;
   body.dataset.archiveReady = 'true';
 
-  const items = [...body.querySelectorAll<HTMLElement>('[data-archive-item]')];
+  let items = [...body.querySelectorAll<HTMLElement>('[data-archive-item]')];
   /**
    * 归档页同一条内容有方格和列表两份 DOM，计数只能认其中一份（方格）。
    * 合集页只有列表、没有方格，所以按"有没有方格"决定认哪一份。
    */
-  const hasTiles = items.some((item) => item.classList.contains('archive-tile'));
+  const hasTiles = items.some((item) =>
+    item.classList.contains('archive-tile'),
+  );
   const isCountable = (item: HTMLElement) =>
     !hasTiles || item.classList.contains('archive-tile');
-  const monthHeaders = [
+  let monthHeaders = [
     ...body.querySelectorAll<HTMLElement>('[data-month-header]'),
   ];
-  const countLabel = document.querySelector<HTMLElement>('[data-archive-count]');
+  const countLabel = document.querySelector<HTMLElement>(
+    '[data-archive-count]',
+  );
   const empty = body.querySelector<HTMLElement>('[data-archive-empty]');
   const selects = [
     ...document.querySelectorAll<HTMLElement>('[data-chip-select]'),
@@ -41,16 +193,6 @@ const setup = () => {
     return chosen.size === 0 || values.some((value) => chosen.has(value));
   };
 
-  const closeMenus = (except?: HTMLElement) => {
-    selects.forEach((select) => {
-      if (select === except) return;
-      const menu = select.querySelector<HTMLElement>('[data-chip-menu]');
-      const trigger = select.querySelector<HTMLElement>('[data-chip-trigger]');
-      if (menu) menu.hidden = true;
-      trigger?.setAttribute('aria-expanded', 'false');
-    });
-  };
-
   const readCollections = (item: HTMLElement) => {
     try {
       return JSON.parse(item.dataset.collections || '[]') as string[];
@@ -63,9 +205,7 @@ const setup = () => {
     let visible = 0;
 
     items.forEach((item) => {
-      const media = (item.dataset.media || '')
-        .split(',')
-        .filter(Boolean);
+      const media = (item.dataset.media || '').split(',').filter(Boolean);
       // 形式的可选值含 `note:titled` / `note:untitled` 这种带子级的写法。
       // 长文（article）就是带标题的随记，所以也归到 note / note:titled 下。
       const kindValues = [item.dataset.kind ?? ''];
@@ -207,11 +347,6 @@ const setup = () => {
     syncChip();
   });
 
-  document.addEventListener('click', () => closeMenus());
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeMenus();
-  });
-
   document
     .querySelectorAll<HTMLButtonElement>('[data-archive-view]')
     .forEach((button) => {
@@ -227,8 +362,25 @@ const setup = () => {
       });
     });
 
+  body.addEventListener('lmd:archive-items-changed', () => {
+    items = [...body.querySelectorAll<HTMLElement>('[data-archive-item]')];
+    monthHeaders = [
+      ...body.querySelectorAll<HTMLElement>('[data-month-header]'),
+    ];
+    apply();
+  });
+
   apply();
+  if ((window as AdminWindow).__lmdAdminAuthenticated) void loadDrafts(body);
 };
 
+document.addEventListener('click', () => closeMenus());
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeMenus();
+});
+document.addEventListener('lmd:admin-authenticated', () => {
+  const body = document.querySelector<HTMLElement>('[data-archive-body]');
+  if (body) void loadDrafts(body);
+});
 setup();
 document.addEventListener('astro:page-load', setup);
