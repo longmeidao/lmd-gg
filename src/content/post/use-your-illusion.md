@@ -1,7 +1,6 @@
 ---
 title: Use Your Illusion
 pubDate: 2021-09-15
-collections: ["虚构与现实"]
 ---
 
 三年前我写下「[想象便是在构筑现实](/a-chuni-manifesto)」，颇有些「虽陷果壳之中，仍自以为无限宇宙之王」的感觉。然而，GN’R 那句「[运用你的幻想](https://en.wikipedia.org/wiki/Use_Your_Illusion)」让我开始重新思考想象的意义——这是他们早在廿世纪九十年代借其双专辑便阐明了的反抗的根本。

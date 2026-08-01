@@ -66,7 +66,7 @@ test('local write page bypasses production authentication', async ({
   ).toBeVisible();
 });
 
-test('published collection data renders related posts', async ({ page }) => {
+test('local preview data renders related posts', async ({ page }) => {
   await page.goto('/a-chuni-manifesto');
   await expect(page.locator('.related-post')).toHaveCount(3);
   await expect(page.locator('.related-post-rule')).toHaveCount(3);

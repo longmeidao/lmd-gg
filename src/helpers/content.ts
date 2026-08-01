@@ -30,15 +30,29 @@ export const renderFeedPosts = async (posts: PostEntry[]) =>
     })),
   );
 
+/** 只供本地检查相关文章样式；不写入内容数据，也不会进入生产构建。 */
+const devRelatedPreviewIds = new Set([
+  'a-chuni-manifesto',
+  'do-cloud-gamers-dream-of-electric-sheep',
+  'misunderstandings-are-fine',
+  'use-your-illusion',
+]);
+
+const getRelatedCollections = (post: PostEntry) => {
+  const collections = post.data.collections ?? [];
+  if (collections.length > 0 || !import.meta.env.DEV) return collections;
+  return devRelatedPreviewIds.has(post.id) ? ['__dev_related_preview__'] : [];
+};
+
 export const findRelatedPosts = (post: PostEntry, posts: PostEntry[]) => {
-  const collections = new Set(post.data.collections ?? []);
+  const collections = new Set(getRelatedCollections(post));
   return posts
     .filter(
       (candidate) => candidate.id !== post.id && candidate.data.draft !== true,
     )
     .map((candidate) => ({
       candidate,
-      score: (candidate.data.collections ?? []).filter((name) =>
+      score: getRelatedCollections(candidate).filter((name) =>
         collections.has(name),
       ).length,
     }))
@@ -55,7 +69,11 @@ export const findRelatedPosts = (post: PostEntry, posts: PostEntry[]) => {
       kind: candidate.data.kind,
       description: getPostExcerpt(candidate.body),
       pubDate: candidate.data.pubDate,
-      collections: candidate.data.collections ?? [],
+      collections:
+        candidate.data.collections ??
+        (import.meta.env.DEV && devRelatedPreviewIds.has(candidate.id)
+          ? ['本地预览']
+          : []),
     }));
 };
 
