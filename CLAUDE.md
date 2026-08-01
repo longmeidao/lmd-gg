@@ -39,19 +39,18 @@ git 里的 markdown，**没有数据库**。完整步骤见 `docs/cloudflare.md`
 
 ## 图片
 
-**R2 里只存原件,不进仓库,也不存派生文件。** 展示尺寸由 Cloudflare Image
-Transformations 现场生成,地址集中在 `src/helpers/media.ts` 生成,别手拼。
+**R2 里只存原件,不进仓库,也不存派生文件。** 上传接口会实测 Cloudflare Image
+Transformations 的候选响应,只有格式正确且比原件更小时才把派生地址写进文章。
 
 - 原件在 `images/originals/`,撰写面板上传的也落在这里
-- 正文 `width=1200`(列宽 588px,2 倍屏需 1176、手机 3 倍屏需 981,都覆盖得住)
-- 归档方格 `width=340`
-- **用 `format=webp` 不用 `format=auto`** —— AVIF 只在中低质量下省,到高质量档
-  编码开销会反超 webp,而这个站的图基本是截图。实测 q95 的 AVIF 有两张比原件
-  还大。webp q92 是拐点,三张全部压到原件以下
+- PNG 正文先试原尺寸无损 WebP q100,再试原尺寸 PNG8 q85;两者都不比原件小就用原件
+- JPEG/WebP 正文使用 `width=1200,fit=scale-down,format=webp,quality=92`,同样先比较体积
+- 归档方格使用 `width=340,fit=scale-down` 的 WebP q92
+- 视频、音频和其他文件直接使用原件,不经过 Image Transformations
 - `onerror=redirect`:超出免费额度时回退到原件,不裂图
 
 免费额度每月 5000 次唯一转换(按「图片 × 参数」每月算一次),远远用不完。
-改尺寸/质量**不用重新上传**,改常量再部署一次即可。
+上传时最多探测两个候选;原件始终保留,压缩失败不会阻断发布。
 
 ## 部署
 

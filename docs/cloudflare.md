@@ -37,9 +37,9 @@ pagefind 索引可取、`/write` 及其 JS/CSS 正常；`/api/admin/session` 返
 npx wrangler r2 bucket domain add lmd-gg-media --domain media.lmd.gg --zone-id <ZONE_ID>
 ```
 
-**只有撰写面板上传的媒体走 R2。** 仓库里 `src/content/images/*` 的图片仍然由
-Astro 在构建时处理成 `/_astro/*.webp`（多尺寸、内容哈希），这条链路没变，
-也不该变 —— 构建时优化比运行时从 R2 取更快。
+**只有撰写面板上传的媒体走 R2。** R2 保留原件；上传接口会探测 Cloudflare
+Image Transformations 的候选响应，只有格式正确且体积更小时才返回派生地址，
+避免固定编码导致截图发糊或文件越压越大。
 
 所以 `media.lmd.gg` 在传第一张图之前一直是 404，属正常。
 

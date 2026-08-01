@@ -22,9 +22,15 @@
 
 const CONTENT_DIR = 'src/content/post';
 /** 和 dev 端一致：只允许小写字母、数字、连字符和一层子目录 */
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?$/;
+const SLUG_PATTERN =
+  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?$/;
 const MAX_POST_BYTES = 256 * 1024;
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+interface MediaCandidate {
+  url: string;
+  contentType: string;
+}
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -61,7 +67,8 @@ let cachedKeys: { at: number; keys: CryptoKey[] } | null = null;
 
 const accessKeys = async (env: Env): Promise<CryptoKey[]> => {
   // 证书会轮换，缓存一小时足够，也避免每个请求都去取一次
-  if (cachedKeys && Date.now() - cachedKeys.at < 3600_000) return cachedKeys.keys;
+  if (cachedKeys && Date.now() - cachedKeys.at < 3600_000)
+    return cachedKeys.keys;
 
   const response = await fetch(
     `${env.ACCESS_TEAM_DOMAIN.replace(/\/$/, '')}/cdn-cgi/access/certs`,
@@ -240,7 +247,8 @@ const readItems = (payload: {
   const seen = new Set<string>();
   items.forEach((item) => {
     if (!SLUG_PATTERN.test(item.slug)) throw new Error('INVALID_SLUG');
-    if (!item.content.startsWith('---\n')) throw new Error('缺少 frontmatter。');
+    if (!item.content.startsWith('---\n'))
+      throw new Error('缺少 frontmatter。');
     if (item.content.length > MAX_POST_BYTES) throw new Error('内容过大。');
     if (seen.has(item.slug)) throw new Error('DUPLICATE_SLUG');
     seen.add(item.slug);
@@ -293,7 +301,11 @@ const handlePosts = async (
   }
 
   const items = readItems(
-    (await request.json()) as { slug?: unknown; content?: unknown; posts?: unknown },
+    (await request.json()) as {
+      slug?: unknown;
+      content?: unknown;
+      posts?: unknown;
+    },
   );
 
   // GitHub 的 contents API 一次只能改一个文件，串文就是几条几次提交
@@ -357,14 +369,89 @@ const handleUpload = async (
     },
   });
 
-  // 返回转换地址而不是原件地址：直接引用原件的话，一张手机照片就会原样
-  // 发给读者。onerror=redirect 保证万一超出免费额度时回退到原件而不是裂图。
   const origin = env.MEDIA_PUBLIC_URL.replace(/\/$/, '');
+  const original = `${origin}/${key}`;
+  const contentType = (
+    request.headers.get('content-type') || 'application/octet-stream'
+  )
+    .split(';', 1)[0]
+    .toLowerCase();
+
+  /**
+   * 不再把所有图片固定缩成 1200px WebP q92：截图文字会糊，已经量化过的
+   * PNG 还可能越转越大。PNG 先试原尺寸无损 WebP，再试原尺寸 PNG8；照片
+   * 才使用限宽的有损 WebP。每个候选都以真实响应的格式和 Content-Length
+   * 为准，只有确实更小才采用，否则返回原件。
+   */
+  const candidates: MediaCandidate[] =
+    contentType === 'image/png'
+      ? [
+          {
+            url: `${origin}/cdn-cgi/image/format=webp,quality=100,onerror=redirect/${key}`,
+            contentType: 'image/webp',
+          },
+          {
+            url: `${origin}/cdn-cgi/image/format=png,quality=85,onerror=redirect/${key}`,
+            contentType: 'image/png',
+          },
+        ]
+      : ['image/jpeg', 'image/webp'].includes(contentType)
+        ? [
+            {
+              url: `${origin}/cdn-cgi/image/width=1200,fit=scale-down,quality=92,format=webp,onerror=redirect/${key}`,
+              contentType: 'image/webp',
+            },
+          ]
+        : [];
+
+  let selectedUrl = original;
+  let selectedBytes = declared;
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(candidate.url, {
+        headers: {
+          accept: 'image/avif,image/webp,image/*,*/*;q=0.8',
+        },
+      });
+      const transformedType = (response.headers.get('content-type') ?? '')
+        .split(';', 1)[0]
+        .toLowerCase();
+      let transformedBytes = Number(response.headers.get('content-length'));
+      if (!Number.isFinite(transformedBytes) || transformedBytes <= 0) {
+        transformedBytes = (await response.arrayBuffer()).byteLength;
+      } else {
+        await response.body?.cancel();
+      }
+      if (
+        response.ok &&
+        transformedType === candidate.contentType &&
+        Number.isFinite(transformedBytes) &&
+        transformedBytes > 0 &&
+        transformedBytes < declared
+      ) {
+        selectedUrl = candidate.url;
+        selectedBytes = transformedBytes;
+        // PNG 候选按质量排序：无损 WebP 可用时，不再为了少几个字节降级到 PNG8。
+        break;
+      }
+    } catch (error) {
+      // 压缩探测失败不能让上传失败；保留原件 URL 即可。
+      console.warn(
+        JSON.stringify({
+          event: 'media_candidate_probe_failed',
+          key,
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
+  }
+
   return json(
     {
-      url: `${origin}/cdn-cgi/image/width=1200,quality=92,format=webp,onerror=redirect/${key}`,
-      original: `${origin}/${key}`,
+      url: selectedUrl,
+      original,
       bytes: declared,
+      servedBytes: selectedBytes,
     },
     201,
   );
