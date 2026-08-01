@@ -60,11 +60,16 @@ const themeScript = `
       <NormalJsonLd title={fullTitle} description={description} image={image} />
     </slot>
     <slot name="head" />
-    <script
-      is:inline
-      defer
-      src="https://umami.lmd.gg/script.js"
-      data-website-id="4e5cf502-20bc-4a44-89ee-31ea469e15b4"></script>
+    {
+      import.meta.env.PROD && (
+        <script
+          is:inline
+          defer
+          src="https://umami.lmd.gg/script.js"
+          data-website-id="4e5cf502-20bc-4a44-89ee-31ea469e15b4"
+        />
+      )
+    }
     <script is:inline set:html={themeScript} />
     <ClientRouter />
   </head>

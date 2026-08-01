@@ -14,6 +14,9 @@ const defaultConfig: Partial<SlateConfig> = {
   theme: defaultTheme,
   readTime: false,
   lastModified: false,
+  pagination: {
+    pageSize: 20,
+  },
 };
 
 export function defineConfig(config: SlateConfig): SlateConfig {
@@ -23,6 +26,10 @@ export function defineConfig(config: SlateConfig): SlateConfig {
     theme: {
       ...defaultTheme,
       ...config.theme,
+    },
+    pagination: {
+      pageSize: 20,
+      ...config.pagination,
     },
   };
 }

@@ -1,19 +1,10 @@
-import rss, { type RSSFeedItem, type RSSOptions } from '@astrojs/rss';
-import { experimental_AstroContainer } from 'astro/container';
-import { loadRenderers } from 'astro:container';
-import { getCollection, render, type CollectionEntry } from 'astro:content';
-import { getContainerRenderer as mdxContainerRenderer } from '@astrojs/mdx/container-renderer';
+import rss, { type RSSOptions } from '@astrojs/rss';
+import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
-import sanitizeHtml from 'sanitize-html';
 import slateConfig from '~@/slate.config';
-import {
-  getPostDisplayTitle,
-  getPostExcerpt,
-  getPostPath,
-} from '@/helpers/post';
 import { buildCollectionIndex } from '@/helpers/collection';
-
-type PostEntry = CollectionEntry<'post'>;
+import { getSitePosts, type PostEntry } from '@/helpers/content';
+import { buildRssItems } from '@/helpers/feed';
 
 /**
  * 每个合集一份 RSS，地址是 `/rss/<合集 slug>.xml`。
@@ -22,10 +13,7 @@ type PostEntry = CollectionEntry<'post'>;
  * 只筛掉草稿。
  */
 export async function getStaticPaths() {
-  const posts = await getCollection(
-    'post',
-    ({ data }: PostEntry) => data.draft !== true,
-  );
+  const posts = await getSitePosts();
 
   return buildCollectionIndex(posts).map((entry) => ({
     params: { collection: entry.slug },
@@ -45,31 +33,7 @@ export async function GET(context: APIContext) {
     .map((id) => all.find((post) => post.id === id))
     .filter((post): post is PostEntry => Boolean(post));
 
-  const renderers = await loadRenderers([mdxContainerRenderer()]);
-  const container = await experimental_AstroContainer.create({ renderers });
-
-  const items: RSSFeedItem[] = await Promise.all(
-    posts
-      .sort(
-        (a, b) =>
-          (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
-      )
-      .map(async (post) => {
-        const { Content } = await render(post);
-        const html = await container.renderToString(Content);
-
-        return {
-          link: `${getPostPath(post.id)}/`,
-          title: getPostDisplayTitle(post.data),
-          description: getPostExcerpt(post.body),
-          pubDate: post.data.pubDate,
-          categories: post.data.collections,
-          content: sanitizeHtml(html, {
-            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-          }),
-        };
-      }),
-  );
+  const items = await buildRssItems(posts);
 
   const rssOptions: RSSOptions = {
     stylesheet: '/pretty-feed-v3.xsl',

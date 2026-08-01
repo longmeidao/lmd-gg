@@ -1,0 +1,81 @@
+---
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import BackHeader from '@/components/layouts/BackHeader.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import PaginationNav from '@/components/feed/PaginationNav.astro';
+import { getFeaturedPostGroups, renderFeedPosts } from '@/helpers/content';
+import { paginateItems } from '@/helpers/pagination';
+import slateConfig from '~@/slate.config';
+import '@/assets/style/home.css';
+
+interface Props {
+  page?: number;
+}
+
+const { page = 1 } = Astro.props;
+const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const rawGroups = await getFeaturedPostGroups();
+const paginated = paginateItems(rawGroups, page, pageSize);
+const rawPosts = paginated.items.flatMap((group) => group.items);
+const posts = await renderFeedPosts(rawPosts);
+const totalPosts = rawGroups.reduce(
+  (sum, group) => sum + group.items.length,
+  0,
+);
+---
+
+<PageLayout
+  title={page > 1 ? `精选 · 第 ${page} 页` : '精选'}
+  description="挑出来的、值得再读一次的内容。"
+>
+  <BackHeader slot="header" />
+
+  <main class="home-column">
+    <section class="collection-hero">
+      <h1 class="home-hero-title text-slate12">精选</h1>
+      <p class="home-hero-description text-slate10 mt-2">
+        {
+          totalPosts > 0
+            ? `挑出来的 ${totalPosts} 条内容。`
+            : '还没有精选内容。'
+        }
+      </p>
+    </section>
+
+    <section class="mb-16">
+      <div class="home-feed">
+        {
+          posts.map((item, index) => (
+            <div class="home-feed-cluster">
+              {index > 0 && (
+                <div class="home-group-divider" aria-hidden="true" />
+              )}
+              <section class="home-feed-group" data-visible-count="1">
+                <PostEntry item={item} isFirst isLast>
+                  <PostActions
+                    slug={item.id}
+                    collections={item.data.collections ?? []}
+                    hiddenFromLatest={item.data.hiddenFromLatest}
+                    draft={item.data.draft}
+                    featured={item.data.featured}
+                    pinned={item.data.pinned}
+                  />
+                </PostEntry>
+              </section>
+            </div>
+          ))
+        }
+      </div>
+      <PaginationNav
+        currentPage={paginated.meta.currentPage}
+        totalPages={paginated.meta.totalPages}
+        basePath="/featured"
+      />
+    </section>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/feed-typography';
+</script>

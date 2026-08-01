@@ -1,0 +1,97 @@
+---
+import PageLayout from '@/components/layouts/PageLayout.astro';
+import PostActions from '@/components/admin/PostActions.astro';
+import PostEntry from '@/components/feed/PostEntry.astro';
+import PaginationNav from '@/components/feed/PaginationNav.astro';
+import { getPostDisplayTitle } from '@/helpers/post';
+import { getLatestPostGroups, renderFeedPosts } from '@/helpers/content';
+import { paginateItems } from '@/helpers/pagination';
+import slateConfig from '~@/slate.config';
+import '@/assets/style/home.css';
+
+interface Props {
+  page?: number;
+}
+
+const { page = 1 } = Astro.props;
+const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const rawGroups = await getLatestPostGroups();
+const paginated = paginateItems(rawGroups, page, pageSize);
+const postGroups = await Promise.all(
+  paginated.items.map(async (group) => ({
+    ...group,
+    items: await renderFeedPosts(group.items),
+  })),
+);
+---
+
+<PageLayout title={page > 1 ? `第 ${page} 页` : undefined}>
+  <main class="home-column">
+    <section class="relative mb-14">
+      <h1 class="home-hero-title text-slate12">
+        <a href="/">{slateConfig.title}</a>
+      </h1>
+      <nav class="home-nav mt-5" aria-label="站点导航">
+        {
+          slateConfig.navigations?.map((navigation) => (
+            <a href={navigation.href}>{navigation.label}</a>
+          ))
+        }
+      </nav>
+    </section>
+
+    <section id="post-list-section" class="mb-16 scroll-mt-8">
+      <div id="post-list" class="home-feed" aria-live="polite">
+        {
+          postGroups.map((group, groupIndex) => (
+            <div class="home-feed-cluster" data-feed-cluster>
+              {groupIndex > 0 && (
+                <div class="home-group-divider" aria-hidden="true" />
+              )}
+              <section
+                class="home-feed-group"
+                data-feed-group
+                data-thread-group={group.thread}
+                data-visible-count={group.items.length}
+                aria-label={
+                  group.thread
+                    ? `${group.items.length} 条关联内容`
+                    : getPostDisplayTitle(group.items[0]!.data)
+                }
+              >
+                {group.items.map((item, itemIndex) => (
+                  <PostEntry
+                    item={item}
+                    isFirst={itemIndex === 0}
+                    isLast={itemIndex === group.items.length - 1}
+                    isThreadLatest={
+                      !!group.thread && itemIndex === group.items.length - 1
+                    }
+                  >
+                    <PostActions
+                      slug={item.id}
+                      collections={item.data.collections ?? []}
+                      hiddenFromLatest={item.data.hiddenFromLatest}
+                      draft={item.data.draft}
+                      featured={item.data.featured}
+                      pinned={item.data.pinned}
+                    />
+                  </PostEntry>
+                ))}
+              </section>
+            </div>
+          ))
+        }
+      </div>
+      <PaginationNav
+        currentPage={paginated.meta.currentPage}
+        totalPages={paginated.meta.totalPages}
+        basePath="/"
+      />
+    </section>
+  </main>
+</PageLayout>
+
+<script>
+  import '@/scripts/feed-typography';
+</script>

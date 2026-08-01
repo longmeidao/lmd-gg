@@ -11,6 +11,9 @@ export default defineConfig({
   description: '五年饮冰，来份烧仙草。',
   lastModified: true,
   readTime: true,
+  pagination: {
+    pageSize: 20,
+  },
   footer: {
     copyright: `© ${new Date().getFullYear()} 三墩冰室`,
   },

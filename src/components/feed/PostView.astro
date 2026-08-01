@@ -1,7 +1,7 @@
 ---
 import dayjs from 'dayjs';
 import type { CollectionEntry } from 'astro:content';
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import i18next from '@/i18n';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
@@ -15,9 +15,9 @@ import { getFullTitle } from '@/helpers/utils';
 import {
   getPostDisplayTitle,
   getPostExcerpt,
-  getPostPath,
   type PostKind,
 } from '@/helpers/post';
+import { getSitePosts, renderFeedPosts } from '@/helpers/content';
 import 'remark-block-containers/css';
 import 'heti/umd/heti.min.css';
 import '@/assets/style/blog.css';
@@ -74,28 +74,13 @@ const showLastModified =
  * 串文里的任意一条被点开时，整串都要展示出来，左侧锚点高亮当前这条。
  * 点开的正好是最新一条时，把之前的压暗，突出最新的（参考 owenyoung.com 的串文页）。
  */
-const showPrototypes =
-  import.meta.env.DEV || import.meta.env.SHOW_PROTOTYPES === 'true';
 const threadId = post.data.thread;
 const threadEntries = threadId
-  ? await Promise.all(
-      (
-        await getCollection(
-          'post',
-          ({ data }) =>
-            (showPrototypes || data.draft !== true) && data.thread === threadId,
-        )
-      )
-        .sort(
-          (a, b) =>
-            (a.data.pubDate?.getTime() ?? 0) - (b.data.pubDate?.getTime() ?? 0),
-        )
-        .map(async (entry) => ({
-          id: entry.id,
-          url: getPostPath(entry.id),
-          data: entry.data,
-          Content: (await render(entry)).Content,
-        })),
+  ? await renderFeedPosts(
+      (await getSitePosts(({ data }) => data.thread === threadId)).sort(
+        (a, b) =>
+          (a.data.pubDate?.getTime() ?? 0) - (b.data.pubDate?.getTime() ?? 0),
+      ),
     )
   : [];
 
@@ -246,7 +231,6 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
   import Heti from 'heti/js/heti-addon.js';
   import '@/scripts/feed-typography';
 
-
   // 逐个根节点同步处理并打标记：autoSpacing() 延后查询，防不住重复执行，
   // 跑第二遍会把 <heti-adjacent> 再包一层，句尾标点被压两次。
   const heti = new Heti();
@@ -254,7 +238,7 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
   const applySpacing = () => {
     document
       .querySelectorAll<HTMLElement>(
-        '.post-header, .post-content.heti, .post-meta-bar-facts',
+        '.post-header, .post-content.heti, .post-meta-bar-facts, .related-post-date',
       )
       .forEach((root) => {
         if (root.dataset.hetiDone === 'true') return;

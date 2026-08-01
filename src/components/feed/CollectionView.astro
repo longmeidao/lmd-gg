@@ -1,13 +1,20 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import PostEntry from '@/components/feed/PostEntry.astro';
 import FilterBar from '@/components/feed/FilterBar.astro';
-import { getPostPath } from '@/helpers/post';
-import { getCollectionSlug, getPostCollections } from '@/helpers/collection';
+import PaginationNav from '@/components/feed/PaginationNav.astro';
+import { groupPostThreads, renderFeedPosts } from '@/helpers/content';
+import {
+  getCollectionHref,
+  getCollectionSlug,
+  getPostCollections,
+} from '@/helpers/collection';
 import { buildFilters, detectMedia } from '@/helpers/filters';
+import { paginateItems } from '@/helpers/pagination';
+import slateConfig from '~@/slate.config';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
 
@@ -15,40 +22,44 @@ interface Props {
   name: string;
   count: number;
   ids: string[];
+  page?: number;
 }
 
-const { name, count, ids } = Astro.props;
+const { name, count, ids, page = 1 } = Astro.props;
 
 const all = await getCollection('post');
+const selectedPosts = ids.map((id) => all.find((post) => post.id === id)!);
+const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const paginated = paginateItems(
+  groupPostThreads(selectedPosts),
+  page,
+  pageSize,
+);
+const pagePosts = paginated.items.flatMap((group) => group.items);
 const posts = await Promise.all(
-  ids
-    .map((id) => all.find((post) => post.id === id)!)
-    .map(async (post) => {
-      const { Content } = await render(post);
-      const date = post.data.pubDate;
-      return {
-        id: post.id,
-        url: getPostPath(post.id),
-        data: post.data,
-        Content,
-        // 以下都是筛选用的：和归档页同一套判定，同一个脚本消费
-        kind: post.data.kind,
-        year: date ? date.getFullYear() : 0,
-        hasTitle: Boolean(post.data.title?.trim()),
-        isThread: Boolean(post.data.thread),
-        media: detectMedia(
-          post.body,
-          post.data.kind,
-          post.data.attached === true,
-        ),
-        collections: getPostCollections(post.data),
-        visibility: post.data.draft
-          ? 'private'
-          : post.data.hiddenFromLatest
-            ? 'hidden'
-            : 'public',
-      };
-    }),
+  (await renderFeedPosts(pagePosts)).map(async (post) => {
+    const source = all.find((entry) => entry.id === post.id)!;
+    const date = post.data.pubDate;
+    return {
+      ...post,
+      // 以下都是筛选用的：和归档页同一套判定，同一个脚本消费
+      kind: post.data.kind,
+      year: date ? date.getFullYear() : 0,
+      hasTitle: Boolean(post.data.title?.trim()),
+      isThread: Boolean(post.data.thread),
+      media: detectMedia(
+        source.body,
+        post.data.kind,
+        post.data.attached === true,
+      ),
+      collections: getPostCollections(post.data),
+      visibility: post.data.draft
+        ? 'private'
+        : post.data.hiddenFromLatest
+          ? 'hidden'
+          : 'public',
+    };
+  }),
 );
 
 // 页面本身就限定了合集，再给一个合集筛选没有意义
@@ -56,7 +67,10 @@ const filters = buildFilters(posts, { includeCollection: false });
 const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
 ---
 
-<PageLayout title={name} description={`合集「${name}」下的 ${count} 条内容。`}>
+<PageLayout
+  title={page > 1 ? `${name} · 第 ${page} 页` : name}
+  description={`合集「${name}」下的 ${count} 条内容。`}
+>
   <link
     slot="head"
     rel="alternate"
@@ -71,7 +85,7 @@ const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
       <h1 class="home-hero-title text-slate12">{name}</h1>
       <FilterBar
         filters={filters}
-        count={count}
+        count={posts.length}
         feedHref={feedHref}
         feedTitle={`订阅合集「${name}」`}
       />
@@ -112,7 +126,14 @@ const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
           ))
         }
       </div>
-      <p class="archive-empty" data-archive-empty hidden>没有符合条件的内容。</p>
+      <p class="archive-empty" data-archive-empty hidden>
+        没有符合条件的内容。
+      </p>
+      <PaginationNav
+        currentPage={paginated.meta.currentPage}
+        totalPages={paginated.meta.totalPages}
+        basePath={getCollectionHref(name)}
+      />
     </section>
   </main>
 </PageLayout>

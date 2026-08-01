@@ -1,6 +1,7 @@
 ---
 title: 云玩家会梦见电子羊吗？
 pubDate: 2021-07-08
+collections: ["虚构与现实"]
 ---
 
 ::: info

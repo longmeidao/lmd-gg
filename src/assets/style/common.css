@@ -181,12 +181,12 @@ body {
 }
 
 /*
- * 内容整体靠左、放宽（参考 owenyoung.com）：不贴边，左侧留一段较宽的边距，
- * 右侧收窄，多出来的横向空间留给内容。owen 在 1280 视口是 160px / 51px。
+ * 内容列保留轻微左偏，但有限宽度的外壳必须在超宽屏居中；否则超过 81.5rem
+ * 的全部剩余空间都会堆到右侧，页面看起来被钉在屏幕左边。
  */
 .site-shell {
   width: min(81.5rem, 100%);
-  margin-inline: 0 auto;
+  margin-inline: auto;
   padding-inline: clamp(1.5rem, 12.5vw, 10rem) clamp(1.5rem, 4vw, 3.25rem);
 }
 
@@ -291,6 +291,12 @@ body {
   color: var(--color-slate12);
   font-size: 0.9rem;
   line-height: 1.7;
+}
+
+/* 首页 info 的正文跟随 feed 正文色，不用详情页强调一档的 slate12。 */
+.home-entry-content .block-default.info,
+.home-entry-content .block-default.info p {
+  color: inherit;
 }
 
 .blog-content .block-default.tip,

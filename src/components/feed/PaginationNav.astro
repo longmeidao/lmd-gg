@@ -1,0 +1,41 @@
+---
+import { getPaginationHref } from '@/helpers/pagination';
+
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
+}
+
+const { currentPage, totalPages, basePath } = Astro.props;
+const previousHref =
+  currentPage > 1 ? getPaginationHref(basePath, currentPage - 1) : undefined;
+const nextHref =
+  currentPage < totalPages
+    ? getPaginationHref(basePath, currentPage + 1)
+    : undefined;
+---
+
+{
+  totalPages > 1 && (
+    <nav class="feed-pagination" aria-label="分页导航">
+      {currentPage > 1 ? (
+        <a rel="prev" href={previousHref}>
+          ← 上一页
+        </a>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+      <span class="feed-pagination-status" aria-current="page">
+        {currentPage} / {totalPages}
+      </span>
+      {currentPage < totalPages ? (
+        <a rel="next" href={nextHref}>
+          下一页 →
+        </a>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+    </nav>
+  )
+}

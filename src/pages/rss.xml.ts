@@ -1,48 +1,12 @@
-import rss, { type RSSFeedItem, type RSSOptions } from '@astrojs/rss';
-import { experimental_AstroContainer } from 'astro/container';
-import { loadRenderers } from 'astro:container';
-import { getCollection, render, type CollectionEntry } from 'astro:content';
-import { getContainerRenderer as mdxContainerRenderer } from '@astrojs/mdx/container-renderer';
+import rss, { type RSSOptions } from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import sanitizeHtml from 'sanitize-html';
 import slateConfig from '~@/slate.config';
-import {
-  getPostDisplayTitle,
-  getPostExcerpt,
-  getPostPath,
-} from '@/helpers/post';
-
-type PostEntry = CollectionEntry<'post'>;
+import { getSitePosts } from '@/helpers/content';
+import { buildRssItems } from '@/helpers/feed';
 
 export async function GET(context: APIContext) {
-  const blog = await getCollection(
-    'post',
-    ({ data }: PostEntry) => data.draft !== true && data.kind === 'article',
-  );
-  const renderers = await loadRenderers([mdxContainerRenderer()]);
-  const container = await experimental_AstroContainer.create({ renderers });
-
-  const postItems: RSSFeedItem[] = await Promise.all(
-    blog
-      .sort(
-        (a: PostEntry, b: PostEntry) =>
-          (b.data.pubDate?.getTime() ?? 0) - (a.data.pubDate?.getTime() ?? 0),
-      )
-      .map(async (post: PostEntry) => {
-        const { Content } = await render(post);
-        const html = await container.renderToString(Content);
-
-        return {
-          link: `${getPostPath(post.id)}/`,
-          title: getPostDisplayTitle(post.data),
-          description: getPostExcerpt(post.body),
-          pubDate: post.data.pubDate,
-          categories: post.data.collections,
-          content: sanitizeHtml(html, {
-            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-          }),
-        };
-      }),
+  const postItems = await buildRssItems(
+    await getSitePosts(({ data }) => data.kind === 'article'),
   );
 
   const rssOptions: RSSOptions = {

@@ -52,7 +52,9 @@ const displayDomain = (() => {
   try {
     return new URL(externalUrl).hostname.replace(/^www\./i, '');
   } catch {
-    return externalUrl.replace(/^https?:\/\//i, '').split('/')[0] ?? externalUrl;
+    return (
+      externalUrl.replace(/^https?:\/\//i, '').split('/')[0] ?? externalUrl
+    );
   }
 })();
 ---
@@ -126,7 +128,11 @@ const displayDomain = (() => {
             {item.data.source && (
               <span class="home-entry-source">
                 {externalUrl ? (
-                  <a href={externalUrl} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {item.data.source}
                   </a>
                 ) : (
@@ -177,7 +183,10 @@ const displayDomain = (() => {
     </a>
     {
       item.data.rating && (
-        <span class="home-entry-rating" aria-label={`${item.data.rating} 星评分`}>
+        <span
+          class="home-entry-rating"
+          aria-label={`${item.data.rating} 星评分`}
+        >
           {'★'.repeat(item.data.rating)}
           {'☆'.repeat(5 - item.data.rating)}
         </span>

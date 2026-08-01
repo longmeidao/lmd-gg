@@ -42,7 +42,9 @@ export const getCollectionHref = (name: string) =>
   `/${getCollectionSlug(name)}`;
 
 /** 把全站条目汇总成合集列表，按条目数降序、同数按名字排 */
-export const buildCollectionIndex = <T extends { data: { collections?: string[] } }>(
+export const buildCollectionIndex = <
+  T extends { data: { collections?: string[] } },
+>(
   posts: T[],
 ) => {
   const grouped = new Map<string, T[]>();

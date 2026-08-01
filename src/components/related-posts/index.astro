@@ -17,15 +17,22 @@ const { posts } = Astro.props;
 ---
 
 {
-  posts.length > 1 && (
-    <section class="border-slate4 mt-16 border-t pt-16">
-      <h3 class="text-slate12 mb-6 text-base font-semibold sm:ml-2">
+  posts.length > 0 && (
+    <section class="related-posts mt-16" aria-labelledby="related-posts-title">
+      <div
+        class="home-group-divider related-posts-divider"
+        aria-hidden="true"
+      />
+      <h3
+        id="related-posts-title"
+        class="text-slate12 mb-6 ml-3 text-base font-semibold"
+      >
         相关文章
       </h3>
       <div class="text-slate12 text-base">
         {posts.map((post) => (
           <a
-            class="active:bg-slate4 sm:hover:bg-slate3 group mt-4 flex cursor-pointer flex-col rounded-xl py-2.5 no-underline transition-all hover:no-underline active:scale-[0.995] sm:px-2"
+            class="related-post active:bg-slate4 sm:hover:bg-slate3 group mt-4 flex cursor-pointer flex-col rounded-xl px-3 pt-3 no-underline transition-all hover:no-underline active:scale-[0.995]"
             href={getPostPath(post.id)}
             title={post.title}
           >
@@ -34,15 +41,18 @@ const { posts } = Astro.props;
                 <span class="text-slate12 shrink-0 font-medium">
                   {post.title}
                 </span>
-                <span class="border-slate6 mx-8 hidden h-px w-full grow border-t border-dashed sm:flex" />
+                <span class="related-post-rule border-slate6 mx-8 hidden h-px w-full grow border-t border-dashed sm:flex" />
                 {post.pubDate && (
-                  <span class="text-slate8 shrink-0 text-base">
+                  <time
+                    class="related-post-date heti text-slate8 shrink-0"
+                    datetime={post.pubDate.toISOString()}
+                  >
                     {post.pubDate.toLocaleDateString('zh-CN', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                     })}
-                  </span>
+                  </time>
                 )}
               </div>
               {post.description && (
@@ -51,9 +61,9 @@ const { posts } = Astro.props;
                 </p>
               )}
               {post.collections.length > 0 && (
-                <div class="mt-3 flex flex-wrap gap-1.5">
+                <div class="related-post-collections mx-1 mt-3 flex flex-wrap gap-1.5">
                   {post.collections.slice(0, 3).map((tag) => (
-                    <span class="bg-slate3 group-hover:bg-slate4 text-slate10 rounded-full px-2 py-0.5 text-sm transition-colors">
+                    <span class="bg-slate5 group-hover:bg-slate6 text-slate10 rounded-full px-3 py-0.5 text-sm transition-colors">
                       {tag}
                     </span>
                   ))}

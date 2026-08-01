@@ -2,7 +2,8 @@
 
 /* 标题下的日期、正文下面的信息栏：跟 owen 的 13.5/18.225 对齐（换算成本站 rem） */
 .post-header-meta,
-.post-meta-bar {
+.post-meta-bar,
+.related-post-date {
   font-size: 0.9rem;
   line-height: 1.35;
 }
@@ -19,6 +20,27 @@
   gap: 0.75rem;
   margin-top: 2.5rem;
   color: var(--color-slate9);
+}
+
+/* 正文链接规则的 specificity 更高；在组件末端明确恢复相关文章的结构样式。 */
+.blog-content .related-post {
+  border-bottom: 0;
+  color: inherit;
+  background-image: none;
+  padding-bottom: 1rem;
+  text-decoration: none;
+}
+
+.blog-content .related-post:hover {
+  color: inherit;
+  background-image: none;
+}
+
+.blog-content .related-post p {
+  margin: 0.4rem 0 0;
+  color: var(--color-slate10);
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .post-meta-bar-facts {
@@ -43,6 +65,16 @@
 
 .post-meta-bar-facts:empty + .post-admin {
   margin-left: 0;
+}
+
+/* 相关文章保留旧版圆角列表；区块线改用首页的三枚叶形分隔标记。 */
+.blog-content .related-posts {
+  max-width: 36.75rem;
+  border-top: 0;
+}
+
+.related-posts .related-posts-divider {
+  margin: 0 auto 2.5rem;
 }
 
 .blog-content {

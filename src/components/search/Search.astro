@@ -66,8 +66,8 @@ import './search.css';
 
   /** 每个词都得在正文或标题里出现，才算命中（pagefind 默认是「或」） */
   const matchesAll = (item, terms) => {
-    const haystack = `${item.raw_content ?? ''} ${item.meta?.title ?? ''}`
-      .toLowerCase();
+    const haystack =
+      `${item.raw_content ?? ''} ${item.meta?.title ?? ''}`.toLowerCase();
     return terms.every((term) => haystack.includes(term));
   };
 

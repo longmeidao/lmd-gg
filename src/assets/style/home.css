@@ -582,10 +582,7 @@
 
 .home-entry-content a {
   color: var(--color-indigo11);
-  background-image: linear-gradient(
-    var(--color-indigo6),
-    var(--color-indigo6)
-  );
+  background-image: linear-gradient(var(--color-indigo6), var(--color-indigo6));
   background-repeat: no-repeat;
 
   /* 行内元素的背景定位区只有内容区那么高，直接定位到底部会紧贴字。
@@ -606,7 +603,8 @@
 
 /* 渐变下划线是按盒宽铺的，块级链接会一直画到容器右边缘（看起来"超框"）。
    feed 里的结构性链接本来就有自己的样式，这里统一排除掉。 */
-.home-entry-content a:where(.home-link-url, .home-link-title, .home-entry-title),
+.home-entry-content
+  a:where(.home-link-url, .home-link-title, .home-entry-title),
 .home-entry-date-link,
 .home-link-url,
 .home-link-title,
@@ -777,4 +775,35 @@
 .collection-hero {
   position: relative;
   margin-bottom: 3.5rem;
+}
+
+/* --- 分页 --------------------------------------------------------------- */
+
+.feed-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  color: var(--color-slate9);
+  font-size: 0.875rem;
+}
+
+.feed-pagination > :last-child {
+  justify-self: end;
+}
+
+.feed-pagination a {
+  width: fit-content;
+  color: var(--color-slate11);
+  text-decoration: none;
+}
+
+.feed-pagination a:hover,
+.feed-pagination a:focus-visible {
+  color: var(--color-slate12);
+}
+
+.feed-pagination-status {
+  font-variant-numeric: tabular-nums;
 }

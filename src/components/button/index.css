@@ -1,11 +1,11 @@
 @reference '../../assets/style/common.css';
 
 .sb-button {
-  @apply touch-manipulation select-none rounded-full px-4 py-2 text-base text-center bg-slate3 text-slate11 hover:bg-slate4 hover:text-slate12 transition-all duration-200 ease-in-out min-w-16 active:scale-95 cursor-pointer;
+  @apply bg-slate3 text-slate11 hover:bg-slate4 hover:text-slate12 min-w-16 cursor-pointer touch-manipulation rounded-full px-4 py-2 text-center text-base transition-all duration-200 ease-in-out select-none active:scale-95;
 
   /* 渲染成 <a> 时没有 <button> 的 UA 居中，显式对齐，两种标签外观一致 */
   text-align: center;
-} 
+}
 
 .sb-button-default {
   @apply bg-slate3;
