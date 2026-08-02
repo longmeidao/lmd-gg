@@ -57,7 +57,7 @@ pnpm verify
 ```text
 plugins/             Astro/Vite 本地开发插件
 public/              原样复制的静态文件与重定向规则
-scripts/             构建后验证、外部服务健康检查
+scripts/             构建后验证与辅助脚本
 src/components/      Astro/React 组件
 src/content/         内容集合与 Markdown
 src/domain/          Worker 与本地开发共用的内容契约

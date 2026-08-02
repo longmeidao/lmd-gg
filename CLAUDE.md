@@ -58,13 +58,6 @@ Astro 7 / React 19 / Tailwind CSS 4 / Node 24 / pnpm 10。
 - 提交前跑 `git diff --cached --check` 和项目 lint
 - 个人项目不必每次都开 PR，直接 commit/push 可以；跨分支合并才建 PR
 
-## 外部服务健康检查
-
-`scripts/check-external-services.mjs` 覆盖：生产站点/About、Umami、Bangumi CORS 和 RSS。
-
-- 需要 `node --use-env-proxy`
-- Bangumi 的 CORS 检查必须带 `Origin: https://lmd.gg`
-
 ## 已决策事项
 
 - Decap CMS、Netlify Identity 与 Git Gateway 已移除；网页撰写已迁到 Cloudflare（Access + Worker + R2）

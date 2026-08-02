@@ -13,7 +13,6 @@ on:
       - docs/**
       - README*.md
       - CLAUDE.md
-      - .github/workflows/health-check.yml
   workflow_dispatch:
 
 permissions:

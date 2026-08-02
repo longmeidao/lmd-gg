@@ -32,7 +32,6 @@
     "lint-fix": "pnpm run lint-fix:script",
     "lint-fix:script": "pnpm run lint:script -- --fix",
     "lint:script": "eslint",
-    "check:services": "node --use-env-proxy scripts/check-external-services.mjs",
     "search:index": "pagefind --site dist",
     "verify:rss": "node scripts/verify-rss.mjs",
     "format": "prettier --write .",
