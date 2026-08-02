@@ -66,6 +66,50 @@ test('local write page bypasses production authentication', async ({
   ).toBeVisible();
 });
 
+test('Bangumi ratings use the five-star writer style above progress', async ({
+  page,
+}) => {
+  await page.route(
+    'https://api.bgm.tv/v0/users/longmeidao/collections**',
+    async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          total: 1,
+          data: [
+            {
+              subject_id: 310,
+              type: 3,
+              rate: 9,
+              ep_status: 1,
+              vol_status: 0,
+              subject: {
+                id: 310,
+                name: 'Mononoke Hime',
+                name_cn: '幽灵公主',
+                eps: 1,
+                images: {},
+              },
+            },
+          ],
+        }),
+      });
+    },
+  );
+
+  await page.goto('/about');
+  const card = page.locator('.bgm-item').first();
+  await expect(card.locator('.bgm-item-rating')).toHaveAttribute(
+    'aria-label',
+    'Bangumi 评分 9 分，折合 4.5 星',
+  );
+  await expect(card.locator('.bgm-item-rating-label')).toHaveText('4.5/5');
+  await expect(card.locator('.bgm-item-rating-star')).toHaveCount(5);
+  await expect(
+    card.locator('.bgm-item-rating + .bgm-item-statusBar-container'),
+  ).toHaveCount(1);
+});
+
 test('local preview data renders related posts', async ({ page }) => {
   await page.goto('/a-chuni-manifesto');
   await expect(page.locator('.related-post')).toHaveCount(3);

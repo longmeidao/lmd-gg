@@ -49,11 +49,7 @@ function getProgress(item, subjectType, collectionType) {
   let total = 0;
   let label = '话数';
 
-  if (subjectType.key === 'game' && Number(item.rate) > 0) {
-    current = Number(item.rate);
-    total = 10;
-    label = '评分';
-  } else if (subjectType.key === 'book' && Number(subject.volumes) > 0) {
+  if (subjectType.key === 'book' && Number(subject.volumes) > 0) {
     current = Number(item.vol_status) || 0;
     total = Number(subject.volumes) || 0;
     label = '卷数';
@@ -77,6 +73,35 @@ function getProgress(item, subjectType, collectionType) {
     label,
     percent: total > 0 ? Math.min(100, (current / total) * 100) : 0,
   };
+}
+
+function createRating(rateValue) {
+  const rate = Math.min(10, Math.max(0, Number(rateValue) || 0));
+  if (rate === 0) return null;
+
+  const fiveStarRating = rate / 2;
+  const rating = createElement('div', 'bgm-item-rating');
+  rating.setAttribute(
+    'aria-label',
+    `Bangumi 评分 ${rate} 分，折合 ${fiveStarRating} 星`,
+  );
+
+  const stars = createElement('span', 'bgm-item-rating-stars');
+  stars.setAttribute('aria-hidden', 'true');
+  for (let index = 0; index < 5; index += 1) {
+    const fill = Math.min(100, Math.max(0, (fiveStarRating - index) * 100));
+    const star = createElement('span', 'bgm-item-rating-star', '★');
+    star.style.setProperty('--bgm-star-fill', `${fill}%`);
+    stars.appendChild(star);
+  }
+
+  const label = createElement(
+    'span',
+    'bgm-item-rating-label',
+    `${fiveStarRating}/5`,
+  );
+  rating.append(stars, label);
+  return rating;
 }
 
 function createBangumiCard(item, subjectType, collectionType) {
@@ -112,6 +137,9 @@ function createBangumiCard(item, subjectType, collectionType) {
   );
   info.appendChild(originalTitle);
 
+  const rating = createRating(item.rate);
+  if (rating) info.appendChild(rating);
+
   const progress = getProgress(item, subjectType, collectionType);
   if (progress) {
     const progressContainer = createElement(
@@ -130,10 +158,7 @@ function createBangumiCard(item, subjectType, collectionType) {
     info.appendChild(progressContainer);
   } else {
     const statusLabel = BANGUMI_STATUS_LABELS[subjectType.key][collectionType];
-    const metaText = item.rate
-      ? `${statusLabel} · ${item.rate} 分`
-      : statusLabel;
-    info.appendChild(createElement('span', 'bgm-item-meta', metaText));
+    info.appendChild(createElement('span', 'bgm-item-meta', statusLabel));
   }
 
   card.appendChild(info);

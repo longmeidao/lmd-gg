@@ -162,6 +162,43 @@
   display: none;
 }
 
+.bgm-item-rating {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
+.bgm-item-rating-stars {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 0.08rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.bgm-item-rating-star {
+  background: linear-gradient(
+    90deg,
+    oklch(0.75 0.15 70) var(--bgm-star-fill),
+    var(--color-slate5) var(--bgm-star-fill)
+  );
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+}
+
+.bgm-item-rating-label {
+  overflow: hidden;
+  color: var(--color-slate8);
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bgm-item-statusBar-container {
   position: relative;
   z-index: 0;
