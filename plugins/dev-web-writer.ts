@@ -2,12 +2,10 @@ import {
   access,
   mkdir,
   readFile,
-  rename,
   readdir,
   unlink,
   writeFile,
 } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
@@ -221,26 +219,26 @@ export function devWebWriter(): Plugin {
               originals.set(filePath, await readFile(filePath, 'utf8'));
           }
 
-          const tempPaths = paths.map(
-            (filePath) => `${filePath}.${randomUUID()}.tmp`,
-          );
+          /*
+           * 直接原地写，不走「临时文件 + rename」。
+           *
+           * rename 到被监听的目录里，chokidar 会收到两次事件（旧 inode 消失 +
+           * 新文件出现），Astro 就跑两次 `vite program reload`，每次都把页面刷掉 ——
+           * 实测点一次「置顶」会闪两下，间隔一秒多。实测同一个文件直接 writeFile
+           * 只触发一次 program reload。
+           *
+           * 多文件的「要么全成、要么全不动」没有丢：下面照旧先存原文，任何一步
+           * 失败就把已经写过的逐个还原。相比原来只少了「单个文件写到一半进程被杀」
+           * 这一种情况的保护，本地开发的写入器可以接受。
+           */
           const committed: number[] = [];
           try {
             for (const [index, item] of items.entries()) {
               await mkdir(path.dirname(paths[index]!), { recursive: true });
-              await writeFile(tempPaths[index]!, item.content, {
-                encoding: 'utf8',
-                flag: 'wx',
-              });
-            }
-            for (const [index, tempPath] of tempPaths.entries()) {
-              await rename(tempPath, paths[index]!);
+              await writeFile(paths[index]!, item.content, 'utf8');
               committed.push(index);
             }
           } catch (error) {
-            await Promise.allSettled(
-              tempPaths.map((filePath) => unlink(filePath)),
-            );
             await Promise.all(
               committed.map(async (index) => {
                 const filePath = paths[index]!;

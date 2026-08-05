@@ -18,6 +18,7 @@ import rehypeFigure from 'rehype-figure';
 import { remarkModifiedTime } from './plugins/remark-modified-time';
 import { remarkReadingTime } from './plugins/remark-reading-time';
 import { devWebWriter } from './plugins/dev-web-writer';
+import { silenceAstroServerApp } from './plugins/silence-astro-server-app';
 import slateConfig from './slate.config';
 
 function generateAstroConfigure() {
@@ -73,7 +74,7 @@ function generateAstroConfigure() {
       }),
     },
     vite: {
-      plugins: [devWebWriter(), svgr(), tailwindcss()],
+      plugins: [silenceAstroServerApp(), devWebWriter(), svgr(), tailwindcss()],
       // emoji-mart 只在撰写面板里动态 import，dev 的依赖预打包扫不到它，
       // 首次点击表情就会 504。显式列出来让它随服务启动一起预打包。
       // 不含 @emoji-mart/data：那是个 JSON 数据包，预打包不了（会告警），
