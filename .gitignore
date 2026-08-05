@@ -27,6 +27,9 @@ playwright-report/
 # jetbrains setting folder
 .idea/
 
+# 本机的 Claude Code 配置（预览服务器等）
+.claude/
+
 #MWeb
 .MWebMetaData/
 TODO.md
