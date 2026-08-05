@@ -32,8 +32,12 @@ import './search.css';
       />
       <kbd>ESC</kbd>
     </div>
+    {
+      /* 文案要和 script 里清空后写回的那句保持一致；索引只覆盖正文
+        （data-pagefind-body），所以别承诺能搜标签。 */
+    }
     <p class="site-search-status" aria-live="polite" data-search-status>
-      输入标题、正文或标签关键词
+      输入标题或正文关键词
     </p>
     <ul class="site-search-results" data-search-results hidden></ul>
   </section>

@@ -8,9 +8,14 @@ import Button from '@/components/button';
 <PageLayout title="四〇四">
   <BackHeader slot="header" />
 
-  <div class="flex h-[70vh] flex-col items-center justify-center">
+  {/* min-h 而不是 h：固定高度在 200% 缩放下会把文字挤出容器 */}
+  <main
+    id="main-content"
+    tabindex="-1"
+    class="flex min-h-[70vh] flex-col items-center justify-center"
+  >
     <h1 class="mb-4 text-4xl font-bold">四〇四</h1>
     <p class="text-slate10 mb-8 text-base">{i18next.t('404.pageText')}</p>
     <Button href="/">{i18next.t('404.backBtnText')}</Button>
-  </div>
+  </main>
 </PageLayout>

@@ -37,10 +37,12 @@ test('theme selector hydrates and switches the document theme', async ({
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto('/');
-  const darkTheme = page.getByRole('radio', { name: 'dark' });
+  // 主题切换器已从 <div role="radio"> 改成原生 <button>：可访问名是中文，
+  // 选中状态用 aria-pressed（不再是 role=radio / aria-checked）。
+  const darkTheme = page.getByRole('button', { name: '深色' });
   await darkTheme.click();
   await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(darkTheme).toHaveAttribute('aria-checked', 'true');
+  await expect(darkTheme).toHaveAttribute('aria-pressed', 'true');
   expect(pageErrors).toEqual([]);
 });
 

@@ -15,6 +15,12 @@ import HeaderActions from './HeaderActions.astro';
 ---
 
 <div class="mb-16 flex h-14 items-start justify-between">
-  <Button href="/">←</Button>
+  {
+    /* 箭头是纯装饰：读屏念「←」只会得到「左箭头」或什么都没有，
+      真正的名字由 aria-label 给。 */
+  }
+  <Button href="/" aria-label="回到首页">
+    <span aria-hidden="true">←</span>
+  </Button>
   <HeaderActions />
 </div>

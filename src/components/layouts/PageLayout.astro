@@ -74,6 +74,27 @@ const themeScript = `
     <ClientRouter />
   </head>
   <body class="bg-slate1">
+    {
+      /* 键盘用户的第一个落点：不然每换一页都要先 Tab 过头像、撰写、搜索、导航
+        才能进正文。平时不可见，聚焦时才出现。 */
+    }
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <script is:inline>
+      /*
+       * 自己把焦点送进 <main>。光靠 href="#main-content" 不行：ClientRouter 会
+       * 接管同页锚点跳转，实测按下回车后 hash 没变、焦点被打回 body，
+       * 等于这个链接白点。document 不会被换页替换掉，所以只绑一次。
+       */
+      document.addEventListener('click', (event) => {
+        const link = event.target.closest?.('.skip-link');
+        if (!link) return;
+        const main = document.getElementById('main-content');
+        if (!main) return;
+        event.preventDefault();
+        main.focus();
+        main.scrollIntoView();
+      });
+    </script>
     <div class="site-shell flex min-h-dvh flex-col pt-18 pb-6">
       <slot name="header">
         <Header />

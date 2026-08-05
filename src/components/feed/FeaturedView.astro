@@ -24,7 +24,7 @@ const posts = await renderFeedPosts(rawPosts);
 <PageLayout title={page > 1 ? `精选辑 · 第 ${page} 页` : '精选辑'}>
   <BackHeader slot="header" />
 
-  <main class="home-column">
+  <main id="main-content" tabindex="-1" class="home-column">
     <section class="collection-hero">
       <h1 class="home-hero-title text-slate12">精选辑</h1>
     </section>

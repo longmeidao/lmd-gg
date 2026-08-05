@@ -102,129 +102,143 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
   <BackHeader slot="header" />
 
   {
-    /* 串文视图必须放在 .blog-content 外面：blog.css 的正文样式（a / blockquote
+    /* 正文要有 <main> 地标：读屏用户靠它一步跳到内容，否则只能从页头一路 Tab 下来。
+      串文视图和正文都算内容，一起包进来。 */
+  }
+  <main id="main-content" tabindex="-1">
+    {
+      /* 串文视图必须放在 .blog-content 外面：blog.css 的正文样式（a / blockquote
        那些）会套到 feed 的结构性元素上 —— 引文卡片被再包一层引用边框、日期和
        合集链接变成蓝色带下划线、下划线还铺满整行。挪出来就一次性都干净了。 */
-    isThread && (
-      <section
-        class="thread-view home-column"
-        data-thread-view
-        data-emphasise-latest={isLatestInThread ? 'true' : 'false'}
-        aria-label={`这条串文共 ${threadEntries.length} 条内容`}
-      >
-        <div class="home-feed">
-          <div class="home-feed-cluster">
-            <section
-              class="home-feed-group"
-              data-thread-group={threadId}
-              data-visible-count={threadEntries.length}
-            >
-              {threadEntries.map((entry, index) => (
-                <PostEntry
-                  item={entry}
-                  isFirst={index === 0}
-                  isLast={index === threadEntries.length - 1}
-                  isThreadCurrent={entry.id === post.id}
-                  isDimmed={isLatestInThread && entry.id !== post.id}
-                />
-              ))}
-            </section>
+      isThread && (
+        <section
+          class="thread-view home-column"
+          data-thread-view
+          data-emphasise-latest={isLatestInThread ? 'true' : 'false'}
+          aria-label={`这条串文共 ${threadEntries.length} 条内容`}
+        >
+          <div class="home-feed">
+            <div class="home-feed-cluster">
+              <section
+                class="home-feed-group"
+                data-thread-group={threadId}
+                data-visible-count={threadEntries.length}
+              >
+                {threadEntries.map((entry, index) => (
+                  <PostEntry
+                    item={entry}
+                    isFirst={index === 0}
+                    isLast={index === threadEntries.length - 1}
+                    isThreadCurrent={entry.id === post.id}
+                    isDimmed={isLatestInThread && entry.id !== post.id}
+                  />
+                ))}
+              </section>
+            </div>
           </div>
-        </div>
-      </section>
-    )
-  }
-
-  <div class="blog-content">
-    {
-      /* 无标题的内容不造标题、也不在上面挂日期 —— 那一行对一条随记来说太重了。
-         日期和操作统一放到正文下面的信息栏（同 owen 的 /18oun）。 */
-      hasTitle && (
-        <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
-          <h1>{postTitle}</h1>
-          <div class="post-header-meta text-slate10 flex items-center gap-2">
-            <span>{formattedPubDate}</span>
-            {post.data.rating && (
-              <>
-                <span class="heti-skip">·</span>
-                <span aria-label={`${post.data.rating} 星评分`}>
-                  {'★'.repeat(post.data.rating)}
-                  {'☆'.repeat(5 - post.data.rating)}
-                </span>
-              </>
-            )}
-            {showReadTime && <span class="heti-skip">·</span>}
-            {showReadTime && (
-              <div>
-                {i18next.t('blog.readingTime', {
-                  minutes: remarkPluginFrontmatter.minutesRead,
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+        </section>
       )
     }
 
-    <div
-      class:list={['post-content', 'heti', isThread && 'sr-only']}
-      data-pagefind-body
-    >
-      <Content />
-    </div>
-
-    {
-      /* 正文下面的信息栏。无标题的内容在这里第一次出现日期；有标题的上面已经
-         有发布日期了，这里只补「编辑于」。两者都把操作按钮放在这一行。 */
-      !isThread && (
-        <div class="post-meta-bar">
-          <div class="post-meta-bar-facts">
-            {!hasTitle && (
-              <>
-                <span>{formattedPubDate}</span>
-                {post.data.rating && (
-                  <>
-                    <span class="heti-skip">·</span>
-                    <span aria-label={`${post.data.rating} 星评分`}>
+    <div class="blog-content">
+      {
+        /* 无标题的内容不造标题、也不在上面挂日期 —— 那一行对一条随记来说太重了。
+         日期和操作统一放到正文下面的信息栏（同 owen 的 /18oun）。 */
+        hasTitle && (
+          <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
+            <h1>{postTitle}</h1>
+            <div class="post-header-meta text-slate10 flex items-center gap-2">
+              <span>{formattedPubDate}</span>
+              {post.data.rating && (
+                <>
+                  <span class="heti-skip">·</span>
+                  <span>
+                    <span aria-hidden="true">
                       {'★'.repeat(post.data.rating)}
                       {'☆'.repeat(5 - post.data.rating)}
                     </span>
-                  </>
-                )}
-                {showReadTime && (
-                  <>
-                    <span class="heti-skip">·</span>
-                    <span>
-                      {i18next.t('blog.readingTime', {
-                        minutes: remarkPluginFrontmatter.minutesRead,
-                      })}
-                    </span>
-                  </>
-                )}
-              </>
-            )}
-            {showLastModified && (
-              <>
-                {!hasTitle && <span class="heti-skip">·</span>}
-                <span>
-                  {i18next.t('blog.lastModified')} {lastModified}
-                </span>
-              </>
-            )}
+                    <span class="sr-only">{`${post.data.rating} 星评分`}</span>
+                  </span>
+                </>
+              )}
+              {showReadTime && <span class="heti-skip">·</span>}
+              {showReadTime && (
+                <div>
+                  {i18next.t('blog.readingTime', {
+                    minutes: remarkPluginFrontmatter.minutesRead,
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-          <PostActions
-            slug={post.id}
-            collections={post.data.collections ?? []}
-            hiddenFromLatest={post.data.hiddenFromLatest}
-            draft={post.data.draft}
-            featured={post.data.featured}
-            pinned={post.data.pinned}
-          />
-        </div>
-      )
-    }
-    <RelatedPosts posts={relatedPosts} />
-  </div>
+        )
+      }
+
+      <div
+        class:list={['post-content', 'heti', isThread && 'sr-only']}
+        data-pagefind-body
+      >
+        <Content />
+      </div>
+
+      {
+        /* 正文下面的信息栏。无标题的内容在这里第一次出现日期；有标题的上面已经
+         有发布日期了，这里只补「编辑于」。两者都把操作按钮放在这一行。 */
+        !isThread && (
+          <div class="post-meta-bar">
+            <div class="post-meta-bar-facts">
+              {!hasTitle && (
+                <>
+                  <span>{formattedPubDate}</span>
+                  {post.data.rating && (
+                    <>
+                      <span class="heti-skip">·</span>
+                      <span>
+                        <span aria-hidden="true">
+                          {'★'.repeat(post.data.rating)}
+                          {'☆'.repeat(5 - post.data.rating)}
+                        </span>
+                        <span class="sr-only">
+                          {`${post.data.rating} 星评分`}
+                        </span>
+                      </span>
+                    </>
+                  )}
+                  {showReadTime && (
+                    <>
+                      <span class="heti-skip">·</span>
+                      <span>
+                        {i18next.t('blog.readingTime', {
+                          minutes: remarkPluginFrontmatter.minutesRead,
+                        })}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+              {showLastModified && (
+                <>
+                  {!hasTitle && <span class="heti-skip">·</span>}
+                  <span>
+                    {i18next.t('blog.lastModified')} {lastModified}
+                  </span>
+                </>
+              )}
+            </div>
+            <PostActions
+              slug={post.id}
+              collections={post.data.collections ?? []}
+              hiddenFromLatest={post.data.hiddenFromLatest}
+              draft={post.data.draft}
+              featured={post.data.featured}
+              pinned={post.data.pinned}
+            />
+          </div>
+        )
+      }
+      <RelatedPosts posts={relatedPosts} />
+    </div>
+  </main>
 </PageLayout>
 
 <script>
