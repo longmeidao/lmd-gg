@@ -99,7 +99,7 @@ entries.forEach((entry) => {
 <PageLayout title="档案室" description="按月份排列的全部内容。">
   <BackHeader slot="header" />
 
-  <main class="archive-page">
+  <main id="main-content" tabindex="-1" class="archive-page">
     <header class="archive-page-header">
       <h1 class="archive-page-title">档案室</h1>
       <FilterBar filters={filters} count={entries.length} feedHref="/rss.xml">
@@ -200,7 +200,8 @@ entries.forEach((entry) => {
                       {entry.shortDate}
                     </time>
                     {entry.featured && (
-                      <span class="archive-tile-badge" aria-label="精选辑">
+                      <span class="archive-tile-badge">
+                        <span class="sr-only">精选辑</span>
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -317,9 +318,17 @@ entries.forEach((entry) => {
         }
       </div>
 
-      <p class="archive-empty" data-archive-empty hidden>
-        没有符合条件的内容。
-      </p>
+      {/* 空状态是筛选筛出来的，得给条回去的路，不然只能逐个胶囊点回全部 */}
+      <div class="archive-empty" data-archive-empty hidden>
+        <p>没有符合条件的内容。</p>
+        <button
+          type="button"
+          class="archive-clear-filters"
+          data-archive-clear-filters
+        >
+          清除筛选
+        </button>
+      </div>
     </div>
   </main>
 </PageLayout>

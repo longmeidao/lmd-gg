@@ -260,6 +260,10 @@ const setup = () => {
     if (empty) empty.hidden = visible > 0;
   };
 
+  /** 空状态里那颗「清除筛选」按钮要一次性清空所有维度，
+      而每个维度的 syncChip 是闭包里的，这里收集起来统一调用。 */
+  const resetters: Array<() => void> = [];
+
   selects.forEach((select) => {
     const name = select.dataset.chipSelect ?? '';
     const trigger = select.querySelector<HTMLButtonElement>(
@@ -344,7 +348,21 @@ const setup = () => {
       apply();
     });
 
+    resetters.push(() => {
+      selected(name).clear();
+      syncChip();
+    });
+
     syncChip();
+  });
+
+  /** 筛选到空结果时，给一个一键回到全部的出口，不用逐个胶囊点回去 */
+  const clearAll = body.querySelector<HTMLButtonElement>(
+    '[data-archive-clear-filters]',
+  );
+  clearAll?.addEventListener('click', () => {
+    resetters.forEach((reset) => reset());
+    apply();
   });
 
   document

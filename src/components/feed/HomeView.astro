@@ -26,7 +26,7 @@ const postGroups = await Promise.all(
 ---
 
 <PageLayout title={page > 1 ? `第 ${page} 页` : undefined}>
-  <main class="home-column">
+  <main id="main-content" tabindex="-1" class="home-column">
     <section class="relative mb-14">
       <h1 class="home-hero-title text-slate12">
         <a href="/">{slateConfig.title}</a>
@@ -41,7 +41,12 @@ const postGroups = await Promise.all(
     </section>
 
     <section id="post-list-section" class="mb-16 scroll-mt-8">
-      <div id="post-list" class="home-feed" aria-live="polite">
+      {
+        /* 不要加 aria-live：这个 feed 是静态渲染的，不存在需要播报的更新，
+          而 scripts/feed-typography.ts 会在加载后往里注入上百个 <heti-spacing>，
+          挂了实时区域就等于让读屏把整屏 feed 重念一遍。 */
+      }
+      <div id="post-list" class="home-feed">
         {
           postGroups.map((group, groupIndex) => (
             <div class="home-feed-cluster" data-feed-cluster>
@@ -67,6 +72,7 @@ const postGroups = await Promise.all(
                     isThreadLatest={
                       !!group.thread && itemIndex === group.items.length - 1
                     }
+                    showPinned
                   >
                     <PostActions
                       slug={item.id}

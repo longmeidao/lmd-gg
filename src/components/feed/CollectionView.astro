@@ -80,7 +80,7 @@ const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
   />
   <BackHeader slot="header" />
 
-  <main class="home-column" data-archive-body>
+  <main id="main-content" tabindex="-1" class="home-column" data-archive-body>
     <section class="collection-hero">
       <h1 class="home-hero-title text-slate12">{name}</h1>
       <FilterBar
@@ -126,9 +126,16 @@ const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
           ))
         }
       </div>
-      <p class="archive-empty" data-archive-empty hidden>
-        没有符合条件的内容。
-      </p>
+      <div class="archive-empty" data-archive-empty hidden>
+        <p>没有符合条件的内容。</p>
+        <button
+          type="button"
+          class="archive-clear-filters"
+          data-archive-clear-filters
+        >
+          清除筛选
+        </button>
+      </div>
       <PaginationNav
         currentPage={paginated.meta.currentPage}
         totalPages={paginated.meta.totalPages}

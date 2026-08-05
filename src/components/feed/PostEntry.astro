@@ -23,6 +23,8 @@ interface Props {
   isDimmed?: boolean;
   /** 合集页里已经在这个合集下了，footer 不用再重复列出来 */
   hideCollections?: boolean;
+  /** 置顶标记只在按置顶排序的列表里有意义（首页最新），别处不显示 */
+  showPinned?: boolean;
 }
 
 const {
@@ -33,8 +35,10 @@ const {
   isThreadCurrent,
   isDimmed,
   hideCollections = false,
+  showPinned: showPinnedProp = false,
 } = Astro.props;
 
+const showPinned = showPinnedProp && item.data.pinned === true;
 const kind = item.data.kind;
 const externalUrl = item.data.externalUrl;
 const displayTitle = getPostDisplayTitle(item.data);
@@ -72,6 +76,30 @@ const displayDomain = (() => {
     isDimmed && 'is-thread-dimmed',
   ]}
 >
+  {
+    /* 置顶标记，规格照 owenyoung.com 的 .post-status-badge：图钉 + 文字，
+       没有底色也没有边框，压得比正文弱一档，贴在条目最上面。
+       串文页里不重复显示 —— 那儿排序本来就不按置顶走。 */
+    showPinned && (
+      <p class="home-entry-status">
+        <span class="home-entry-status-badge">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="12" x2="12" y1="17" y2="22" />
+            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+          </svg>
+          置顶
+        </span>
+      </p>
+    )
+  }
   {
     kind === 'article' ? (
       <div class="home-article">
@@ -146,7 +174,10 @@ const displayDomain = (() => {
             {item.data.title && (
               <header class="home-entry-header">
                 {kind === 'note' && (
-                  <span class="home-entry-icon" aria-label={kind}>
+                  /* 纯装饰图标：原来挂的 aria-label={kind} 会把内部枚举值
+                     「note」念给中文站点的读屏用户，而 ARIA 也不允许在
+                     role=generic 上用 aria-label。 */
+                  <span class="home-entry-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M6 4h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
                     </svg>
@@ -183,18 +214,21 @@ const displayDomain = (() => {
     </a>
     {
       item.data.rating && (
-        <span
-          class="home-entry-rating"
-          aria-label={`${item.data.rating} 星评分`}
-        >
-          {'★'.repeat(item.data.rating)}
-          {'☆'.repeat(5 - item.data.rating)}
+        /* 星星本身交给视觉，文字说明单独给读屏。
+           aria-label 挂在无角色的 span 上按 ARIA 1.2 是不允许的，各家支持也不一致。 */
+        <span class="home-entry-rating">
+          <span aria-hidden="true">
+            {'★'.repeat(item.data.rating)}
+            {'☆'.repeat(5 - item.data.rating)}
+          </span>
+          <span class="sr-only">{`${item.data.rating} 星评分`}</span>
         </span>
       )
     }
     {
       !hideCollections && collections.length > 0 && (
-        <span class="home-entry-collections" aria-label="合集">
+        <span class="home-entry-collections">
+          <span class="sr-only">合集</span>
           {collections.map((name) => (
             <a href={getCollectionHref(name)}>{name}</a>
           ))}
