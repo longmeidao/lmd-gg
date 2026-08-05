@@ -198,6 +198,36 @@ body {
   }
 }
 
+/* 跳过导航。不用 display:none / visibility:hidden —— 那样它就不可聚焦了；
+   挪出视口，聚焦时再拉回来。 */
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-slate6);
+  background: var(--color-slate3);
+  padding: 0.6rem 1rem;
+  color: var(--color-slate12);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+/* 这里用 :focus 而不是 :focus-visible —— 跳过链接本来就只有键盘会碰到，
+   而 :focus-visible 在程序化 focus() 时不匹配，链接会留在视口外，
+   等于按了 Tab 什么也看不见。 */
+.skip-link:focus {
+  border-color: var(--color-slate8);
+  transform: translateY(0);
+}
+
+/* 跳过去之后标题别贴在视口最上沿 */
+#main-content {
+  scroll-margin-top: 1.5rem;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -212,6 +242,11 @@ body {
   appearance: none;
   border: 0;
   background: transparent;
+
+  /* 移动端会把文字标签藏掉，只剩 1rem 的图标；不撑开命中区就只有 16×16，
+     远低于触摸场景 44×44 的推荐值。图标尺寸不变，只放大可点区域。 */
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   padding: 0;
   color: var(--color-slate10);
   font-size: 0.875rem;
@@ -596,5 +631,179 @@ body {
 
   .header-action span {
     display: none;
+  }
+}
+
+/* --- 新建合集弹窗 --------------------------------------------------------- */
+/*
+ * 版式照 jant 的 `.collection-quick-dialog`（jant-me/jant，
+ * packages/core/src/styles/ui.css）。尺寸、圆角、间距直接用那份的数值：
+ * 宽 28rem、圆角 1.35rem、头部 1.05/1.1/0.8 的内边距、表单 grid gap 0.95rem、
+ * 字段 gap 0.46rem、输入框 min-height 2.8rem + 圆角 0.95rem、
+ * 确认键通栏 min-height 3rem + 全圆角。颜色换成本站的 slate 档位。
+ */
+
+.collection-dialog {
+  /* 显式居中：<dialog> 靠 UA 的 margin:auto 居中，而 Tailwind preflight 把
+     所有元素的 margin 清成 0，弹窗就被顶到左上角。jant 那边也是 fixed 居中。 */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(100vw - 2rem), 28rem);
+  max-height: calc(100dvh - 2rem);
+  border: 1px solid color-mix(in srgb, var(--color-slate12) 8%, transparent);
+
+  /* 圆角直接沿用条目管理菜单那一套：外壳 1.15rem（同 .post-admin-popover），
+     里面的输入框和确认键 0.8rem（同 .post-admin-row）。同一个后台里只用一套
+     圆角刻度，不另起炉灶。 */
+  border-radius: 1.15rem;
+  background: var(--color-slate2);
+  padding: 0;
+  color: var(--color-slate12);
+  box-shadow: 0 28px 80px -42px
+    color-mix(in srgb, var(--color-slate12) 42%, transparent);
+}
+
+.collection-dialog::backdrop {
+  background: rgb(0 0 0 / 32%);
+  backdrop-filter: blur(10px);
+}
+
+.collection-dialog-form {
+  display: flex;
+  max-height: calc(100dvh - 2rem);
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.collection-dialog-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 1.1rem 0.8rem;
+}
+
+.collection-dialog-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+/* 关闭键和撰写页顶栏的 X 一致：44×44、12px 圆角、平时无底色，
+   hover 才浮出来（同 .writer-topbar-btn）。 */
+.collection-dialog-cancel {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+
+  /* 44px 的方块比标题行高，往上提一点让 X 和标题在视觉上齐平 */
+  margin: -0.35rem -0.5rem 0 0;
+  padding: 0;
+  color: var(--color-slate10);
+  cursor: pointer;
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out;
+}
+
+.collection-dialog-cancel:hover {
+  background: var(--color-slate3);
+  color: var(--color-slate12);
+}
+
+.collection-dialog-cancel svg {
+  display: block;
+}
+
+.collection-dialog-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.1rem 1rem;
+}
+
+.collection-dialog-field {
+  display: grid;
+  gap: 0.46rem;
+}
+
+.collection-dialog-label {
+  color: var(--color-slate10);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.collection-dialog-input {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-slate6) 72%, transparent);
+  border-radius: 0.8rem;
+  background: var(--color-slate1);
+  padding: 0 0.85rem;
+  color: var(--color-slate12);
+  font: inherit;
+
+  /* 手机上低于 16px，iOS Safari 一聚焦就把整页放大 */
+  font-size: 16px;
+  outline: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.collection-dialog-input::placeholder {
+  color: var(--color-slate9);
+}
+
+/* jant 这里用的是主色描边；本站不要彩色焦点框，改成同一档的中性描边加深 */
+.collection-dialog-input:focus-visible {
+  border-color: var(--color-slate8);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-slate12) 6%, transparent);
+}
+
+.collection-dialog-footer {
+  flex-shrink: 0;
+  padding: 0 1.1rem 1.1rem;
+}
+
+.collection-dialog-submit {
+  display: flex;
+  width: 100%;
+  min-height: 3rem;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.8rem;
+  background: var(--color-slate12);
+  padding: 0 1rem;
+  color: var(--color-slate1);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 180ms ease;
+}
+
+.collection-dialog-submit:hover {
+  opacity: 0.88;
+}
+
+@media (min-width: 640px) {
+  .collection-dialog-input {
+    font-size: 1rem;
   }
 }

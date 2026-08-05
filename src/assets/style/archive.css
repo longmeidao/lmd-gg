@@ -157,13 +157,15 @@
   border-radius: 9999px;
   background: transparent;
   margin-right: 5px;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
   padding: 0;
   color: var(--color-slate9);
   cursor: pointer;
-  transition: color 150ms ease;
+
+  /* 原来这里声明了两次 transition，后一句只有 color，把前面的 background-color
+     整个盖掉了，hover 的底色是硬切的。合成一句。 */
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .archive-chip-clear[hidden] {
@@ -571,10 +573,42 @@
 }
 
 .archive-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
   padding: 3rem 0;
   color: var(--color-slate10);
   font-size: 0.9rem;
   text-align: center;
+}
+
+.archive-empty[hidden] {
+  display: none;
+}
+
+.archive-empty p {
+  margin: 0;
+}
+
+.archive-clear-filters {
+  appearance: none;
+  border: 1px solid var(--color-slate6);
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  color: var(--color-slate12);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.archive-clear-filters:hover {
+  border-color: var(--color-slate7);
+  background: var(--color-slate3);
 }
 
 /* --- 视图切换 ------------------------------------------------------------ */

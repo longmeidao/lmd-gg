@@ -771,13 +771,32 @@
   transition: all 150ms ease;
 }
 
-.writer-star:hover {
-  color: color-mix(in srgb, oklch(0.75 0.15 70) 60%, var(--w-divider));
-}
-
 .writer-star.is-filled {
   color: oklch(0.75 0.15 70);
   transform: scale(1.1);
+}
+
+/*
+ * 悬停预览：鼠标停在第 N 颗上时，1..N 一起点亮。
+ *
+ * 预览必须比选中态弱一档，否则两者长得一模一样 —— 鼠标从右边移过来先扫到
+ * 第 5 颗，5 颗全亮成选中的样子，看着就像「默认选了 5 星」。
+ * 所以预览用半透明的琥珀色、也不放大；真正选中了才是实色 + scale(1.1)。
+ *
+ * 两步来：先把整排压回未选中的样子，再点亮 1..N。这样已经选了 3 星时
+ * 去指第 1 颗，预览出来就是 1 星，而不是 3 星和 1 星混在一起。
+ * `:has(~ ...)` 用来选「后面有兄弟正被悬停」的那些，也就是左边所有星。
+ */
+.writer-star-rating:has(.writer-star:hover) .writer-star {
+  color: var(--w-divider);
+  transform: none;
+}
+
+.writer-star-rating:has(.writer-star:hover) .writer-star:hover,
+.writer-star-rating:has(.writer-star:hover)
+  .writer-star:has(~ .writer-star:hover) {
+  color: color-mix(in srgb, oklch(0.75 0.15 70) 45%, var(--w-divider));
+  transform: none;
 }
 
 .writer-star-label {
@@ -1869,5 +1888,18 @@ html.dark .writer-hide-latest input:checked {
   .writer-publish-popover {
     transition: none;
     animation: none;
+  }
+}
+
+/*
+ * iOS Safari 在输入框字号小于 16px 时会自动放大整页，放大后不会自己缩回去，
+ * 撰写面板里有好几个 15px 的输入框都会触发。手机上统一抬到 16px，
+ * 宽屏保持原本更紧凑的 15px。
+ * （.writer-quote-meta input 那条原本带 !important，这里得跟上。）
+ */
+@media (max-width: 639px) {
+  .writer-shell input,
+  .writer-shell textarea {
+    font-size: 16px !important;
   }
 }
