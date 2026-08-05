@@ -1,11 +1,12 @@
 /**
- * 首页 / 详情页条目上的管理操作：回复、编辑、加入合集、可见性、复制链接、删除。
+ * 首页 / 详情页条目上的管理操作：回复、编辑、加入合集、可见性、精选、置顶、删除。
  *
  * 写接口是「整份 markdown 读回来 → 改 frontmatter → 写回去」，
  * 所以这里只对 frontmatter 做定点增删，正文原样保留。
  */
 
 import { DEFAULT_COLLECTION } from '@/helpers/collection';
+import { askCollectionName } from '@/scripts/collection-dialog';
 
 type Visibility = 'public' | 'hidden' | 'private';
 
@@ -238,7 +239,13 @@ const setupPostActions = (root: HTMLElement) => {
     try {
       const content = await readPost(slug);
       await writePost(slug, change(content));
-      window.location.reload();
+      /*
+       * dev 下不自己 reload：写完文件后 Astro 的内容监听会重跑一次
+       * `vite program reload` 并把页面刷掉，我们再叠一次 location.reload()
+       * 就变成连着两次整页加载，看起来就是闪。生产没有 HMR，仍然要自己刷。
+       */
+      if (!isLocalWriter) window.location.reload();
+      else closeAllMenus();
     } catch (error) {
       trigger.disabled = false;
       window.alert(
@@ -253,30 +260,22 @@ const setupPostActions = (root: HTMLElement) => {
   });
 
   popover.addEventListener('click', async (event) => {
+    /*
+     * 必须拦住冒泡：document 上有一句「点哪儿都关掉所有菜单」的监听，
+     * 事件冒上去之后会立刻把整个 popover 关掉。
+     *
+     * 表现就是「加入合集」「可见性」点了没反应 —— 其实二级面板已经切过去了，
+     * 只是紧接着整个菜单被关了，再打开又被 openMenu() 重置回 root 面板。
+     * 会写文件的那几项（置顶、精选辑、删除）因为最后会重新加载页面，
+     * 反而看不出这个问题。
+     */
+    event.stopPropagation();
+
     const target = event.target as HTMLElement;
 
     const paneButton = target.closest<HTMLButtonElement>('[data-goto-pane]');
     if (paneButton) {
       showPane(paneButton.dataset.gotoPane ?? 'root');
-      return;
-    }
-
-    const copyButton = target.closest<HTMLButtonElement>(
-      '[data-copy-post-link]',
-    );
-    if (copyButton) {
-      const path = copyButton.dataset.copyPostLink;
-      if (!path) return;
-      await navigator.clipboard.writeText(
-        new URL(path, window.location.origin).href,
-      );
-      const label = copyButton.querySelector('span');
-      if (label) {
-        label.textContent = '已复制';
-        window.setTimeout(() => {
-          label.textContent = '复制链接';
-        }, 1200);
-      }
       return;
     }
 
@@ -293,7 +292,7 @@ const setupPostActions = (root: HTMLElement) => {
     }
 
     if (target.closest('[data-new-collection]')) {
-      const name = window.prompt('新的合集名称')?.trim();
+      const name = await askCollectionName();
       if (!name) return;
       const next = [...new Set([...currentCollections(), name])];
       await withPost('更新合集', (content) => setCollections(content, next));

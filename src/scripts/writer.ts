@@ -15,6 +15,7 @@ import {
   markdownBlocks,
   stripDirectives,
 } from './writer/markdown';
+import { askCollectionName } from './collection-dialog';
 import { parseExistingPost, setPostThread } from './writer/frontmatter';
 import {
   generatedSlug as makeGeneratedSlug,
@@ -272,7 +273,7 @@ if (root) {
         data-field-name="externalUrl"
         aria-label="链接地址"
         inputmode="url"
-        placeholder="粘贴链接…"
+        placeholder="输入链接…"
         value="${escapeAttribute(item.externalUrl)}"
       />
     </label>
@@ -280,14 +281,14 @@ if (root) {
       class="writer-title-input"
       data-field-name="title"
       aria-label="链接标题"
-      placeholder="给它一个标题…"
+      placeholder="链接标题"
       value="${escapeAttribute(item.title)}"
     />
     <textarea
       class="writer-commentary-textarea"
       data-field-name="commentary"
       aria-label="我的评论"
-      placeholder="你的想法（可选）"
+      placeholder="你的想法"
     >${escapeHtml(item.commentary)}</textarea>
   `;
 
@@ -305,7 +306,7 @@ if (root) {
       <input
         data-field-name="source"
         aria-label="作者"
-        placeholder="作者（可选）"
+        placeholder="作者"
         value="${escapeAttribute(item.source)}"
       />
     </label>
@@ -314,14 +315,14 @@ if (root) {
       data-field-name="externalUrl"
       aria-label="来源链接"
       inputmode="url"
-      placeholder="来源链接（可选）"
+      placeholder="来源链接"
       value="${escapeAttribute(item.externalUrl)}"
     />
     <textarea
       class="writer-commentary-textarea"
       data-field-name="commentary"
       aria-label="我的评论"
-      placeholder="你的想法（可选）"
+      placeholder="你的想法"
     >${escapeHtml(item.commentary)}</textarea>
   `;
 
@@ -593,6 +594,8 @@ if (root) {
     renderItems();
     if (editSlug) await loadPostForEditing(editSlug);
     else if (replySlug) await loadReplyTarget(replySlug);
+    // 打开撰写面板就能直接开始敲（编辑/回复那两条路径会重渲，所以放在它们之后）
+    focusFirstField(state.activeIndex);
   };
 
   // 有任意字段填过内容就算「有草稿」，退出时需要确认
@@ -761,6 +764,22 @@ if (root) {
     updatePreview();
   };
 
+  /**
+   * 把光标放到某条内容的第一个可输入字段上。
+   *
+   * DOM 顺序就是各形式该先填的那一项：随记是标题（没开就是正文）、
+   * 链接是网址、引文是引文正文，所以取第一个 textarea/input 即可。
+   *
+   * 和 renderItems(focusIndex) 里那段不同：那条路径是「新加一节串文」用的，
+   * 会平滑滚动并延迟 220ms；切换形式时内容还在原地，不需要滚也不该等。
+   */
+  const focusFirstField = (index: number) => {
+    itemsHost
+      .querySelector<HTMLElement>(`[data-writer-item][data-index="${index}"]`)
+      ?.querySelector<HTMLInputElement | HTMLTextAreaElement>('textarea, input')
+      ?.focus();
+  };
+
   const changeKind = (index: number, kind: WriterKind) => {
     syncAllItems();
     const item = state.items[index];
@@ -768,6 +787,8 @@ if (root) {
     item.kind = kind;
     state.activeIndex = index;
     renderItems();
+    // 换了形式就把光标送到该形式的第一个字段，不用再伸手点一下
+    focusFirstField(index);
     scheduleDraftSave();
   };
 
@@ -1215,14 +1236,16 @@ if (root) {
     renderCollections();
     scheduleDraftSave();
   });
-  root.querySelector('[data-add-collection]')?.addEventListener('click', () => {
-    const name = window.prompt('新的合集名称')?.trim();
-    if (!name) return;
-    availableCollections.add(name);
-    if (!state.collections.includes(name)) state.collections.push(name);
-    renderCollections();
-    scheduleDraftSave();
-  });
+  root
+    .querySelector('[data-add-collection]')
+    ?.addEventListener('click', async () => {
+      const name = await askCollectionName();
+      if (!name) return;
+      availableCollections.add(name);
+      if (!state.collections.includes(name)) state.collections.push(name);
+      renderCollections();
+      scheduleDraftSave();
+    });
 
   publishSettingsTrigger.addEventListener('click', () => {
     togglePublishPopover();
