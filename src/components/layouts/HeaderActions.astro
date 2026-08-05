@@ -67,8 +67,15 @@ const sessionEndpoint = import.meta.env.DEV
     if (!endpoint) return;
 
     checked = true;
-    // 身份由 Cloudflare Access 管，Cookie 浏览器自动带
-    void fetch(endpoint, { credentials: 'same-origin' })
+    /*
+     * 身份由 Cloudflare Access 管，Cookie 浏览器自动带。
+     *
+     * redirect: 'manual' 是兜底：万一 Access 应用把 /api/admin/* 也圈了进去，
+     * 未登录时它会在 Worker 之前就 302 到跨源的登录页，浏览器跟过去拿不到
+     * CORS 头，每个匿名访客的控制台都会红一条。改成手动之后 302 变成
+     * opaqueredirect（ok 为 false），照样判定成未登录，但不再报错。
+     */
+    void fetch(endpoint, { credentials: 'same-origin', redirect: 'manual' })
       .then(async (response) => {
         const result = (await response.json().catch(() => ({}))) as {
           authenticated?: boolean;

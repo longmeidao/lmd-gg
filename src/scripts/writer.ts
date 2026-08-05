@@ -567,8 +567,11 @@ if (root) {
     if (localWriter) return true;
 
     try {
+      // redirect: 'manual' 的理由同 HeaderActions.astro：未登录时若 Access
+      // 抢先 302 到跨源登录页，跟过去就是一条 CORS 报错。302 一律当未登录。
       const response = await fetch(sessionEndpoint, {
         credentials: 'same-origin',
+        redirect: 'manual',
       });
       const result = (await response.json().catch(() => ({}))) as {
         authenticated?: boolean;
