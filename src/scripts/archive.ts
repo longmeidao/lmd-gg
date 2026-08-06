@@ -78,8 +78,16 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
   header.append(headerLabel, headerCount);
   gridItems.append(header);
 
+  /** 列表视图里正常条目的分隔标记，草稿行沿用同一个 */
+  const groupDivider = () => {
+    const divider = document.createElement('div');
+    divider.className = 'home-group-divider';
+    divider.setAttribute('aria-hidden', 'true');
+    return divider;
+  };
+
   const listItems = document.createDocumentFragment();
-  missing.forEach((draft) => {
+  missing.forEach((draft, listIndex) => {
     const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
     const date = draft.pubDate ? new Date(draft.pubDate) : null;
     const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
@@ -113,23 +121,64 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     tile.append(top, content);
     gridItems.append(tile);
 
+    /*
+     * 列表视图的草稿照搬正常条目的结构（archive.astro 里那套
+     * cluster > divider? + group > article.home-feed-item），
+     * 这样标题、日期、间距全都走首页那份样式，不用另写一套。
+     * 原来是一行虚线加「日期 · 草稿 · 点击继续编辑」，和上下条目不是一个语言。
+     */
     const row = document.createElement('div');
     row.className = 'home-feed-cluster archive-draft-row';
     applyDraftData(row, draft);
-    const link = document.createElement('a');
-    link.className = 'archive-draft-link';
-    link.href = editUrl;
-    const rowTitle = document.createElement('strong');
+    if (listIndex > 0) row.append(groupDivider());
+
+    const group = document.createElement('section');
+    group.className = 'home-feed-group';
+    group.dataset.visibleCount = '1';
+
+    const article = document.createElement('article');
+    article.className = 'home-feed-item is-first-visible is-last-visible';
+
+    const header = document.createElement('header');
+    header.className = 'home-entry-header';
+    const rowTitle = document.createElement('a');
+    rowTitle.className = 'home-entry-title';
+    rowTitle.href = editUrl;
     rowTitle.textContent = draft.title || draft.slug;
-    const rowMeta = document.createElement('span');
-    rowMeta.textContent = `${dateLabel} · 草稿 · 点击继续编辑`;
-    link.append(rowTitle, rowMeta);
-    row.append(link);
+    header.append(rowTitle);
+
+    const footer = document.createElement('footer');
+    footer.className = 'home-entry-footer';
+    const dateLink = document.createElement('a');
+    dateLink.className = 'home-entry-date-link';
+    dateLink.href = editUrl;
+    const rowTime = document.createElement('time');
+    rowTime.className = 'home-entry-date';
+    rowTime.textContent = dateLabel;
+    if (validDate) rowTime.dateTime = validDate.toISOString();
+    dateLink.append(rowTime);
+    const flag = document.createElement('span');
+    flag.className = 'archive-draft-flag';
+    flag.textContent = '草稿';
+    footer.append(dateLink, flag);
+
+    article.append(header, footer);
+    group.append(article);
+    row.append(group);
     listItems.append(row);
   });
 
   grid.prepend(gridItems);
   list.prepend(listItems);
+
+  // 草稿插到最前面之后，原本的第一条不再是第一条了，给它补上分隔标记，
+  // 否则草稿和正文之间会少一条，节奏断在那儿。
+  const firstOriginal = list.querySelector<HTMLElement>(
+    '.home-feed-cluster:not(.archive-draft-row)',
+  );
+  if (firstOriginal && !firstOriginal.querySelector('.home-group-divider')) {
+    firstOriginal.prepend(groupDivider());
+  }
 };
 
 const loadDrafts = async (body: HTMLElement) => {

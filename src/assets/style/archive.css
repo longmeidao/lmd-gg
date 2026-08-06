@@ -410,15 +410,25 @@
 }
 
 .archive-draft-tile::after {
+  --draft-badge-pad-y: 0.15rem;
+
   position: absolute;
-  top: 10px;
+
+  /*
+   * 和左边日期同一行。两者的定位原点相同（都是方格的 padding box），但胶囊
+   * 有纵向内边距、又继承了 body 的 1.6 行高，盒子比日期高出一截，中线实测
+   * 差 4.52px。把行高压回 1、再上移一个自身的内边距，胶囊里的字就和日期
+   * 落在同一条线上了。
+   */
+  top: calc(10px - var(--draft-badge-pad-y));
   right: 10px;
   border-radius: 9999px;
   background: var(--color-slate3);
-  padding: 0.15rem 0.45rem;
+  padding: var(--draft-badge-pad-y) 0.45rem;
   color: var(--color-slate10);
   content: '草稿';
   font-size: 0.65rem;
+  line-height: 1;
 }
 
 .archive-tile-top-meta {
@@ -628,22 +638,15 @@
   display: none !important;
 }
 
-.archive-draft-row {
-  padding: 0.75rem 0;
-  border-bottom: 1px dashed var(--color-slate6);
-}
-
-.archive-draft-link {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  color: var(--color-slate12);
-  text-decoration: none;
-}
-
-.archive-draft-link span {
+/* 列表视图的草稿完全走首页条目那套排版（见 scripts/archive.ts），
+   这里只剩页脚上那枚状态标记。 */
+.archive-draft-flag {
+  border-radius: 9999px;
+  background: var(--color-slate3);
+  padding: 0.1rem 0.45rem;
   color: var(--color-slate10);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 @media (max-width: 520px) {
