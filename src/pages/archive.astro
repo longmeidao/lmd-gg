@@ -12,7 +12,11 @@ import {
 import { getPostCollections } from '@/helpers/collection';
 import { buildFilters, detectMedia } from '@/helpers/filters';
 import { resizeUrl, THUMB_WIDTH } from '@/helpers/media';
-import { byPubDateDesc, getSitePosts } from '@/helpers/content';
+import {
+  byPubDateDesc,
+  getSitePosts,
+  groupPostThreads,
+} from '@/helpers/content';
 import FilterBar from '@/components/feed/FilterBar.astro';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
@@ -94,6 +98,13 @@ entries.forEach((entry) => {
       items: [entry],
     });
 });
+
+/**
+ * 列表视图按串文分组，和首页用的是同一个 groupPostThreads —— 不这么做，
+ * 同一串的几条会摊成互不相干的独立条目，左边那条锚点轨道根本画不出来。
+ * 方格视图不分组：那是一格一条的墙，串起来没有意义。
+ */
+const listGroups = groupPostThreads(entries);
 ---
 
 <PageLayout title="档案室" description="按月份排列的全部内容。">
@@ -283,40 +294,63 @@ entries.forEach((entry) => {
       {/* 列表视图：和首页一样的条目展示 */}
       <div class="archive-list home-feed" data-archive-list>
         {
-          entries.map((entry, index) => (
-            <div
-              class="home-feed-cluster"
-              data-archive-item
-              data-slug={entry.id}
-              data-month={entry.monthKey}
-              data-year={entry.year}
-              data-kind={entry.kind}
-              data-collections={JSON.stringify(entry.collections)}
-              data-thread={String(entry.isThread)}
-              data-has-title={String(entry.hasTitle)}
-              data-media={entry.media.join(',')}
-              data-visibility={entry.visibility}
-              data-featured={String(entry.featured)}
-            >
-              {index > 0 && (
+          listGroups.map((group, groupIndex) => (
+            <div class="home-feed-cluster" data-feed-cluster>
+              {groupIndex > 0 && (
                 <div class="home-group-divider" aria-hidden="true" />
               )}
-              <section class="home-feed-group" data-visible-count="1">
-                <PostEntry item={entry} isFirst isLast>
-                  <PostActions
-                    slug={entry.id}
-                    collections={entry.data.collections ?? []}
-                    hiddenFromLatest={entry.data.hiddenFromLatest}
-                    draft={entry.data.draft}
-                    featured={entry.data.featured}
-                    pinned={entry.data.pinned}
-                  />
-                </PostEntry>
+              <section
+                class="home-feed-group"
+                data-thread-group={group.thread}
+                data-visible-count={group.items.length}
+              >
+                {group.items.map((entry, itemIndex) => (
+                  <PostEntry
+                    item={entry}
+                    isFirst={itemIndex === 0}
+                    isLast={itemIndex === group.items.length - 1}
+                    isThreadLatest={
+                      !!group.thread && itemIndex === group.items.length - 1
+                    }
+                    itemAttrs={{
+                      'data-archive-item': '',
+                      'data-slug': entry.id,
+                      'data-month': entry.monthKey,
+                      'data-year': String(entry.year),
+                      'data-thread': String(entry.isThread),
+                      'data-has-title': String(entry.hasTitle),
+                      'data-media': entry.media.join(','),
+                      'data-visibility': entry.visibility,
+                      'data-featured': String(entry.featured),
+                    }}
+                  >
+                    <PostActions
+                      slug={entry.id}
+                      collections={entry.data.collections ?? []}
+                      hiddenFromLatest={entry.data.hiddenFromLatest}
+                      draft={entry.data.draft}
+                      featured={entry.data.featured}
+                      pinned={entry.data.pinned}
+                    />
+                  </PostEntry>
+                ))}
               </section>
             </div>
           ))
         }
       </div>
+
+      {
+        /*
+        草稿是登录后由脚本注入的，拿不到 Astro 组件，所以在这里放一份模板，
+        scripts/archive.ts 克隆它再改 slug 和几个状态属性 —— 免得把
+        PostActions 那一大段 markup 在 JS 里重抄一遍。
+        <template> 的内容不进文档树，也不会被 revealAdmin 扫到。
+      */
+      }
+      <template data-post-actions-template>
+        <PostActions slug="" />
+      </template>
 
       {/* 空状态是筛选筛出来的，得给条回去的路，不然只能逐个胶囊点回全部 */}
       <div class="archive-empty" data-archive-empty hidden>

@@ -351,6 +351,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeAllMenus();
 });
 document.addEventListener('lmd:admin-authenticated', init);
+// 归档页登录后会注入草稿，它们的操作菜单也要挂上监听（事件从 archive.ts 冒泡上来）
+document.addEventListener('lmd:archive-items-changed', init);
 // ClientRouter 换页后是新的 DOM 节点，要重新挂事件
 document.addEventListener('astro:page-load', init);
 init();

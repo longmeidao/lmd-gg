@@ -871,3 +871,61 @@
 .feed-pagination-status {
   font-variant-numeric: tabular-nums;
 }
+
+/* --- 串文折叠段 ---------------------------------------------------------- */
+/*
+ * 规格照 owenyoung.com 的 .thread-context-shell：折叠时压到 160px，
+ * 下缘用 mask 化开，配一个朴素的文字按钮。
+ * 差别见 components/feed/ThreadCollapse.astro 的注释（当前条上下都能放）。
+ */
+
+.thread-collapse-shell[data-collapsed] {
+  max-height: 160px;
+  overflow: hidden;
+
+  /* 60% 之后开始化开，和 owen 一致 */
+  mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
+}
+
+.thread-collapse-toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0.28rem 0;
+  color: var(--color-slate10);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.thread-collapse-toggle:hover {
+  color: var(--color-slate12);
+}
+
+/* 按钮永远紧挨着当前那条内容。slot 只能渲染一次，所以顺序用 column-reverse
+   在这里调换，而不是在组件里把 markup 写两遍。 */
+.thread-collapse {
+  display: flex;
+
+  /* flex-start：不然按钮被拉成整行宽、文字跑到居中，和左对齐的 feed 不搭 */
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.thread-collapse[data-position='after'] {
+  flex-direction: column-reverse;
+}
+
+.thread-collapse[data-position='before'] .thread-collapse-toggle {
+  margin-bottom: 0.35rem;
+}
+
+.thread-collapse[data-position='after'] .thread-collapse-toggle {
+  margin-top: 0.35rem;
+}
+
+.thread-collapse-shell {
+  width: 100%;
+}

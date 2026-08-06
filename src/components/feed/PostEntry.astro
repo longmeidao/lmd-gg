@@ -25,6 +25,11 @@ interface Props {
   hideCollections?: boolean;
   /** 置顶标记只在按置顶排序的列表里有意义（首页最新），别处不显示 */
   showPinned?: boolean;
+  /**
+   * 透传到 <article> 上的 data-*。归档/合集的前端筛选按条隐藏，标记必须挂在
+   * 条目本身，否则串成一组之后没法单独筛某一条。
+   */
+  itemAttrs?: Record<string, string>;
 }
 
 const {
@@ -36,6 +41,7 @@ const {
   isDimmed,
   hideCollections = false,
   showPinned: showPinnedProp = false,
+  itemAttrs = {},
 } = Astro.props;
 
 const showPinned = showPinnedProp && item.data.pinned === true;
@@ -64,6 +70,7 @@ const displayDomain = (() => {
 ---
 
 <article
+  {...itemAttrs}
   data-post-item
   data-kind={kind}
   data-collections={JSON.stringify(collections)}

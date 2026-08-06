@@ -1,0 +1,41 @@
+---
+/**
+ * 串文里被折叠的那一段：一截带渐隐的预览 + 一个展开按钮。
+ *
+ * 做法照 owenyoung.com 的 .thread-context-shell —— 折叠时
+ * `max-height: 160px; overflow: hidden`，再用 mask 把下缘化开，
+ * 按钮在「显示/收起」之间切换。
+ *
+ * 和它不同的一点：owen 只折叠当前这条之前的内容，后面的永远全展开。
+ * 所以正在看串文中间的某条时，下方会拖着一长串没法收起。这里把位置做成
+ * 参数，详情页在当前条的上下各放一个，当前那条被夹在中间。
+ *
+ * 按钮永远紧挨着当前那条内容，所以两个方向的顺序是反的：
+ *   before → 壳在上、按钮在下
+ *   after  → 按钮在上、壳在下
+ * 顺序交给 CSS 的 column-reverse，而不是在这里写两遍 —— slot 只能渲染一次。
+ */
+interface Props {
+  /** 折叠段相对当前内容的位置 */
+  position: 'before' | 'after';
+  /** 折叠了多少条，用于按钮文案 */
+  count: number;
+}
+
+const { position, count } = Astro.props;
+---
+
+<div class="thread-collapse" data-thread-collapse data-position={position}>
+  <div class="thread-collapse-shell" data-thread-shell data-collapsed>
+    <slot />
+  </div>
+  <button
+    type="button"
+    class="thread-collapse-toggle"
+    data-thread-toggle
+    data-count={count}
+    aria-expanded="false"
+  >
+    显示其余 {count} 条
+  </button>
+</div>

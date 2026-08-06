@@ -10,6 +10,7 @@ import RelatedPosts from '@/components/related-posts/index.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import CodeGroupEvent from '@/components/code-group-event';
 import PostEntry from '@/components/feed/PostEntry.astro';
+import ThreadCollapse from '@/components/feed/ThreadCollapse.astro';
 import slateConfig from '~@/slate.config';
 import { getFullTitle } from '@/helpers/utils';
 import {
@@ -87,6 +88,20 @@ const threadEntries = threadId
 const isThread = threadEntries.length > 1;
 const currentIndex = threadEntries.findIndex((entry) => entry.id === post.id);
 const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
+
+/*
+ * 当前这条之外的内容折叠起来，上下各一段。
+ *
+ * owen 只折叠前面的，后面的永远全展开 —— 看串文中间那条时，下方会拖着一长串
+ * 收不起来。这里把「之后」也折上，当前那条正好被夹在两个按钮中间。
+ */
+const threadBefore = isThread ? threadEntries.slice(0, currentIndex) : [];
+const threadAfter = isThread ? threadEntries.slice(currentIndex + 1) : [];
+
+/** 只折 1 条不值得——按钮占的地方跟内容差不多，还多一次点击。2 条起才折。 */
+const COLLAPSE_FROM = 2;
+const collapseBefore = threadBefore.length >= COLLAPSE_FROM;
+const collapseAfter = threadAfter.length >= COLLAPSE_FROM;
 ---
 
 <PageLayout title={postTitle} description={postDescription}>
@@ -124,15 +139,52 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
                 data-thread-group={threadId}
                 data-visible-count={threadEntries.length}
               >
-                {threadEntries.map((entry, index) => (
-                  <PostEntry
-                    item={entry}
-                    isFirst={index === 0}
-                    isLast={index === threadEntries.length - 1}
-                    isThreadCurrent={entry.id === post.id}
-                    isDimmed={isLatestInThread && entry.id !== post.id}
-                  />
-                ))}
+                {collapseBefore && (
+                  <ThreadCollapse position="before" count={threadBefore.length}>
+                    {threadBefore.map((entry, index) => (
+                      <PostEntry
+                        item={entry}
+                        isFirst={index === 0}
+                        isDimmed={isLatestInThread}
+                      />
+                    ))}
+                  </ThreadCollapse>
+                )}
+
+                {!collapseBefore &&
+                  threadBefore.map((entry, index) => (
+                    <PostEntry
+                      item={entry}
+                      isFirst={index === 0}
+                      isDimmed={isLatestInThread}
+                    />
+                  ))}
+
+                <PostEntry
+                  item={threadEntries[currentIndex]!}
+                  isFirst={currentIndex === 0}
+                  isLast={currentIndex === threadEntries.length - 1}
+                  isThreadCurrent
+                />
+
+                {collapseAfter && (
+                  <ThreadCollapse position="after" count={threadAfter.length}>
+                    {threadAfter.map((entry, index) => (
+                      <PostEntry
+                        item={entry}
+                        isLast={index === threadAfter.length - 1}
+                      />
+                    ))}
+                  </ThreadCollapse>
+                )}
+
+                {!collapseAfter &&
+                  threadAfter.map((entry, index) => (
+                    <PostEntry
+                      item={entry}
+                      isLast={index === threadAfter.length - 1}
+                    />
+                  ))}
               </section>
             </div>
           </div>
@@ -244,6 +296,7 @@ const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
 <script>
   import Heti from 'heti/js/heti-addon.js';
   import '@/scripts/feed-typography';
+  import '@/scripts/thread-collapse';
 
   // 逐个根节点同步处理并打标记：autoSpacing() 延后查询，防不住重复执行，
   // 跑第二遍会把 <heti-adjacent> 再包一层，句尾标点被压两次。

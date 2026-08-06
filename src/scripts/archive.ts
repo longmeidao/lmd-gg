@@ -11,6 +11,8 @@ import {
   formatDisplayDomain,
   markdownBlocks,
 } from './writer/markdown';
+// 纯 TS、无 Astro 依赖，正文摘要和服务端渲染的方格共用同一套规则
+import { getPostExcerpt } from '@/helpers/post';
 
 /** 每个筛选维度保存一组已选值 —— 筛选是多选的（同 jant，胶囊上显示计数 + 清除） */
 type Filters = Record<string, Set<string>>;
@@ -187,6 +189,47 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
   header.append(headerLabel, headerCount);
   gridItems.append(header);
 
+  /**
+   * 给草稿配一份操作菜单：克隆页面里那份 PostActions 模板，再把 slug 和
+   * 状态属性改成这条草稿的。模板里的那份是 hidden 的（组件默认如此），
+   * 但能走到这儿说明已经登录，克隆出来直接放出。
+   */
+  const draftActions = (draft: DraftSummary) => {
+    const template = document.querySelector<HTMLTemplateElement>(
+      '[data-post-actions-template]',
+    );
+    const admin = template?.content
+      .querySelector<HTMLElement>('.post-admin')
+      ?.cloneNode(true) as HTMLElement | undefined;
+    if (!admin) return null;
+
+    admin.hidden = false;
+    admin.dataset.postAdmin = draft.slug;
+    admin.dataset.postCollections = JSON.stringify(draft.collections);
+    admin.dataset.postVisibility = 'private';
+    admin.dataset.postFeatured = String(draft.featured);
+    admin.dataset.postPinned = 'false';
+
+    const slug = encodeURIComponent(draft.slug);
+    admin
+      .querySelector('a.post-admin-btn')
+      ?.setAttribute('href', `/write?reply=${slug}`);
+    admin
+      .querySelector('a.post-admin-row')
+      ?.setAttribute('href', `/write?edit=${slug}`);
+
+    // 这几处文案服务端是按 props 渲染的，克隆出来要按草稿的状态改写
+    const label = admin.querySelector<HTMLElement>('[data-visibility-label]');
+    if (label) label.textContent = '草稿';
+    const featured = admin.querySelector<HTMLElement>('[data-featured-label]');
+    if (featured)
+      featured.textContent = draft.featured ? '移出精选辑' : '加入精选辑';
+    const pinned = admin.querySelector<HTMLElement>('[data-pinned-label]');
+    if (pinned) pinned.textContent = '置顶';
+
+    return admin;
+  };
+
   /** 列表视图里正常条目的分隔标记，草稿行沿用同一个 */
   const groupDivider = () => {
     const divider = document.createElement('div');
@@ -224,7 +267,8 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     title.textContent = draft.title || draft.slug;
     const summary = document.createElement('span');
     summary.className = 'archive-tile-summary';
-    summary.textContent = '草稿 · 点击继续编辑';
+    // 和正常方格一样显示正文摘要（archive.astro 用的也是 96 字上限）
+    summary.textContent = getPostExcerpt(draft.body, 96) ?? '';
     copy.append(title, summary);
     content.append(copy);
     tile.append(top, content);
@@ -238,7 +282,8 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
      */
     const row = document.createElement('div');
     row.className = 'home-feed-cluster archive-draft-row';
-    applyDraftData(row, draft);
+    // 筛选标记挂在条目上（同正常条目），cluster 只做分组容器
+    row.dataset.feedCluster = '';
     if (listIndex > 0) row.append(groupDivider());
 
     const group = document.createElement('section');
@@ -246,8 +291,11 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     group.dataset.visibleCount = '1';
 
     const article = document.createElement('article');
-    article.className = 'home-feed-item is-first-visible is-last-visible';
+    article.className = 'home-feed-item';
+    applyDraftData(article, draft);
     article.innerHTML = draftEntryMarkup(draft, editUrl, dateLabel, validDate);
+    const actions = draftActions(draft);
+    if (actions) article.querySelector('.home-entry-footer')?.append(actions);
 
     group.append(article);
     row.append(group);
@@ -283,7 +331,9 @@ const loadDrafts = async (body: HTMLElement) => {
     const result = (await response.json()) as { drafts?: DraftSummary[] };
     addDrafts(body, result.drafts ?? []);
     body.dataset.draftsLoaded = 'true';
-    body.dispatchEvent(new CustomEvent('lmd:archive-items-changed'));
+    body.dispatchEvent(
+      new CustomEvent('lmd:archive-items-changed', { bubbles: true }),
+    );
   } catch (error) {
     console.warn('草稿列表加载失败', error);
   } finally {
@@ -382,14 +432,38 @@ const setup = () => {
       if (counter) counter.textContent = String(shown);
     });
 
-    // 列表视图里第一条可见项之前不该有分隔点
-    const listVisible = items.filter(
-      (item) => item.classList.contains('home-feed-cluster') && !item.hidden,
-    );
-    listVisible.forEach((item, index) => {
-      const divider = item.querySelector<HTMLElement>('.home-group-divider');
-      if (divider) divider.hidden = index === 0;
-    });
+    /*
+     * 列表视图按串文成组，所以筛选之后要重算每组的状态：
+     * - data-visible-count 决定 CSS 画不画轨道（只剩一条就不该画）
+     * - is-thread-latest 那颗大锚点要落在「当前可见的最后一条」上
+     * - 整组被筛空就连 cluster 一起收起来，分隔点也跟着让位
+     */
+    let shownClusters = 0;
+    body
+      .querySelectorAll<HTMLElement>('[data-feed-cluster]')
+      .forEach((cluster) => {
+        const group = cluster.querySelector<HTMLElement>('.home-feed-group');
+        const members = [
+          ...cluster.querySelectorAll<HTMLElement>('[data-archive-item]'),
+        ];
+        const shown = members.filter((member) => !member.hidden);
+
+        if (group) group.dataset.visibleCount = String(shown.length);
+        members.forEach((member) =>
+          member.classList.remove('is-thread-latest'),
+        );
+        if (group?.dataset.threadGroup && shown.length > 1) {
+          shown.at(-1)?.classList.add('is-thread-latest');
+        }
+
+        cluster.hidden = shown.length === 0;
+        if (cluster.hidden) return;
+        const divider = cluster.querySelector<HTMLElement>(
+          '.home-group-divider',
+        );
+        if (divider) divider.hidden = shownClusters === 0;
+        shownClusters += 1;
+      });
 
     if (countLabel) countLabel.textContent = String(visible);
     if (empty) empty.hidden = visible > 0;
