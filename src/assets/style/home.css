@@ -889,6 +889,9 @@
 }
 
 .thread-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   appearance: none;
   border: 0;
   background: none;
@@ -928,4 +931,16 @@
 
 .thread-collapse-shell {
   width: 100%;
+}
+
+.thread-collapse-chevron {
+  display: inline-flex;
+  width: 0.85em;
+  height: 0.85em;
+  flex-shrink: 0;
+}
+
+.thread-collapse-chevron svg {
+  width: 100%;
+  height: 100%;
 }

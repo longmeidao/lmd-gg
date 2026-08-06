@@ -6,6 +6,9 @@
  */
 
 const EXPANDED_LABEL = '收起';
+/** 折叠时朝下、展开后朝上 */
+const CHEVRON_DOWN = 'M4 6l4 4 4-4';
+const CHEVRON_UP = 'M4 10l4-4 4 4';
 
 const toggleShell = (button: HTMLElement) => {
   const wrapper = button.closest<HTMLElement>('[data-thread-collapse]');
@@ -17,9 +20,16 @@ const toggleShell = (button: HTMLElement) => {
   else shell.setAttribute('data-collapsed', '');
 
   button.setAttribute('aria-expanded', String(collapsed));
-  button.textContent = collapsed
-    ? EXPANDED_LABEL
-    : `显示其余 ${button.dataset.count ?? ''} 条`;
+  // 只换文字节点：按钮里还有那枚三角，整个 textContent 会把它抹掉
+  const label = button.querySelector<HTMLElement>('[data-thread-toggle-label]');
+  if (label) {
+    label.textContent = collapsed
+      ? EXPANDED_LABEL
+      : `显示其余 ${button.dataset.count ?? ''} 条`;
+  }
+  button
+    .querySelector('[data-thread-toggle-chevron]')
+    ?.setAttribute('d', collapsed ? CHEVRON_UP : CHEVRON_DOWN);
 };
 
 if (

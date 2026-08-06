@@ -160,12 +160,23 @@ const collapseAfter = threadAfter.length >= COLLAPSE_FROM;
                     />
                   ))}
 
+                {/* 串文页原来整页都没有操作菜单：下面那条信息栏被 !isThread
+                    挡掉了，串文里的条目也没传过 PostActions。给当前这条补上。 */}
                 <PostEntry
                   item={threadEntries[currentIndex]!}
                   isFirst={currentIndex === 0}
                   isLast={currentIndex === threadEntries.length - 1}
                   isThreadCurrent
-                />
+                >
+                  <PostActions
+                    slug={post.id}
+                    collections={post.data.collections ?? []}
+                    hiddenFromLatest={post.data.hiddenFromLatest}
+                    draft={post.data.draft}
+                    featured={post.data.featured}
+                    pinned={post.data.pinned}
+                  />
+                </PostEntry>
 
                 {collapseAfter && (
                   <ThreadCollapse position="after" count={threadAfter.length}>

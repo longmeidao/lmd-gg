@@ -192,7 +192,12 @@ const listGroups = groupPostThreads(entries);
               </div>
               {month.items.map((entry) => (
                 <a
-                  class="archive-tile"
+                  class:list={[
+                    'archive-tile',
+                    /* dev 会把草稿一起构建进来（showDraftsAtBuild），生产则由脚本
+                       注入并带上这个类。两边都标上，草稿的虚线框才一致。 */
+                    entry.visibility === 'private' && 'archive-draft-tile',
+                  ]}
                   href={entry.url}
                   data-archive-item
                   data-slug={entry.id}

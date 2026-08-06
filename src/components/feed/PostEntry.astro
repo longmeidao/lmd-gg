@@ -45,6 +45,9 @@ const {
 } = Astro.props;
 
 const showPinned = showPinnedProp && item.data.pinned === true;
+/* 草稿只有登录后才看得到（dev 直接构建进来，生产由脚本注入），
+   所以这里不用再判鉴权。标记要和注入草稿那份一致，见 scripts/archive.ts。 */
+const showDraft = item.data.draft === true;
 const kind = item.data.kind;
 const externalUrl = item.data.externalUrl;
 const displayTitle = getPostDisplayTitle(item.data);
@@ -87,7 +90,28 @@ const displayDomain = (() => {
     /* 置顶标记，规格照 owenyoung.com 的 .post-status-badge：图钉 + 文字，
        没有底色也没有边框，压得比正文弱一档，贴在条目最上面。
        串文页里不重复显示 —— 那儿排序本来就不按置顶走。 */
-    showPinned && (
+    showDraft && (
+      <p class="home-entry-status">
+        <span class="home-entry-status-badge home-entry-status-draft">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+          草稿
+        </span>
+      </p>
+    )
+  }
+  {
+    showPinned && !showDraft && (
       <p class="home-entry-status">
         <span class="home-entry-status-badge">
           <svg
