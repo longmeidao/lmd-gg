@@ -4,6 +4,7 @@ import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import ThreadGroup from '@/components/feed/ThreadGroup.astro';
+import ThreadCollapse from '@/components/feed/ThreadCollapse.astro';
 import {
   getPostDisplayTitle,
   getPostExcerpt,
@@ -334,6 +335,11 @@ const listGroups = groupPostThreads(entries);
       }
       <template data-post-actions-template>
         <PostActions slug="" />
+      </template>
+
+      {/* 同理：注入的草稿如果串成一串，前面几条也要能折叠 */}
+      <template data-thread-collapse-template>
+        <ThreadCollapse position="before" count={0} />
       </template>
 
       {/* 空状态是筛选筛出来的，得给条回去的路，不然只能逐个胶囊点回全部 */}

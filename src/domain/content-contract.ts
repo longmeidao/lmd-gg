@@ -24,7 +24,8 @@ export interface DraftSummary {
   kind: string;
   pubDate: string;
   collections: string[];
-  thread: boolean;
+  /** 串文的键名，没有就是空串。归档页靠它把草稿串成一组，不只是判断有没有 */
+  thread: string;
   featured: boolean;
   hiddenFromLatest: boolean;
   /**
@@ -139,7 +140,7 @@ export const parseDraftSummary = (
     kind: unquote(frontmatterValue(frontmatter, 'kind')) || 'article',
     pubDate: unquote(frontmatterValue(frontmatter, 'pubDate')),
     collections,
-    thread: Boolean(frontmatterValue(frontmatter, 'thread')),
+    thread: unquote(frontmatterValue(frontmatter, 'thread')),
     featured: frontmatterValue(frontmatter, 'featured') === 'true',
     hiddenFromLatest:
       frontmatterValue(frontmatter, 'hiddenFromLatest') === 'true',

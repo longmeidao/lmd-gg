@@ -25,7 +25,8 @@ interface DraftSummary {
   kind: string;
   pubDate: string;
   collections: string[];
-  thread: boolean;
+  /** 串文的键名，没有就是空串 */
+  thread: string;
   featured: boolean;
   body: string;
   externalUrl: string;
@@ -58,7 +59,7 @@ const applyDraftData = (element: HTMLElement, draft: DraftSummary) => {
   element.dataset.year = validDate ? String(validDate.getFullYear()) : '';
   element.dataset.kind = draft.kind;
   element.dataset.collections = JSON.stringify(draft.collections);
-  element.dataset.thread = String(draft.thread);
+  element.dataset.thread = String(Boolean(draft.thread));
   element.dataset.hasTitle = String(Boolean(draft.title));
   element.dataset.media = '';
   element.dataset.visibility = 'private';
@@ -162,6 +163,63 @@ const draftEntryMarkup = (
     </footer>`;
 };
 
+/**
+ * 草稿也要按串文分组。服务端那份走 helpers/content 的 groupPostThreads，
+ * 生产环境的草稿是前端补画的，只能在这里照同一套规则再分一次：
+ * 组的位置跟着组里最新那条（接口返回的就是新到旧），组内按时间正序。
+ */
+const groupDraftThreads = (drafts: DraftSummary[]) => {
+  const seen = new Set<string>();
+  const groups: Array<{ thread: string; items: DraftSummary[] }> = [];
+  drafts.forEach((draft) => {
+    if (!draft.thread) {
+      groups.push({ thread: '', items: [draft] });
+      return;
+    }
+    if (seen.has(draft.thread)) return;
+    seen.add(draft.thread);
+    groups.push({
+      thread: draft.thread,
+      items: drafts
+        .filter((candidate) => candidate.thread === draft.thread)
+        .sort((left, right) => left.pubDate.localeCompare(right.pubDate)),
+    });
+  });
+  return groups;
+};
+
+/** 折叠的门槛，和 components/feed/ThreadGroup.astro 保持一致 */
+const COLLAPSE_FROM = 2;
+
+/**
+ * 折叠段的 markup 不在这里重写一遍：页面上放了一份
+ * components/feed/ThreadCollapse.astro 渲染出的模板，克隆它就行
+ * （同 PostActions 的做法），样式和交互自然跟服务端那份一模一样。
+ */
+const threadCollapse = () => {
+  const template = document.querySelector<HTMLTemplateElement>(
+    '[data-thread-collapse-template]',
+  );
+  const element = template?.content
+    .querySelector<HTMLElement>('[data-thread-collapse]')
+    ?.cloneNode(true) as HTMLElement | undefined;
+  const shell = element?.querySelector<HTMLElement>('[data-thread-shell]');
+  const button = element?.querySelector<HTMLElement>('[data-thread-toggle]');
+  const label = element?.querySelector<HTMLElement>(
+    '[data-thread-toggle-label]',
+  );
+  if (!element || !shell || !button || !label) return null;
+
+  return {
+    element,
+    shell,
+    setCount: (count: number) => {
+      button.dataset.count = String(count);
+      label.textContent = `显示其余 ${count} 条`;
+    },
+  };
+};
+
 const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
   const existing = new Set(
     [...body.querySelectorAll<HTMLElement>('[data-slug]')].map(
@@ -240,14 +298,21 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     return divider;
   };
 
-  const listItems = document.createDocumentFragment();
-  missing.forEach((draft, listIndex) => {
-    const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
+  /** 条目的日期在方格和列表里显示成一样的短日期 */
+  const draftDate = (draft: DraftSummary) => {
     const date = draft.pubDate ? new Date(draft.pubDate) : null;
     const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
-    const dateLabel = validDate
-      ? `${validDate.getMonth() + 1} 月 ${validDate.getDate()} 日`
-      : '未标日期';
+    return {
+      validDate,
+      label: validDate
+        ? `${validDate.getMonth() + 1} 月 ${validDate.getDate()} 日`
+        : '未标日期',
+    };
+  };
+
+  missing.forEach((draft) => {
+    const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
+    const { validDate, label: dateLabel } = draftDate(draft);
 
     const tile = document.createElement('a');
     tile.className = 'archive-tile archive-draft-tile';
@@ -275,32 +340,62 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     content.append(copy);
     tile.append(top, content);
     gridItems.append(tile);
+  });
 
-    /*
-     * 列表视图的草稿照搬正常条目的结构（archive.astro 里那套
-     * cluster > divider? + group > article.home-feed-item），
-     * 这样标题、日期、间距全都走首页那份样式，不用另写一套。
-     * 原来是一行虚线加「日期 · 草稿 · 点击继续编辑」，和上下条目不是一个语言。
-     */
+  /** 列表视图里的一条：结构照搬 components/feed/PostEntry.astro 的 <article> */
+  const draftArticle = (draft: DraftSummary) => {
+    const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
+    const { validDate, label } = draftDate(draft);
+    const article = document.createElement('article');
+    article.className = 'home-feed-item';
+    applyDraftData(article, draft);
+    article.innerHTML = draftEntryMarkup(draft, editUrl, label, validDate);
+    const actions = draftActions(draft);
+    if (actions) article.querySelector('.home-entry-footer')?.append(actions);
+    return article;
+  };
+
+  /*
+   * 列表视图的草稿照搬正常条目的结构（archive.astro 里那套
+   * cluster > divider? + group > article.home-feed-item），
+   * 这样标题、日期、间距全都走首页那份样式，不用另写一套。
+   * 原来是一行虚线加「日期 · 草稿 · 点击继续编辑」，和上下条目不是一个语言。
+   */
+  const listItems = document.createDocumentFragment();
+  groupDraftThreads(missing).forEach((group, groupIndex) => {
     const row = document.createElement('div');
     row.className = 'home-feed-cluster archive-draft-row';
     // 筛选标记挂在条目上（同正常条目），cluster 只做分组容器
     row.dataset.feedCluster = '';
-    if (listIndex > 0) row.append(groupDivider());
+    if (groupIndex > 0) row.append(groupDivider());
 
-    const group = document.createElement('section');
-    group.className = 'home-feed-group';
-    group.dataset.visibleCount = '1';
+    const section = document.createElement('section');
+    section.className = 'home-feed-group';
+    section.dataset.visibleCount = String(group.items.length);
+    if (group.thread) section.dataset.threadGroup = group.thread;
 
-    const article = document.createElement('article');
-    article.className = 'home-feed-item';
-    applyDraftData(article, draft);
-    article.innerHTML = draftEntryMarkup(draft, editUrl, dateLabel, validDate);
-    const actions = draftActions(draft);
-    if (actions) article.querySelector('.home-entry-footer')?.append(actions);
+    const articles = group.items.map((draft, index) => {
+      const article = draftArticle(draft);
+      if (index === 0) article.classList.add('is-first-visible');
+      if (index === group.items.length - 1) {
+        article.classList.add('is-last-visible');
+        if (group.thread) article.classList.add('is-thread-latest');
+      }
+      return article;
+    });
 
-    group.append(article);
-    row.append(group);
+    // 前面那几条折起来，规则和 ThreadGroup.astro 一致（两条起才折）
+    const context = group.thread ? articles.slice(0, -1) : [];
+    const collapse = context.length >= COLLAPSE_FROM ? threadCollapse() : null;
+    if (collapse) {
+      collapse.shell.append(...context);
+      collapse.setCount(context.length);
+      section.append(collapse.element, ...articles.slice(-1));
+    } else {
+      section.append(...articles);
+    }
+
+    row.append(section);
     listItems.append(row);
   });
 
