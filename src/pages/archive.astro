@@ -3,7 +3,7 @@ import { render } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
 import PostActions from '@/components/admin/PostActions.astro';
-import PostEntry from '@/components/feed/PostEntry.astro';
+import ThreadGroup from '@/components/feed/ThreadGroup.astro';
 import {
   getPostDisplayTitle,
   getPostExcerpt,
@@ -304,42 +304,21 @@ const listGroups = groupPostThreads(entries);
               {groupIndex > 0 && (
                 <div class="home-group-divider" aria-hidden="true" />
               )}
-              <section
-                class="home-feed-group"
-                data-thread-group={group.thread}
-                data-visible-count={group.items.length}
-              >
-                {group.items.map((entry, itemIndex) => (
-                  <PostEntry
-                    item={entry}
-                    isFirst={itemIndex === 0}
-                    isLast={itemIndex === group.items.length - 1}
-                    isThreadLatest={
-                      !!group.thread && itemIndex === group.items.length - 1
-                    }
-                    itemAttrs={{
-                      'data-archive-item': '',
-                      'data-slug': entry.id,
-                      'data-month': entry.monthKey,
-                      'data-year': String(entry.year),
-                      'data-thread': String(entry.isThread),
-                      'data-has-title': String(entry.hasTitle),
-                      'data-media': entry.media.join(','),
-                      'data-visibility': entry.visibility,
-                      'data-featured': String(entry.featured),
-                    }}
-                  >
-                    <PostActions
-                      slug={entry.id}
-                      collections={entry.data.collections ?? []}
-                      hiddenFromLatest={entry.data.hiddenFromLatest}
-                      draft={entry.data.draft}
-                      featured={entry.data.featured}
-                      pinned={entry.data.pinned}
-                    />
-                  </PostEntry>
-                ))}
-              </section>
+              <ThreadGroup
+                items={group.items}
+                thread={group.thread}
+                itemAttrs={group.items.map((entry) => ({
+                  'data-archive-item': '',
+                  'data-slug': entry.id,
+                  'data-month': entry.monthKey,
+                  'data-year': String(entry.year),
+                  'data-thread': String(entry.isThread),
+                  'data-has-title': String(entry.hasTitle),
+                  'data-media': entry.media.join(','),
+                  'data-visibility': entry.visibility,
+                  'data-featured': String(entry.featured),
+                }))}
+              />
             </div>
           ))
         }

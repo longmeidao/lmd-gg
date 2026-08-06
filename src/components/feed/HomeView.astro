@@ -1,7 +1,6 @@
 ---
 import PageLayout from '@/components/layouts/PageLayout.astro';
-import PostActions from '@/components/admin/PostActions.astro';
-import PostEntry from '@/components/feed/PostEntry.astro';
+import ThreadGroup from '@/components/feed/ThreadGroup.astro';
 import PaginationNav from '@/components/feed/PaginationNav.astro';
 import { getPostDisplayTitle } from '@/helpers/post';
 import { getLatestPostGroups, renderFeedPosts } from '@/helpers/content';
@@ -53,38 +52,17 @@ const postGroups = await Promise.all(
               {groupIndex > 0 && (
                 <div class="home-group-divider" aria-hidden="true" />
               )}
-              <section
-                class="home-feed-group"
-                data-feed-group
-                data-thread-group={group.thread}
-                data-visible-count={group.items.length}
-                aria-label={
+              <ThreadGroup
+                items={group.items}
+                thread={group.thread}
+                ariaLabel={
                   group.thread
                     ? `${group.items.length} 条关联内容`
                     : getPostDisplayTitle(group.items[0]!.data)
                 }
-              >
-                {group.items.map((item, itemIndex) => (
-                  <PostEntry
-                    item={item}
-                    isFirst={itemIndex === 0}
-                    isLast={itemIndex === group.items.length - 1}
-                    isThreadLatest={
-                      !!group.thread && itemIndex === group.items.length - 1
-                    }
-                    showPinned
-                  >
-                    <PostActions
-                      slug={item.id}
-                      collections={item.data.collections ?? []}
-                      hiddenFromLatest={item.data.hiddenFromLatest}
-                      draft={item.data.draft}
-                      featured={item.data.featured}
-                      pinned={item.data.pinned}
-                    />
-                  </PostEntry>
-                ))}
-              </section>
+                showPinned
+                feedGroup
+              />
             </div>
           ))
         }
@@ -100,4 +78,5 @@ const postGroups = await Promise.all(
 
 <script>
   import '@/scripts/feed-typography';
+  import '@/scripts/thread-collapse';
 </script>

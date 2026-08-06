@@ -10,26 +10,37 @@ const EXPANDED_LABEL = '收起';
 const CHEVRON_DOWN = 'M4 6l4 4 4-4';
 const CHEVRON_UP = 'M4 10l4-4 4 4';
 
-const toggleShell = (button: HTMLElement) => {
-  const wrapper = button.closest<HTMLElement>('[data-thread-collapse]');
-  const shell = wrapper?.querySelector<HTMLElement>('[data-thread-shell]');
-  if (!shell) return;
+/** 设定某一段的折叠状态。归档筛选也要用，所以单独导出。 */
+export const setThreadCollapsed = (
+  wrapper: HTMLElement,
+  collapsed: boolean,
+) => {
+  const shell = wrapper.querySelector<HTMLElement>('[data-thread-shell]');
+  const button = wrapper.querySelector<HTMLElement>('[data-thread-toggle]');
+  if (!shell || !button) return;
+  if (collapsed) shell.setAttribute('data-collapsed', '');
+  else shell.removeAttribute('data-collapsed');
 
-  const collapsed = shell.hasAttribute('data-collapsed');
-  if (collapsed) shell.removeAttribute('data-collapsed');
-  else shell.setAttribute('data-collapsed', '');
-
-  button.setAttribute('aria-expanded', String(collapsed));
+  button.setAttribute('aria-expanded', String(!collapsed));
   // 只换文字节点：按钮里还有那枚三角，整个 textContent 会把它抹掉
   const label = button.querySelector<HTMLElement>('[data-thread-toggle-label]');
   if (label) {
     label.textContent = collapsed
-      ? EXPANDED_LABEL
-      : `显示其余 ${button.dataset.count ?? ''} 条`;
+      ? `显示其余 ${button.dataset.count ?? ''} 条`
+      : EXPANDED_LABEL;
   }
   button
     .querySelector('[data-thread-toggle-chevron]')
-    ?.setAttribute('d', collapsed ? CHEVRON_UP : CHEVRON_DOWN);
+    ?.setAttribute('d', collapsed ? CHEVRON_DOWN : CHEVRON_UP);
+};
+
+const toggleShell = (button: HTMLElement) => {
+  const wrapper = button.closest<HTMLElement>('[data-thread-collapse]');
+  const shell = wrapper?.querySelector<HTMLElement>('[data-thread-shell]');
+  if (!wrapper || !shell) return;
+  // 手动动过之后，归档筛选就别再替他收起来了（见 scripts/archive.ts）
+  delete wrapper.dataset.autoExpanded;
+  setThreadCollapsed(wrapper, !shell.hasAttribute('data-collapsed'));
 };
 
 if (

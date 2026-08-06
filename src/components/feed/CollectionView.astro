@@ -2,8 +2,7 @@
 import { getCollection } from 'astro:content';
 import PageLayout from '@/components/layouts/PageLayout.astro';
 import BackHeader from '@/components/layouts/BackHeader.astro';
-import PostActions from '@/components/admin/PostActions.astro';
-import PostEntry from '@/components/feed/PostEntry.astro';
+import ThreadGroup from '@/components/feed/ThreadGroup.astro';
 import FilterBar from '@/components/feed/FilterBar.astro';
 import PaginationNav from '@/components/feed/PaginationNav.astro';
 import { groupPostThreads, renderFeedPosts } from '@/helpers/content';
@@ -110,18 +109,7 @@ const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
               {index > 0 && (
                 <div class="home-group-divider" aria-hidden="true" />
               )}
-              <section class="home-feed-group" data-visible-count="1">
-                <PostEntry item={item} isFirst isLast>
-                  <PostActions
-                    slug={item.id}
-                    collections={item.data.collections ?? []}
-                    hiddenFromLatest={item.data.hiddenFromLatest}
-                    draft={item.data.draft}
-                    featured={item.data.featured}
-                    pinned={item.data.pinned}
-                  />
-                </PostEntry>
-              </section>
+              <ThreadGroup items={[item]} />
             </div>
           ))
         }

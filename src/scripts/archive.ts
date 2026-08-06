@@ -13,6 +13,8 @@ import {
 } from './writer/markdown';
 // 纯 TS、无 Astro 依赖，正文摘要和服务端渲染的方格共用同一套规则
 import { getPostExcerpt } from '@/helpers/post';
+// 顺带把折叠段的点击监听装上（模块自带副作用），列表视图里的串文要用
+import { setThreadCollapsed } from './thread-collapse';
 
 /** 每个筛选维度保存一组已选值 —— 筛选是多选的（同 jant，胶囊上显示计数 + 清除） */
 type Filters = Record<string, Set<string>>;
@@ -454,6 +456,34 @@ const setup = () => {
         );
         if (group?.dataset.threadGroup && shown.length > 1) {
           shown.at(-1)?.classList.add('is-thread-latest');
+        }
+
+        // 串文折起来的那一截也得跟着筛选走，否则会剩下一个指向空处的按钮
+        const collapse = cluster.querySelector<HTMLElement>(
+          '[data-thread-collapse]',
+        );
+        if (collapse) {
+          const inside = members.filter((member) => collapse.contains(member));
+          collapse.hidden = inside.every((member) => member.hidden);
+          // 反过来，露在外面的最新那条被筛掉了：展开，不然整组只看得见一个按钮
+          const orphaned =
+            !collapse.hidden &&
+            members
+              .filter((member) => !collapse.contains(member))
+              .every((member) => member.hidden);
+          const shell = collapse.querySelector<HTMLElement>(
+            '[data-thread-shell]',
+          );
+          if (orphaned) {
+            // 记一笔是筛选替他展开的，清掉筛选就该收回去；本来就展开着的不碰
+            if (shell?.hasAttribute('data-collapsed')) {
+              collapse.dataset.autoExpanded = '';
+              setThreadCollapsed(collapse, false);
+            }
+          } else if (collapse.dataset.autoExpanded !== undefined) {
+            delete collapse.dataset.autoExpanded;
+            setThreadCollapsed(collapse, true);
+          }
         }
 
         cluster.hidden = shown.length === 0;
