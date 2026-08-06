@@ -27,6 +27,16 @@ export interface DraftSummary {
   thread: boolean;
   featured: boolean;
   hiddenFromLatest: boolean;
+  /**
+   * 正文和这几个展示用字段，是为了让归档页能把草稿按正常 feed 条目渲染出来。
+   * 草稿不进静态构建（否则谁都能读），所以只能由已鉴权的接口带回来，
+   * 前端拿 scripts/writer/markdown.ts 那套渲染器画出来。
+   */
+  body: string;
+  externalUrl: string;
+  source: string;
+  commentary: string;
+  rating: number;
 }
 
 export const postRelativePath = (slug: string) => {
@@ -101,10 +111,12 @@ export const parseDraftSummary = (
   slug: string,
   content: string,
 ): DraftSummary | null => {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)?.[1];
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content);
+  const frontmatter = match?.[1];
   if (!frontmatter || frontmatterValue(frontmatter, 'draft') !== 'true') {
     return null;
   }
+  const body = content.slice(match![0].length).replace(/^\s+/, '');
 
   let collections: string[] = [];
   const rawCollections = frontmatterValue(frontmatter, 'collections');
@@ -131,6 +143,11 @@ export const parseDraftSummary = (
     featured: frontmatterValue(frontmatter, 'featured') === 'true',
     hiddenFromLatest:
       frontmatterValue(frontmatter, 'hiddenFromLatest') === 'true',
+    body,
+    externalUrl: unquote(frontmatterValue(frontmatter, 'externalUrl')),
+    source: unquote(frontmatterValue(frontmatter, 'source')),
+    commentary: unquote(frontmatterValue(frontmatter, 'commentary')),
+    rating: Number(frontmatterValue(frontmatter, 'rating')) || 0,
   };
 };
 

@@ -5,6 +5,13 @@
  * 数据本来就全在页面里，切换零延迟，也不用为每种组合生成页面。
  */
 
+import {
+  escapeAttribute,
+  escapeHtml,
+  formatDisplayDomain,
+  markdownBlocks,
+} from './writer/markdown';
+
 /** 每个筛选维度保存一组已选值 —— 筛选是多选的（同 jant，胶囊上显示计数 + 清除） */
 type Filters = Record<string, Set<string>>;
 
@@ -16,6 +23,11 @@ interface DraftSummary {
   collections: string[];
   thread: boolean;
   featured: boolean;
+  body: string;
+  externalUrl: string;
+  source: string;
+  commentary: string;
+  rating: number;
 }
 
 type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
@@ -47,6 +59,103 @@ const applyDraftData = (element: HTMLElement, draft: DraftSummary) => {
   element.dataset.media = '';
   element.dataset.visibility = 'private';
   element.dataset.featured = String(draft.featured);
+};
+
+/**
+ * 把一条草稿画成和首页一样的 feed 条目。
+ *
+ * 结构照抄 components/feed/PostEntry.astro 的分支（article / link / quote /
+ * 其余），类名一律沿用，样式就全部来自 home.css，这里不额外写一套。
+ * 草稿不进静态构建，所以只能这样在前端补画 —— 改 PostEntry 的结构时这里要跟着改。
+ *
+ * 唯一多出来的是顶部那枚「草稿」标记，复用置顶标记的 .home-entry-status。
+ */
+const draftEntryMarkup = (
+  draft: DraftSummary,
+  editUrl: string,
+  dateLabel: string,
+  validDate: Date | null,
+) => {
+  const href = escapeAttribute(editUrl);
+  const title = escapeHtml(draft.title);
+  const bodyHtml = markdownBlocks(draft.body);
+  const commentary = draft.commentary
+    ? `<div class="home-entry-commentary"><p>${escapeHtml(draft.commentary)}</p></div>`
+    : '';
+
+  const flag = `
+    <p class="home-entry-status">
+      <span class="home-entry-status-badge home-entry-status-draft">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+        草稿
+      </span>
+    </p>`;
+
+  let main: string;
+  if (draft.kind === 'article') {
+    main = `
+      <div class="home-article">
+        <h2 class="home-article-title"><a href="${href}">${title}</a></h2>
+        <div class="home-entry-content home-article-content">${bodyHtml}</div>
+      </div>`;
+  } else if (draft.kind === 'link' && draft.externalUrl) {
+    main = `
+      <div>
+        <div class="home-link-card">
+          <span class="home-link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 5h5v5M19 5l-9 9" />
+              <path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5" />
+            </svg>
+          </span>
+          <a class="home-link-url" href="${href}">${escapeHtml(formatDisplayDomain(draft.externalUrl))}</a>
+          <a class="home-link-title" href="${href}">${title || escapeHtml(draft.externalUrl)}</a>
+          <div class="home-entry-content">${bodyHtml}</div>
+        </div>
+        ${commentary}
+      </div>`;
+  } else if (draft.kind === 'quote') {
+    const source = draft.source
+      ? `<span class="home-entry-source">${escapeHtml(draft.source)}</span>`
+      : '';
+    main = `
+      <div>
+        <div class="home-quote-card">
+          <span class="home-quote-mark" aria-hidden="true">“</span>
+          ${title ? `<a class="home-entry-title" href="${href}">${title}</a>` : ''}
+          <div class="home-entry-content">${bodyHtml}</div>
+          ${source}
+        </div>
+        ${commentary}
+      </div>`;
+  } else {
+    // 无标题就不造标题，和首页一致：只显示正文
+    main = `
+      <div>
+        ${title ? `<header class="home-entry-header"><a class="home-entry-title" href="${href}">${title}</a></header>` : ''}
+        <div class="home-entry-content">${bodyHtml}</div>
+        ${commentary}
+      </div>`;
+  }
+
+  const rating = draft.rating
+    ? `<span class="home-entry-rating"><span aria-hidden="true">${'★'.repeat(draft.rating)}${'☆'.repeat(5 - draft.rating)}</span><span class="sr-only">${draft.rating} 星评分</span></span>`
+    : '';
+  const stamp = validDate ? ` datetime="${validDate.toISOString()}"` : '';
+
+  return `
+    ${flag}
+    ${main}
+    <footer class="home-entry-footer">
+      <a class="home-entry-date-link" href="${href}" aria-label="继续编辑这篇草稿">
+        <time class="home-entry-date"${stamp}>${escapeHtml(dateLabel)}</time>
+      </a>
+      ${rating}
+    </footer>`;
 };
 
 const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
@@ -138,31 +247,8 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
 
     const article = document.createElement('article');
     article.className = 'home-feed-item is-first-visible is-last-visible';
+    article.innerHTML = draftEntryMarkup(draft, editUrl, dateLabel, validDate);
 
-    const header = document.createElement('header');
-    header.className = 'home-entry-header';
-    const rowTitle = document.createElement('a');
-    rowTitle.className = 'home-entry-title';
-    rowTitle.href = editUrl;
-    rowTitle.textContent = draft.title || draft.slug;
-    header.append(rowTitle);
-
-    const footer = document.createElement('footer');
-    footer.className = 'home-entry-footer';
-    const dateLink = document.createElement('a');
-    dateLink.className = 'home-entry-date-link';
-    dateLink.href = editUrl;
-    const rowTime = document.createElement('time');
-    rowTime.className = 'home-entry-date';
-    rowTime.textContent = dateLabel;
-    if (validDate) rowTime.dateTime = validDate.toISOString();
-    dateLink.append(rowTime);
-    const flag = document.createElement('span');
-    flag.className = 'archive-draft-flag';
-    flag.textContent = '草稿';
-    footer.append(dateLink, flag);
-
-    article.append(header, footer);
     group.append(article);
     row.append(group);
     listItems.append(row);

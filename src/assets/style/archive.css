@@ -639,14 +639,9 @@
 }
 
 /* 列表视图的草稿完全走首页条目那套排版（见 scripts/archive.ts），
-   这里只剩页脚上那枚状态标记。 */
-.archive-draft-flag {
-  border-radius: 9999px;
-  background: var(--color-slate3);
-  padding: 0.1rem 0.45rem;
+   连「草稿」标记也复用置顶那枚 .home-entry-status-badge，只换个颜色。 */
+.home-entry-status-draft {
   color: var(--color-slate10);
-  font-size: 0.72rem;
-  line-height: 1.35;
 }
 
 @media (max-width: 520px) {
