@@ -2,13 +2,13 @@
  * 归档页和合集页共用的筛选定义。
  *
  * 两边都要这套图标、标签和媒介推断，之前只写在 archive.astro 里，
- * 合集页要用就得复制一份 —— 复制过的东西迟早会飘（block-default 已经飘过一次）。
+ * 合集页要用就得复制一份——复制过的东西迟早会走样（block-default 就走样过一次）。
  */
 
-/** 媒介图标：对齐 jant 的 MEDIA_KIND_ICONS */
-/** 媒介顺序固定，不跟着内容的出现顺序漂（同 jant 的 MediaCategory 排法） */
+/** 媒介顺序固定，不跟着内容出现顺序变动（参考 jant 的 MediaCategory 排法） */
 const MEDIA_ORDER = ['image', 'video', 'audio', 'file', 'attached', 'code'];
 
+/** 媒介图标：对齐 jant 的 MEDIA_KIND_ICONS */
 const MEDIA_ICONS: Record<string, string> = {
   image: 'image',
   video: 'video',
@@ -34,16 +34,14 @@ export const detectMedia = (
 ) => {
   const text = body ?? '';
   const media = new Set<string>();
-  // 附文只认 frontmatter 的标记 —— 正文里的 `---` 常常只是作者手写的分隔线
+  // 附文只认 frontmatter 的标记——正文里的 `---` 常常只是作者手写的分隔线
   if (attached) media.add('attached');
 
   /**
    * 只统计「实际嵌入或上传」的媒介，不统计「提到了」。
-   *
-   * 一条 `[游戏预告片](https://www.youtube.com/watch?v=…)` 是正文里的链接，
-   * 不是这条内容自带视频 —— 之前按域名匹配，这种就被误判成视频了。
-   * 所以：要么是 <video>/<audio>/<img> 这类真实元素，要么是 iframe 嵌入，
-   * 要么是 markdown 媒体语法里指向具体媒体文件的地址。
+   * 一条 `[游戏预告片](https://www.youtube.com/…)` 是正文里的链接，不是这条内容
+   * 自带视频——早前按域名匹配，这种就被误判成视频了。所以只认 <video>/<audio>/<img>
+   * 这类真实元素、iframe 嵌入、或 markdown 媒体语法里指向具体媒体文件的地址。
    */
   const VIDEO_EXT = 'mp4|webm|mov|m4v|mkv|avi';
   const AUDIO_EXT = 'mp3|m4a|wav|flac|aac|ogg|opus';
@@ -162,7 +160,7 @@ export const buildFilters = (
       icon: 'shapes',
       adminOnly: false,
       // 形式和媒介一样使用固定词表：全部列出，暂无内容的项淡显。
-      // 层级照 jant：「随记」下面缩进出「有标题 / 无标题」两项。
+      // 层级参考 jant：「随记」下面缩进出「有标题 / 无标题」两项。
       // 本站的 article 就是带标题的随记，归到「随记 › 有标题」下面。
       options: [
         { value: '', label: '全部形式', icon: 'shapes' },
@@ -258,8 +256,6 @@ export const ICON_PATHS: Record<string, string> = {
   type: '<path d="M12 4v16" /> <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" /> <path d="M9 20h6" />',
   text: '<path d="M21 5H3" /> <path d="M15 12H3" /> <path d="M17 19H3" />',
   file: '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" />',
-  paperclip:
-    '<path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />',
   code: '<path d="m16 18 6-6-6-6" /> <path d="m8 6-6 6 6 6" />',
   image:
     '<rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />',

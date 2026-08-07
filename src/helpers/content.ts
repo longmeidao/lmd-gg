@@ -1,6 +1,6 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
-import { getPostPath } from './post';
-import { getPostDisplayTitle, getPostExcerpt } from './post';
+import { getPostDisplayTitle, getPostExcerpt, getPostPath } from './post';
+import { groupThreads } from './threads';
 
 export type PostEntry = CollectionEntry<'post'>;
 
@@ -30,7 +30,7 @@ export const renderFeedPosts = async (posts: PostEntry[]) =>
     })),
   );
 
-/** 只供本地检查相关文章样式；不写入内容数据，也不会进入生产构建。 */
+/** 只供本地检查相关文章样式；不写入内容数据，也不会进入生产构建 */
 const devRelatedPreviewIds = new Set([
   'a-chuni-manifesto',
   'do-cloud-gamers-dream-of-electric-sheep',
@@ -79,32 +79,14 @@ export const findRelatedPosts = (post: PostEntry, posts: PostEntry[]) => {
 
 export const groupPostThreads = <T extends { data: PostEntry['data'] }>(
   posts: T[],
-) => {
-  const seenThreads = new Set<string>();
-  const groups: Array<{ thread?: string; items: T[] }> = [];
-
-  posts.forEach((post) => {
-    const thread = post.data.thread;
-    if (!thread) {
-      groups.push({ items: [post] });
-      return;
-    }
-    if (seenThreads.has(thread)) return;
-    seenThreads.add(thread);
-    groups.push({
-      thread,
-      items: posts
-        .filter((candidate) => candidate.data.thread === thread)
-        .sort(
-          (left, right) =>
-            (left.data.pubDate?.getTime() ?? 0) -
-            (right.data.pubDate?.getTime() ?? 0),
-        ),
-    });
-  });
-
-  return groups;
-};
+) =>
+  groupThreads(
+    posts,
+    (post) => post.data.thread,
+    (left, right) =>
+      (left.data.pubDate?.getTime() ?? 0) -
+      (right.data.pubDate?.getTime() ?? 0),
+  );
 
 export const getLatestPostGroups = async () =>
   groupPostThreads(

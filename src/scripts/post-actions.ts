@@ -6,14 +6,12 @@
  */
 
 import { DEFAULT_COLLECTION } from '@/helpers/collection';
+import { splitFrontmatter } from '@/domain/frontmatter';
 import { askCollectionName } from '@/scripts/collection-dialog';
-
-type Visibility = 'public' | 'hidden' | 'private';
+import type { Visibility } from '@/scripts/writer/model';
 
 const isLocalWriter = import.meta.env.DEV;
 const writeEndpoint = isLocalWriter ? '/__lmd/write' : '/api/admin/posts';
-
-/** 身份由 Cloudflare Access 管，Cookie 浏览器自动带，前端不持有密钥 */
 
 const VISIBILITY_LABELS: Record<Visibility, string> = {
   public: '公开',
@@ -47,14 +45,14 @@ const knownCollections = () => {
   return [...names].sort((left, right) => left.localeCompare(right, 'zh-CN'));
 };
 
-const splitFrontmatter = (content: string) => {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) throw new Error('这篇内容的 Frontmatter 无法识别。');
-  return { lines: match[1]!.split('\n'), body: match[2]! };
+const splitFrontmatterOrThrow = (content: string) => {
+  const parts = splitFrontmatter(content);
+  if (!parts) throw new Error('这篇内容的 Frontmatter 无法识别。');
+  return parts;
 };
 
 const joinPost = (lines: string[], body: string) =>
-  `---\n${lines.filter((line) => line !== null).join('\n')}\n---\n\n${body.replace(/^\n+/, '')}`;
+  `---\n${lines.join('\n')}\n---\n\n${body.replace(/^\n+/, '')}`;
 
 /** 删掉某个顶层 key（含 `collections:` 这种带缩进列表的块） */
 const dropKey = (lines: string[], key: string) => {
@@ -75,14 +73,14 @@ const dropKey = (lines: string[], key: string) => {
 };
 
 const setCollections = (content: string, names: string[]) => {
-  const { lines, body } = splitFrontmatter(content);
+  const { lines, body } = splitFrontmatterOrThrow(content);
   const next = dropKey(lines, 'collections');
   if (names.length) next.push(`collections: ${JSON.stringify(names)}`);
   return joinPost(next, body);
 };
 
 const setVisibility = (content: string, visibility: Visibility) => {
-  const { lines, body } = splitFrontmatter(content);
+  const { lines, body } = splitFrontmatterOrThrow(content);
   const next = dropKey(dropKey(lines, 'hiddenFromLatest'), 'draft');
   const hasPubDate = next.some((line) => /^pubDate:/.test(line));
 
@@ -101,7 +99,7 @@ const setVisibility = (content: string, visibility: Visibility) => {
 
 /** 精选辑 / 置顶都是布尔开关：开就写 `key: true`，关就把这行删掉 */
 const setFlag = (content: string, key: 'featured' | 'pinned', on: boolean) => {
-  const { lines, body } = splitFrontmatter(content);
+  const { lines, body } = splitFrontmatterOrThrow(content);
   const next = dropKey(lines, key);
   if (on) next.push(`${key}: true`);
   return joinPost(next, body);
@@ -262,12 +260,8 @@ const setupPostActions = (root: HTMLElement) => {
   popover.addEventListener('click', async (event) => {
     /*
      * 必须拦住冒泡：document 上有一句「点哪儿都关掉所有菜单」的监听，
-     * 事件冒上去之后会立刻把整个 popover 关掉。
-     *
-     * 表现就是「加入合集」「可见性」点了没反应 —— 其实二级面板已经切过去了，
-     * 只是紧接着整个菜单被关了，再打开又被 openMenu() 重置回 root 面板。
-     * 会写文件的那几项（置顶、精选辑、删除）因为最后会重新加载页面，
-     * 反而看不出这个问题。
+     * 不拦的话二级面板刚切过去就被整个关掉，再打开又被重置回 root。
+     * 会写文件的那几项（置顶、精选辑、删除）因为最后会重新加载页面，看不出这问题。
      */
     event.stopPropagation();
 

@@ -1,11 +1,10 @@
 ---
 import FeaturedView from '@/components/feed/FeaturedView.astro';
 import { getFeaturedPostGroups } from '@/helpers/content';
-import { getPageCount } from '@/helpers/pagination';
-import slateConfig from '~@/slate.config';
+import { getPageCount, getPageSize } from '@/helpers/pagination';
 
 export async function getStaticPaths() {
-  const pageSize = slateConfig.pagination?.pageSize ?? 20;
+  const pageSize = getPageSize();
   const totalPages = getPageCount(
     (await getFeaturedPostGroups()).length,
     pageSize,

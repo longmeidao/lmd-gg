@@ -1,19 +1,13 @@
 ---
 /**
  * 串文里被折叠的那一段：一截带渐隐的预览 + 一个展开按钮。
+ * 做法参考 owenyoung.com 的 .thread-context-shell（max-height + mask 渐隐）。
+ * 和它不同的地方：owen 只折当前条前面的内容、后面的永远全展开，
+ * 看到串文中间那条时下方会拖一长串收不起来——这里把位置做成参数，
+ * 当前条的上下各放一个。
  *
- * 做法照 owenyoung.com 的 .thread-context-shell —— 折叠时
- * `max-height: 160px; overflow: hidden`，再用 mask 把下缘化开，
- * 按钮在「显示/收起」之间切换。
- *
- * 和它不同的一点：owen 只折叠当前这条之前的内容，后面的永远全展开。
- * 所以正在看串文中间的某条时，下方会拖着一长串没法收起。这里把位置做成
- * 参数，详情页在当前条的上下各放一个，当前那条被夹在中间。
- *
- * 按钮永远紧挨着当前那条内容，所以两个方向的顺序是反的：
- *   before → 壳在上、按钮在下
- *   after  → 按钮在上、壳在下
- * 顺序交给 CSS 的 column-reverse，而不是在这里写两遍 —— slot 只能渲染一次。
+ * 按钮永远紧挨着当前那条，所以两个方向顺序相反（before：壳在上、按钮在下；
+ * after 反过来），交给 CSS 的 column-reverse，slot 只需渲染一次。
  */
 interface Props {
   /** 折叠段相对当前内容的位置 */
@@ -39,7 +33,7 @@ const { position, count } = Astro.props;
     <span data-thread-toggle-label>显示其余 {count} 条</span>
     {
       /* 三角形状同 owen 的 .thread-context-toggle-chevron。
-        折叠时朝下、展开后朝上，由脚本换 path 的 d —— CSS rotate 试过，
+        折叠时朝下、展开后朝上，由脚本换 path 的 d——CSS rotate 试过，
         SVG 上带 transition 时会停在单位矩阵转不动，换路径最稳。 */
     }
     <span class="thread-collapse-chevron" aria-hidden="true">

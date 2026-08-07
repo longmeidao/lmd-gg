@@ -1,28 +1,13 @@
+import { splitFrontmatter, unquote } from '@/domain/frontmatter';
 import { blankWriterItem, type Visibility, type WriterKind } from './model';
 
-const parseScalar = (value: string) => {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    try {
-      return String(JSON.parse(trimmed));
-    } catch {
-      return trimmed.slice(1, -1);
-    }
-  }
-  return trimmed;
-};
-
 export const parseExistingPost = (content: string, today: string) => {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) throw new Error('这篇内容的 Frontmatter 无法识别。');
+  const parts = splitFrontmatter(content);
+  if (!parts) throw new Error('这篇内容的 Frontmatter 无法识别。');
   const frontmatter = new Map<string, string>();
-  const frontmatterLines = match[1]!.split('\n');
   const blockTags: string[] = [];
   let readingTags = false;
-  for (const line of frontmatterLines) {
+  for (const line of parts.lines) {
     if (line.trim() === 'collections:') {
       readingTags = true;
       continue;
@@ -30,27 +15,28 @@ export const parseExistingPost = (content: string, today: string) => {
     if (readingTags) {
       const tag = line.match(/^\s*-\s+(.+)$/);
       if (tag) {
-        blockTags.push(parseScalar(tag[1]!));
+        blockTags.push(unquote(tag[1]!));
         continue;
       }
       readingTags = false;
     }
     const field = line.match(/^([A-Za-z][\w-]*):\s*(.*)$/);
-    if (field) frontmatter.set(field[1]!, parseScalar(field[2]!));
+    if (field) frontmatter.set(field[1]!, unquote(field[2]!));
   }
   const kind = (frontmatter.get('kind') || 'article') as WriterKind | 'article';
-  const rawCollections = frontmatter.get('collections') || '[]';
   let parsedCollections: string[] = [];
   if (blockTags.length > 0) {
     parsedCollections = blockTags;
   } else {
     try {
-      parsedCollections = JSON.parse(rawCollections) as string[];
+      parsedCollections = JSON.parse(
+        frontmatter.get('collections') || '[]',
+      ) as string[];
     } catch {
       parsedCollections = [];
     }
   }
-  const existingBody = match[2]!.trim();
+  const existingBody = parts.body.trim();
   const normalizedBody =
     kind === 'quote'
       ? existingBody.replace(/^>\s?/gm, '')
@@ -88,11 +74,11 @@ export const parseExistingPost = (content: string, today: string) => {
 };
 
 export const setPostThread = (content: string, threadId: string) => {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) throw new Error('这篇内容的 Frontmatter 无法识别。');
-  const lines = match[1]!.split('\n').filter((line) => !/^thread:/.test(line));
+  const parts = splitFrontmatter(content);
+  if (!parts) throw new Error('这篇内容的 Frontmatter 无法识别。');
+  const lines = parts.lines.filter((line) => !/^thread:/.test(line));
   lines.push(`thread: ${JSON.stringify(threadId)}`);
-  return `---\n${lines.join('\n')}\n---\n\n${match[2]!.replace(/^\n+/, '')}`;
+  return `---\n${lines.join('\n')}\n---\n\n${parts.body.replace(/^\n+/, '')}`;
 };
 
 export type ParsedPost = ReturnType<typeof parseExistingPost>;

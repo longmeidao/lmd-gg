@@ -1,9 +1,13 @@
+import slateConfig from '~@/slate.config';
+
 export interface PaginationMeta {
   currentPage: number;
   totalPages: number;
   pageSize: number;
   totalItems: number;
 }
+
+export const getPageSize = () => slateConfig.pagination?.pageSize ?? 20;
 
 export const getPageCount = (totalItems: number, pageSize: number) => {
   if (!Number.isInteger(pageSize) || pageSize < 1) {

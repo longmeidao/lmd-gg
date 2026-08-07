@@ -23,7 +23,7 @@ import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
 
 /**
- * 归档：按月分组的方格墙 + 顶部图标胶囊筛选（版式照 jant 的 /archive）。
+ * 归档：按月分组的方格墙 + 顶部图标胶囊筛选（版式参考 jant 的 /archive）。
  * 列表视图直接复用首页的条目展示（jant 那边是 TimelineFeedItem，本站是 PostEntry）。
  * 站点是静态输出，jant 的 URL 参数式服务端筛选换成前端筛选。
  */
@@ -33,7 +33,7 @@ const postCollection = await getSitePosts();
  * 正文里的第一张图，用作方格封面。
  *
  * 图片只在 R2 上存原件，尺寸由 Cloudflare 现场转换，所以这里只是把正文那张
- * 的地址换个宽度重新生成 —— 方格才 170px，别用正文的 1200px 那份。
+ * 的地址换个宽度重新生成——方格才 170px，别用正文的 1200px 那份。
  */
 const firstImage = (body: string | undefined) =>
   body?.match(/!\[[^\]]*\]\(\s*([^)\s]+)/)?.[1] ??
@@ -101,7 +101,7 @@ entries.forEach((entry) => {
 });
 
 /**
- * 列表视图按串文分组，和首页用的是同一个 groupPostThreads —— 不这么做，
+ * 列表视图按串文分组，和首页用的是同一个 groupPostThreads——不这么做，
  * 同一串的几条会摊成互不相干的独立条目，左边那条锚点轨道根本画不出来。
  * 方格视图不分组：那是一格一条的墙，串起来没有意义。
  */
@@ -328,7 +328,7 @@ const listGroups = groupPostThreads(entries);
       {
         /*
         草稿是登录后由脚本注入的，拿不到 Astro 组件，所以在这里放一份模板，
-        scripts/archive.ts 克隆它再改 slug 和几个状态属性 —— 免得把
+        scripts/archive.ts 克隆它再改 slug 和几个状态属性——免得把
         PostActions 那一大段 markup 在 JS 里重抄一遍。
         <template> 的内容不进文档树，也不会被 revealAdmin 扫到。
       */

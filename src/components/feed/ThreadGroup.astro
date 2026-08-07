@@ -4,16 +4,15 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import PostEntry from '@/components/feed/PostEntry.astro';
 import PostActions from '@/components/admin/PostActions.astro';
 import ThreadCollapse from '@/components/feed/ThreadCollapse.astro';
+import { THREAD_COLLAPSE_FROM } from '@/helpers/threads';
 
 /**
  * 一个 feed 分组：单条内容，或者一整串串文。
- *
- * 首页 / 精选辑 / 合集 / 归档列表原本各自抄了一遍同样的
+ * 首页 / 精选辑 / 合集 / 归档列表原本各自抄了一份同样的
  * `<section class="home-feed-group">…<PostEntry><PostActions/></PostEntry>…`，
- * 差异全是参数。收拢到这里之后，串文折叠这类改动只需要动一处。
- *
- * 串文详情页不走这个组件：那里要按「正在打开的那条」把内容切成上下两段，
- * 规则和列表页不一样（见 PostView.astro）。
+ * 差异全是参数，收拢到这里之后串文折叠这类改动只改一处即可。
+ * 串文详情页不走这个组件：那里按「正在打开的那条」把内容切成上下两段
+ * （见 PostView.astro）。
  */
 export interface FeedItem {
   id: string;
@@ -32,7 +31,7 @@ interface Props {
   /** 合集页里已经在这个合集下了，footer 不用再重复列出来 */
   hideCollections?: boolean;
   /**
-   * 归档的前端筛选要按条隐藏，标记得挂在条目上。按下标和 items 对齐 —— 用回调的话
+   * 归档的前端筛选要按条隐藏，标记得挂在条目上。按下标和 items 对齐——用回调的话
    * 参数会被窄化成 FeedItem，归档那些额外字段（monthKey、media…）就读不到了。
    */
   itemAttrs?: Array<Record<string, string>>;
@@ -51,12 +50,11 @@ const {
 } = Astro.props;
 
 /**
- * 列表里一串串文只完整展示最新那条，前面的折起来（同 owen 的列表页）。
- * 只折 1 条不划算 —— 按钮占的地方跟内容差不多，还多一次点击，所以 2 条起才折。
+ * 列表里一串串文只完整展示最新那条，前面的折起来（参考 owen 的列表页）。
+ * 只折 1 条不划算——按钮占的地方跟内容差不多，还多一次点击，所以 2 条起才折。
  */
-const COLLAPSE_FROM = 2;
 const context = thread ? items.slice(0, -1) : [];
-const collapsed = context.length >= COLLAPSE_FROM;
+const collapsed = context.length >= THREAD_COLLAPSE_FROM;
 const shown = collapsed ? items.slice(-1) : items;
 const shownOffset = collapsed ? items.length - 1 : 0;
 ---

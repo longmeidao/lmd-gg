@@ -1,27 +1,18 @@
 /**
- * lmd.gg 的后台 Worker。
+ * lmd.gg 的后台 Worker：站点仍是静态构建（`dist/`），这个 Worker 只接管 `/api/*`，
+ * 其余请求交给静态资源（见 wrangler.jsonc 的 `assets.run_worker_first`）。
  *
- * 站点本身仍然是静态构建（`dist/`），这个 Worker 只接管 `/api/*` ——
- * 其余请求原样交给静态资源。做法和色览一致，见 wrangler.jsonc 的
- * `assets.run_worker_first`。
+ * 只做静态站做不到的三件事：保管密钥（GITHUB_TOKEN 不能进前端 JS）、
+ * 校验身份（Cloudflare Access 签发的 JWT）、写仓库 / 传媒体
+ * （写进 git 后由 CI 重新构建部署）。内容依旧是 git 里的 markdown。
  *
- * 它只做静态站做不到的三件事：
- *   1. 保管密钥（GITHUB_TOKEN 绝不能出现在前端 JS 里）
- *   2. 校验身份（Cloudflare Access 签发的 JWT）
- *   3. 写仓库 / 传媒体（写进 git 后由 CI 重新构建部署）
- *
- * 内容依旧是 git 里的 markdown，没有数据库。
- */
-
-/**
  * `Env` 由 `wrangler types` 从 wrangler.jsonc 生成（worker-configuration.d.ts），
- * 不手写 —— 手写的接口迟早和实际绑定对不上。改了绑定记得重跑一次。
- *
- * 绑定与变量：MEDIA(R2) / ASSETS / GITHUB_* / ACCESS_* / MEDIA_PUBLIC_URL
+ * 不手写——改了绑定记得重跑一次。
  */
 
 import {
   CONTENT_DIR,
+  INVALID_PAYLOAD_ERRORS,
   MAX_UPLOAD_BYTES,
   makeUploadName,
   parseDraftSummary,
@@ -43,8 +34,8 @@ const json = (data: unknown, status = 200) =>
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });
 
-/* ── Cloudflare Access ──────────────────────────────────────────────────
- * Access 在边缘就会拦掉未登录的请求，但 Worker 仍然自己验一遍签名：
+/*
+ * Cloudflare Access 在边缘就会挡住未登录请求，但 Worker 仍然自己验一遍签名：
  * 光靠边缘拦截的话，绕过自定义域名（比如走 workers.dev）就没人管了。
  */
 
@@ -157,7 +148,7 @@ const verifyAccess = async (request: Request, env: Env): Promise<boolean> => {
   return audience.includes(env.ACCESS_AUD);
 };
 
-/* ── GitHub 内容读写 ───────────────────────────────────────────────────── */
+/* GitHub 内容读写 */
 
 const githubHeaders = (env: Env) => ({
   authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -168,10 +159,6 @@ const githubHeaders = (env: Env) => ({
 
 const contentsUrl = (env: Env, path: string) =>
   `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
-
-const postPath = (slug: string) => {
-  return postRelativePath(slug);
-};
 
 const decodeContent = (base64: string): string =>
   new TextDecoder().decode(base64UrlToBytes(base64.replace(/\n/g, '')));
@@ -317,7 +304,7 @@ export const commitFilesAtomically = async (
       .map((entry) => entry.path),
   );
   for (const item of items) {
-    const exists = existingPaths.has(postPath(item.slug));
+    const exists = existingPaths.has(postRelativePath(item.slug));
     const operation = item.operation ?? defaultOperation;
     if (operation === 'create' && exists) {
       throw new Error(`POST_EXISTS:${item.slug}`);
@@ -348,7 +335,7 @@ export const commitFilesAtomically = async (
       body: JSON.stringify({
         base_tree: baseTreeSha,
         tree: items.map((item, index) => ({
-          path: postPath(item.slug),
+          path: postRelativePath(item.slug),
           mode: '100644',
           type: 'blob',
           sha: blobs[index]!.sha,
@@ -385,7 +372,7 @@ export const commitFilesAtomically = async (
   }
 };
 
-/* ── 路由 ──────────────────────────────────────────────────────────────── */
+/* 路由 */
 
 const handlePosts = async (
   request: Request,
@@ -397,7 +384,7 @@ const handlePosts = async (
       return json({ drafts: await listDrafts(env) });
     }
     const slug = url.searchParams.get('slug')?.trim() ?? '';
-    const path = postPath(slug);
+    const path = postRelativePath(slug);
     const response = await fetch(
       `${contentsUrl(env, path)}?ref=${encodeURIComponent(env.GITHUB_REF)}`,
       { headers: githubHeaders(env) },
@@ -414,7 +401,7 @@ const handlePosts = async (
 
   if (request.method === 'DELETE') {
     const slug = url.searchParams.get('slug')?.trim() ?? '';
-    const path = postPath(slug);
+    const path = postRelativePath(slug);
     const sha = await fileSha(env, path);
     if (!sha) return json({ error: '文章不存在。' }, 404);
     const response = await fetch(contentsUrl(env, path), {
@@ -441,11 +428,10 @@ const handlePosts = async (
     items,
     request.method === 'POST' ? 'create' : 'update',
   );
-  // POST 表示新建，回 201；PUT 是保存，回 200
   return json(
     {
       saved: items.map((item) => item.slug),
-      files: items.map((item) => postPath(item.slug)),
+      files: items.map((item) => postRelativePath(item.slug)),
       urls: items.map((item) => `/${item.slug}`),
     },
     request.method === 'POST' ? 201 : 200,
@@ -573,7 +559,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // run_worker_first 只挂了 /api/*，这里再兜一层
+    // run_worker_first 把 /api/* 交给了 Worker，这里再补一重
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     const authenticated = await verifyAccess(request, env).catch(() => false);
@@ -602,13 +588,9 @@ export default {
         return json({ error: '仓库刚刚发生变化，请重新发布。' }, 409);
       }
       if (
-        [
-          'INVALID_SLUG',
-          'INVALID_CONTENT',
-          'INVALID_ITEM_COUNT',
-          'INVALID_OPERATION',
-          'DUPLICATE_SLUG',
-        ].includes(message)
+        INVALID_PAYLOAD_ERRORS.includes(
+          message as (typeof INVALID_PAYLOAD_ERRORS)[number],
+        )
       ) {
         return json({ error: '发布内容或链接名称无效。' }, 400);
       }

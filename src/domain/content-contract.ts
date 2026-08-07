@@ -1,3 +1,5 @@
+import { splitFrontmatter, unquote } from './frontmatter';
+
 export const CONTENT_DIR = 'src/content/post';
 export const MAX_POST_BYTES = 256 * 1024;
 export const MAX_THREAD_ITEMS = 24;
@@ -44,6 +46,15 @@ export const postRelativePath = (slug: string) => {
   if (!SLUG_PATTERN.test(slug)) throw new Error('INVALID_SLUG');
   return `${CONTENT_DIR}/${slug}.md`;
 };
+
+/** 校验失败的错误码，Worker 和 dev 插件据此映射到 400 */
+export const INVALID_PAYLOAD_ERRORS = [
+  'INVALID_SLUG',
+  'INVALID_CONTENT',
+  'INVALID_ITEM_COUNT',
+  'INVALID_OPERATION',
+  'DUPLICATE_SLUG',
+] as const;
 
 export const readWriteItems = (payload: WritePayload): WriteItem[] => {
   const legacy =
@@ -93,40 +104,32 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
   return items;
 };
 
-const frontmatterValue = (frontmatter: string, name: string) =>
-  new RegExp(`^${name}:\\s*(.*?)\\s*$`, 'm').exec(frontmatter)?.[1] ?? '';
-
-const unquote = (value: string) => {
-  if (!value) return '';
-  if (value.startsWith('"')) {
-    try {
-      return String(JSON.parse(value));
-    } catch {
-      return value.slice(1, -1);
-    }
+const lineValue = (lines: string[], name: string) => {
+  for (const line of lines) {
+    const match = new RegExp(`^${name}:\\s*(.*?)\\s*$`).exec(line);
+    if (match) return match[1]!;
   }
-  return value.replace(/^['"]|['"]$/g, '');
+  return '';
 };
 
 export const parseDraftSummary = (
   slug: string,
   content: string,
 ): DraftSummary | null => {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content);
-  const frontmatter = match?.[1];
-  if (!frontmatter || frontmatterValue(frontmatter, 'draft') !== 'true') {
-    return null;
-  }
-  const body = content.slice(match![0].length).replace(/^\s+/, '');
+  const parts = splitFrontmatter(content);
+  if (!parts) return null;
+  const value = (name: string) => lineValue(parts.lines, name);
+  if (value('draft') !== 'true') return null;
+  const body = parts.body.replace(/^\s+/, '');
 
   let collections: string[] = [];
-  const rawCollections = frontmatterValue(frontmatter, 'collections');
+  const rawCollections = value('collections');
   if (rawCollections.startsWith('[')) {
     try {
       const parsed = JSON.parse(rawCollections) as unknown;
       if (Array.isArray(parsed)) {
         collections = parsed.filter(
-          (value): value is string => typeof value === 'string',
+          (item): item is string => typeof item === 'string',
         );
       }
     } catch {
@@ -136,19 +139,18 @@ export const parseDraftSummary = (
 
   return {
     slug,
-    title: unquote(frontmatterValue(frontmatter, 'title')),
-    kind: unquote(frontmatterValue(frontmatter, 'kind')) || 'article',
-    pubDate: unquote(frontmatterValue(frontmatter, 'pubDate')),
+    title: unquote(value('title')),
+    kind: unquote(value('kind')) || 'article',
+    pubDate: unquote(value('pubDate')),
     collections,
-    thread: unquote(frontmatterValue(frontmatter, 'thread')),
-    featured: frontmatterValue(frontmatter, 'featured') === 'true',
-    hiddenFromLatest:
-      frontmatterValue(frontmatter, 'hiddenFromLatest') === 'true',
+    thread: unquote(value('thread')),
+    featured: value('featured') === 'true',
+    hiddenFromLatest: value('hiddenFromLatest') === 'true',
     body,
-    externalUrl: unquote(frontmatterValue(frontmatter, 'externalUrl')),
-    source: unquote(frontmatterValue(frontmatter, 'source')),
-    commentary: unquote(frontmatterValue(frontmatter, 'commentary')),
-    rating: Number(frontmatterValue(frontmatter, 'rating')) || 0,
+    externalUrl: unquote(value('externalUrl')),
+    source: unquote(value('source')),
+    commentary: unquote(value('commentary')),
+    rating: Number(value('rating')) || 0,
   };
 };
 

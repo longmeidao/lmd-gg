@@ -5,7 +5,7 @@ import slateConfig from '~@/slate.config';
 
 await i18next.init({
   lng: slateConfig.lang,
-  fallbackLng: 'es-US',
+  fallbackLng: 'zh-CN',
   resources: {
     'zh-CN': {
       translation: zhCn,

@@ -12,8 +12,7 @@ import {
   getPostCollections,
 } from '@/helpers/collection';
 import { buildFilters, detectMedia } from '@/helpers/filters';
-import { paginateItems } from '@/helpers/pagination';
-import slateConfig from '~@/slate.config';
+import { getPageSize, paginateItems } from '@/helpers/pagination';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
 
@@ -28,7 +27,7 @@ const { name, count, ids, page = 1 } = Astro.props;
 
 const all = await getCollection('post');
 const selectedPosts = ids.map((id) => all.find((post) => post.id === id)!);
-const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const pageSize = getPageSize();
 const paginated = paginateItems(
   groupPostThreads(selectedPosts),
   page,

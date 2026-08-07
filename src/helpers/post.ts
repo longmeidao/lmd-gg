@@ -14,6 +14,15 @@ interface PostPresentationData {
  */
 export const getPostPath = (id: string) => `/${id}`;
 
+/** 展示用域名：去掉协议和 www 前缀 */
+export const formatDisplayDomain = (value: string) => {
+  try {
+    return new URL(value).hostname.replace(/^www\./i, '');
+  } catch {
+    return value.replace(/^https?:\/\//i, '').split('/')[0] ?? value;
+  }
+};
+
 export const getPostDisplayTitle = (data: PostPresentationData) => {
   if (data.title?.trim()) return data.title.trim();
   if (data.kind === 'quote') {
@@ -22,7 +31,7 @@ export const getPostDisplayTitle = (data: PostPresentationData) => {
   if (data.kind === 'note') return '随记';
   if (data.kind === 'photo') return '图片';
   if (data.kind === 'link' && data.externalUrl) {
-    return new URL(data.externalUrl).hostname.replace(/^www\./, '');
+    return formatDisplayDomain(data.externalUrl);
   }
   return '未命名文章';
 };

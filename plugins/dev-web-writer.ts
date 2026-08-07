@@ -10,6 +10,7 @@ import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import {
+  INVALID_PAYLOAD_ERRORS,
   MAX_REQUEST_BYTES,
   MAX_UPLOAD_BYTES,
   makeUploadName,
@@ -75,7 +76,7 @@ async function listDrafts(
     .sort((left, right) => right.pubDate.localeCompare(left.pubDate));
 }
 
-/** 本地专用写作 API；仅注入 Vite 开发服务器，固定绕过生产鉴权。 */
+/** 本地专用写作 API；仅注入 Vite 开发服务器，固定绕过生产鉴权 */
 export function devWebWriter(): Plugin {
   return {
     name: 'lmd-dev-web-writer',
@@ -85,7 +86,7 @@ export function devWebWriter(): Plugin {
       server.middlewares.use(async (request, response, next) => {
         const url = new URL(request.url ?? '/', 'http://localhost');
 
-        /** 媒体上传（dev 专用）：原样写入 public/media/uploads/。 */
+        /** 媒体上传（dev 专用）：原样写入 public/media/uploads/ */
         if (url.pathname === '/__lmd/upload') {
           if (request.method !== 'POST') {
             respond(response, 405, { error: '只接受 POST 请求。' });
@@ -220,16 +221,10 @@ export function devWebWriter(): Plugin {
           }
 
           /*
-           * 直接原地写，不走「临时文件 + rename」。
-           *
-           * rename 到被监听的目录里，chokidar 会收到两次事件（旧 inode 消失 +
-           * 新文件出现），Astro 就跑两次 `vite program reload`，每次都把页面刷掉 ——
-           * 实测点一次「置顶」会闪两下，间隔一秒多。实测同一个文件直接 writeFile
-           * 只触发一次 program reload。
-           *
-           * 多文件的「要么全成、要么全不动」没有丢：下面照旧先存原文，任何一步
-           * 失败就把已经写过的逐个还原。相比原来只少了「单个文件写到一半进程被杀」
-           * 这一种情况的保护，本地开发的写入器可以接受。
+           * 直接原地写，不走「临时文件 + rename」：rename 会让 chokidar 收到
+           * 两次事件（旧 inode 消失 + 新文件出现），Astro 就重载两次页面。
+           * 多文件「要么全成、要么全不动」没有丢：任何一步失败就按已存的
+           * 原文把写过的逐个还原。
            */
           const committed: number[] = [];
           try {
@@ -278,14 +273,10 @@ export function devWebWriter(): Plugin {
             return;
           }
           if (
-            [
-              'INVALID_SLUG',
-              'INVALID_PATH',
-              'INVALID_CONTENT',
-              'INVALID_ITEM_COUNT',
-              'DUPLICATE_SLUG',
-              'INVALID_OPERATION',
-            ].includes(message)
+            INVALID_PAYLOAD_ERRORS.includes(
+              message as (typeof INVALID_PAYLOAD_ERRORS)[number],
+            ) ||
+            message === 'INVALID_PATH'
           ) {
             respond(response, 400, { error: '发布内容或链接名称无效。' });
             return;

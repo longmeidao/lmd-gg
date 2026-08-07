@@ -11,10 +11,10 @@ import {
 import {
   escapeAttribute,
   escapeHtml,
-  formatDisplayDomain,
   markdownBlocks,
   stripDirectives,
 } from './writer/markdown';
+import { formatDisplayDomain } from '@/helpers/post';
 import { askCollectionName } from './collection-dialog';
 import { parseExistingPost, setPostThread } from './writer/frontmatter';
 import {
@@ -25,86 +25,38 @@ import {
 const root = document.querySelector<HTMLElement>('[data-writer-root]');
 
 if (root) {
-  const writerWindow = root.querySelector<HTMLElement>('[data-writer-window]');
-  const form = root.querySelector<HTMLFormElement>('[data-writer-form]');
-  const itemsHost = root.querySelector<HTMLElement>('[data-writer-items]');
-  const workspace = root.querySelector<HTMLElement>('.writer-workspace');
-  const previewPane = root.querySelector<HTMLElement>('[data-preview-pane]');
-  const preview = root.querySelector<HTMLElement>('[data-writer-preview]');
-  const status = root.querySelector<HTMLElement>('[data-writer-status]');
-  const publishButton = root.querySelector<HTMLButtonElement>(
-    '[data-writer-publish]',
-  );
-  const addThreadButton =
-    root.querySelector<HTMLButtonElement>('[data-add-thread]');
-  const headerFormats = root.querySelector<HTMLElement>(
-    '[data-header-formats]',
-  );
-  const threadHeading = root.querySelector<HTMLElement>(
-    '[data-thread-heading]',
-  );
-  const collectionTrigger = root.querySelector<HTMLButtonElement>(
-    '[data-collection-trigger]',
-  );
-  const collectionPopover = root.querySelector<HTMLElement>(
-    '[data-collection-popover]',
-  );
-  const collectionOptions = root.querySelector<HTMLElement>(
-    '[data-collection-options]',
-  );
-  const collectionSearch = root.querySelector<HTMLInputElement>(
-    '[data-collection-search]',
-  );
-  const collectionLabel = root.querySelector<HTMLElement>(
-    '[data-collection-label]',
-  );
-  const publishSettingsTrigger = root.querySelector<HTMLButtonElement>(
+  /** 撰写面板元素缺一不可，缺失就是页面没拼完整，直接报错 */
+  const $ = <T extends HTMLElement>(selector: string) => {
+    const element = root.querySelector<T>(selector);
+    if (!element) throw new Error(`Writer UI missing: ${selector}`);
+    return element;
+  };
+  const writerWindow = $<HTMLElement>('[data-writer-window]');
+  const form = $<HTMLFormElement>('[data-writer-form]');
+  const itemsHost = $<HTMLElement>('[data-writer-items]');
+  const workspace = $<HTMLElement>('.writer-workspace');
+  const previewPane = $<HTMLElement>('[data-preview-pane]');
+  const preview = $<HTMLElement>('[data-writer-preview]');
+  const status = $<HTMLElement>('[data-writer-status]');
+  const publishButton = $<HTMLButtonElement>('[data-writer-publish]');
+  const addThreadButton = $<HTMLButtonElement>('[data-add-thread]');
+  const headerFormats = $<HTMLElement>('[data-header-formats]');
+  const threadHeading = $<HTMLElement>('[data-thread-heading]');
+  const collectionTrigger = $<HTMLButtonElement>('[data-collection-trigger]');
+  const collectionPopover = $<HTMLElement>('[data-collection-popover]');
+  const collectionOptions = $<HTMLElement>('[data-collection-options]');
+  const collectionSearch = $<HTMLInputElement>('[data-collection-search]');
+  const collectionLabel = $<HTMLElement>('[data-collection-label]');
+  const publishSettingsTrigger = $<HTMLButtonElement>(
     '[data-publish-settings-trigger]',
   );
-  const publishPopover = root.querySelector<HTMLElement>(
-    '[data-publish-popover]',
-  );
-  const hideLatest = root.querySelector<HTMLInputElement>('[data-hide-latest]');
-  const publishDate = root.querySelector<HTMLInputElement>(
-    '[data-publish-date]',
-  );
-  const customSlug = root.querySelector<HTMLInputElement>('[data-custom-slug]');
-  const visibilityDescription = root.querySelector<HTMLElement>(
-    '[data-visibility-description]',
-  );
-  const confirmPanel = root.querySelector<HTMLElement>('[data-writer-confirm]');
-  const attachedPanel = root.querySelector<HTMLElement>(
-    '[data-attached-panel]',
-  );
-
-  if (
-    !writerWindow ||
-    !form ||
-    !itemsHost ||
-    !workspace ||
-    !previewPane ||
-    !preview ||
-    !status ||
-    !publishButton ||
-    !addThreadButton ||
-    !headerFormats ||
-    !threadHeading ||
-    !collectionTrigger ||
-    !collectionPopover ||
-    !collectionOptions ||
-    !collectionSearch ||
-    !collectionLabel ||
-    !publishSettingsTrigger ||
-    !publishPopover ||
-    !hideLatest ||
-    !publishDate ||
-    !customSlug ||
-    !visibilityDescription ||
-    !confirmPanel ||
-    !attachedPanel
-  ) {
-    throw new Error('Writer UI is incomplete.');
-  }
+  const publishPopover = $<HTMLElement>('[data-publish-popover]');
+  const hideLatest = $<HTMLInputElement>('[data-hide-latest]');
+  const publishDate = $<HTMLInputElement>('[data-publish-date]');
+  const customSlug = $<HTMLInputElement>('[data-custom-slug]');
+  const visibilityDescription = $<HTMLElement>('[data-visibility-description]');
+  const confirmPanel = $<HTMLElement>('[data-writer-confirm]');
+  const attachedPanel = $<HTMLElement>('[data-attached-panel]');
 
   const storageKey = 'lmd:writer-draft:v2';
   const localWriter = root.dataset.localWriter === 'true';
@@ -129,15 +81,12 @@ if (root) {
     '.writer-reply-context-body, .writer-reply-context-meta, [data-writer-preview]',
   );
 
-  const makeId = makeWriterId;
-  const blankItem = blankWriterItem;
-
   const today = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Asia/Taipei',
   }).format(new Date());
 
   let state: WriterState = {
-    items: [blankItem()],
+    items: [blankWriterItem()],
     activeIndex: 0,
     collections: [],
     visibility: 'public',
@@ -147,23 +96,22 @@ if (root) {
   let autosaveTimer = 0;
 
   // 图标取自 jant 的 compose 工具栏（18×18 视口，1.55 线宽），保持视觉一致
-  const icon = (
-    name: 'media' | 'text' | 'emoji' | 'rate' | 'title' | 'preview',
-  ) => {
-    const icons = {
-      media:
-        '<rect x="2.75" y="3" width="12.5" height="11.25" rx="3" /><circle cx="6.15" cy="6.85" r="0.85" fill="currentColor" stroke="none" /><path d="M3.6 11.95 6.75 8.8c.42-.42 1.11-.42 1.53 0l1.4 1.4" /><path d="m8.95 10.2 1.38-1.38c.46-.46 1.21-.46 1.67 0l2.4 2.4" />',
-      text: '<rect x="3" y="2.75" width="12" height="12.5" rx="3.1" /><path d="M5.85 6.35h6.3" /><path d="M5.85 9h6.3" /><path d="M5.85 11.65h4.35" />',
-      emoji:
-        '<circle cx="9" cy="9" r="6.8" /><path d="M6.2 10.55c.52 1.08 1.46 1.8 2.8 1.8s2.28-.72 2.8-1.8" /><circle cx="6.5" cy="7.15" r="0.7" fill="currentColor" stroke="none" /><circle cx="11.5" cy="7.15" r="0.7" fill="currentColor" stroke="none" />',
-      rate: '<path d="m9 1.95 2.08 4.21 4.65.67-3.36 3.29.8 4.63L9 12.55l-4.17 2.2.8-4.63-3.36-3.29 4.65-.67z" fill="currentColor" fill-opacity="0.12" stroke="none" /><path d="m9 1.95 2.08 4.21 4.65.67-3.36 3.29.8 4.63L9 12.55l-4.17 2.2.8-4.63-3.36-3.29 4.65-.67z" stroke-width="1.6" />',
-      title:
-        '<rect x="3.35" y="3.2" width="11.3" height="2.05" rx="0.68" fill="currentColor" stroke="none" /><rect x="7.8" y="4.6" width="2.4" height="9.45" rx="0.78" fill="currentColor" stroke="none" /><rect x="6.75" y="13.15" width="4.5" height="1.12" rx="0.56" fill="currentColor" stroke="none" />',
-      preview:
-        '<path d="M5.85 3H3v2.85" stroke-width="1.48" /><path d="M12.15 3H15v2.85" stroke-width="1.48" /><path d="M3 12.15V15h2.85" stroke-width="1.48" /><path d="M15 12.15V15h-2.85" stroke-width="1.48" />',
-    };
-    return `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
+  // 不标 Record<string, string>：那样 keyof 会退化成 string，
+  // icon('typo') 这种写错的名字就查不出来了
+  const TOOL_ICONS = {
+    media:
+      '<rect x="2.75" y="3" width="12.5" height="11.25" rx="3" /><circle cx="6.15" cy="6.85" r="0.85" fill="currentColor" stroke="none" /><path d="M3.6 11.95 6.75 8.8c.42-.42 1.11-.42 1.53 0l1.4 1.4" /><path d="m8.95 10.2 1.38-1.38c.46-.46 1.21-.46 1.67 0l2.4 2.4" />',
+    text: '<rect x="3" y="2.75" width="12" height="12.5" rx="3.1" /><path d="M5.85 6.35h6.3" /><path d="M5.85 9h6.3" /><path d="M5.85 11.65h4.35" />',
+    emoji:
+      '<circle cx="9" cy="9" r="6.8" /><path d="M6.2 10.55c.52 1.08 1.46 1.8 2.8 1.8s2.28-.72 2.8-1.8" /><circle cx="6.5" cy="7.15" r="0.7" fill="currentColor" stroke="none" /><circle cx="11.5" cy="7.15" r="0.7" fill="currentColor" stroke="none" />',
+    rate: '<path d="m9 1.95 2.08 4.21 4.65.67-3.36 3.29.8 4.63L9 12.55l-4.17 2.2.8-4.63-3.36-3.29 4.65-.67z" fill="currentColor" fill-opacity="0.12" stroke="none" /><path d="m9 1.95 2.08 4.21 4.65.67-3.36 3.29.8 4.63L9 12.55l-4.17 2.2.8-4.63-3.36-3.29 4.65-.67z" stroke-width="1.6" />',
+    title:
+      '<rect x="3.35" y="3.2" width="11.3" height="2.05" rx="0.68" fill="currentColor" stroke="none" /><rect x="7.8" y="4.6" width="2.4" height="9.45" rx="0.78" fill="currentColor" stroke="none" /><rect x="6.75" y="13.15" width="4.5" height="1.12" rx="0.56" fill="currentColor" stroke="none" />',
+    preview:
+      '<path d="M5.85 3H3v2.85" stroke-width="1.48" /><path d="M12.15 3H15v2.85" stroke-width="1.48" /><path d="M3 12.15V15h2.85" stroke-width="1.48" /><path d="M15 12.15V15h-2.85" stroke-width="1.48" />',
   };
+  const icon = (name: keyof typeof TOOL_ICONS) =>
+    `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TOOL_ICONS[name]}</svg>`;
 
   const formatSwitcher = (item: WriterItem, index: number) => `
     <div class="writer-item-formats" role="group" aria-label="第 ${index + 1} 条内容形式">
@@ -541,7 +489,7 @@ if (root) {
       ) as StoredDraft | null;
       if (stored?.version !== 2 || !Array.isArray(stored.items)) return;
       state = {
-        items: stored.items.length ? stored.items : [blankItem()],
+        items: stored.items.length ? stored.items : [blankWriterItem()],
         activeIndex: Math.min(
           stored.activeIndex || 0,
           Math.max(0, stored.items.length - 1),
@@ -558,12 +506,8 @@ if (root) {
     }
   };
 
-  /**
-   * 身份由 Cloudflare Access 管，浏览器自动带 CF_Authorization Cookie，
-   * 前端不再持有任何密钥。本地 dev 没有 Access，dev 端点直接放行。
-   */
+  /** 身份由 Cloudflare Access 管（浏览器自动带 Cookie），dev 端点直接放行 */
   const verifySession = async () => {
-    // 本地 dev 端点只监听开发服务器，直接进入编辑器，不依赖 Access/session。
     if (localWriter) return true;
 
     try {
@@ -625,7 +569,6 @@ if (root) {
     }
   };
 
-  // 只是关掉撰写窗口回首页，不清访问密钥（个人设备上不需要每次重新登录）
   const closeWriter = () => {
     toggleConfirm(false);
     window.location.href = '/';
@@ -640,20 +583,13 @@ if (root) {
     closeWriter();
   };
 
-  /**
-   * 走到这里说明会话没通过。生产环境下 Access 会在页面加载前就把未登录的人
-   * 挡在外面，所以这多半是接口没部署或 Access 配错了。
-   */
+  /** 生产环境 Access 会在页面加载前就拦掉未登录的人，走到这里多半是接口没部署或 Access 配错了 */
   const showUnavailable = () => {
     writerWindow.hidden = true;
     setStatus('撰写接口不可用：请确认已登录，且 /api/admin 已部署。', true);
   };
 
-  /**
-   * 上文只用编辑器里那套精简 markdown 渲染，站点的 remark 插件语法（`::: info`
-   * 这类容器指令）在这里没有对应实现，直接丢掉外壳只留内容，免得露出源码。
-   */
-  /** 上文的只读预览：结构和首页条目一致，但不可编辑 */
+  /** 上文只用编辑器那套精简 markdown 渲染；站点 remark 插件（`::: info`）没有对应实现，丢外壳只留内容 */
   const replyContextMarkup = (
     parsed: ReturnType<typeof parseExistingPost>,
     pubDate: string,
@@ -685,7 +621,7 @@ if (root) {
     `;
   };
 
-  /** 打开回复：读取上文及串文 id。 */
+  /** 打开回复：读取上文及串文 id */
   async function loadReplyTarget(slug: string) {
     setStatus('正在读取要回复的内容…');
     try {
@@ -705,7 +641,7 @@ if (root) {
         replyThreadId = parsed.thread;
         replyNeedsBackfill = false;
       } else {
-        replyThreadId = `thread-${new Date().toISOString().slice(0, 10)}-${makeId().slice(0, 8)}`;
+        replyThreadId = `thread-${new Date().toISOString().slice(0, 10)}-${makeWriterId().slice(0, 8)}`;
         replyNeedsBackfill = true;
       }
       state.collections = parsed.collections;
@@ -768,13 +704,9 @@ if (root) {
   };
 
   /**
-   * 把光标放到某条内容的第一个可输入字段上。
-   *
-   * DOM 顺序就是各形式该先填的那一项：随记是标题（没开就是正文）、
-   * 链接是网址、引文是引文正文，所以取第一个 textarea/input 即可。
-   *
-   * 和 renderItems(focusIndex) 里那段不同：那条路径是「新加一节串文」用的，
-   * 会平滑滚动并延迟 220ms；切换形式时内容还在原地，不需要滚也不该等。
+   * 光标落到某条内容的第一个可输入字段。DOM 顺序就是各形式该先填的那一项，
+   * 取第一个 textarea/input 即可。和 renderItems(focusIndex) 那条「新加一节
+   * 串文」的路径不同：切换形式时内容还在原地，不需要平滑滚动和 220ms 延迟。
    */
   const focusFirstField = (index: number) => {
     itemsHost
@@ -795,11 +727,8 @@ if (root) {
     scheduleDraftSave();
   };
 
-  /**
-   * emoji 选择器：和 jant 一样用 emoji-mart（动态 import，不进主包）。
-   * jant 那边每次关闭后重建 Picker —— emoji-mart 在 disconnect/reconnect 之后
-   * 行观察器恢复不可靠，会让后面的分类空掉，这里照办。
-   */
+  /** emoji-mart 动态导入，不进主包；每次关闭后重建 Picker（参考 jant 的做法，
+     disconnect/reconnect 后行观察器恢复不可靠，会导致分类变空） */
   let emojiContainer: HTMLElement | null = null;
   let emojiTargetIndex = 0;
 
@@ -880,10 +809,7 @@ if (root) {
     container.style.top = `${top}px`;
   };
 
-  /**
-   * 附文面板：铺满撰写窗口的覆盖层，带进场动画（同 jant 的 .compose-attached-panel）。
-   * 原来是挤在工具栏下面的一小块 textarea，改成整屏切换后才放得下长文。
-   */
+  /** 附文面板：铺满撰写窗口的覆盖层（参考 jant 的 .compose-attached-panel），整屏才放得下长文 */
   let attachedIndex = 0;
 
   const openAttachedPanel = (index: number) => {
@@ -911,15 +837,12 @@ if (root) {
   };
 
   /**
-   * 插图=上传，而不是粘链接：开系统文件选择器 → POST 到写接口 → 插入返回的地址。
+   * 插图=上传：开系统文件选择器 → POST 到写接口 → 插入返回的地址。
    * dev 走 /__lmd/upload（写进 public/media/uploads），生产留给 /api/admin/upload。
    */
   const uploadEndpoint = localWriter ? '/__lmd/upload' : '/api/admin/upload';
 
-  /**
-   * 按 MIME 归类，决定插进正文的写法 —— 归档页的媒介筛选就靠这些标记认出来。
-   * jant 的 UPLOAD_ACCEPT 收所有类型，这里照办：图片以外的媒体也能传。
-   */
+  /** 按 MIME 归类决定插入正文的写法——归档页的媒介筛选就靠这些标记认出来 */
   const mediaMarkdown = (file: File, url: string) => {
     const type = file.type || '';
     if (type.startsWith('image/')) return `\n![](${url})\n`;
@@ -1021,7 +944,7 @@ if (root) {
       replyThreadId ||
       editThreadId ||
       (state.items.length > 1
-        ? `thread-${new Date().toISOString().slice(0, 10)}-${makeId().slice(0, 8)}`
+        ? `thread-${new Date().toISOString().slice(0, 10)}-${makeWriterId().slice(0, 8)}`
         : undefined);
     return state.items.map((item, index) => ({
       slug: editSlug || generatedSlug(item, index),
@@ -1216,7 +1139,7 @@ if (root) {
     syncAllItems();
     if (!isReady() || editSlug) return;
     const nextIndex = state.items.length;
-    state.items.push(blankItem(state.items.at(-1)?.kind ?? 'note'));
+    state.items.push(blankWriterItem(state.items.at(-1)?.kind ?? 'note'));
     state.activeIndex = nextIndex;
     renderItems(nextIndex);
     scheduleDraftSave();

@@ -8,8 +8,7 @@ import {
   getSitePosts,
   groupPostThreads,
 } from '@/helpers/content';
-import { getPageCount } from '@/helpers/pagination';
-import slateConfig from '~@/slate.config';
+import { getPageCount, getPageSize } from '@/helpers/pagination';
 
 /**
  * 站点根下的唯一动态路由：条目和合集都没有前缀，共用这一个 slug 空间。
@@ -30,7 +29,7 @@ export async function getStaticPaths() {
   const sorted = [...postEntries].sort(byPubDateDesc);
   const takenSlugs = new Set(postPaths.map((entry) => entry.params.slug));
 
-  const pageSize = slateConfig.pagination?.pageSize ?? 20;
+  const pageSize = getPageSize();
   const collectionPaths = buildCollectionIndex(sorted).flatMap((entry) => {
     // 合集 slug 撞上条目 slug 时让条目胜出，并在构建日志里说清楚
     if (takenSlugs.has(entry.slug)) {

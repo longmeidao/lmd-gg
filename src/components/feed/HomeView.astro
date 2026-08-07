@@ -4,7 +4,7 @@ import ThreadGroup from '@/components/feed/ThreadGroup.astro';
 import PaginationNav from '@/components/feed/PaginationNav.astro';
 import { getPostDisplayTitle } from '@/helpers/post';
 import { getLatestPostGroups, renderFeedPosts } from '@/helpers/content';
-import { paginateItems } from '@/helpers/pagination';
+import { getPageSize, paginateItems } from '@/helpers/pagination';
 import slateConfig from '~@/slate.config';
 import '@/assets/style/home.css';
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { page = 1 } = Astro.props;
-const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const pageSize = getPageSize();
 const rawGroups = await getLatestPostGroups();
 const paginated = paginateItems(rawGroups, page, pageSize);
 const postGroups = await Promise.all(

@@ -1,11 +1,10 @@
 ---
 import HomeView from '@/components/feed/HomeView.astro';
 import { getLatestPostGroups } from '@/helpers/content';
-import { getPageCount } from '@/helpers/pagination';
-import slateConfig from '~@/slate.config';
+import { getPageCount, getPageSize } from '@/helpers/pagination';
 
 export async function getStaticPaths() {
-  const pageSize = slateConfig.pagination?.pageSize ?? 20;
+  const pageSize = getPageSize();
   const totalPages = getPageCount(
     (await getLatestPostGroups()).length,
     pageSize,

@@ -8,14 +8,6 @@ export const escapeHtml = (value: string) =>
 
 export const escapeAttribute = escapeHtml;
 
-export const formatDisplayDomain = (value: string) => {
-  try {
-    return new URL(value).hostname.replace(/^www\./i, '');
-  } catch {
-    return value.replace(/^https?:\/\//i, '').split('/')[0] ?? value;
-  }
-};
-
 export const inlineMarkdown = (value: string) =>
   escapeHtml(value)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

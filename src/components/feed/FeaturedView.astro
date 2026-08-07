@@ -4,8 +4,7 @@ import BackHeader from '@/components/layouts/BackHeader.astro';
 import ThreadGroup from '@/components/feed/ThreadGroup.astro';
 import PaginationNav from '@/components/feed/PaginationNav.astro';
 import { getFeaturedPostGroups, renderFeedPosts } from '@/helpers/content';
-import { paginateItems } from '@/helpers/pagination';
-import slateConfig from '~@/slate.config';
+import { getPageSize, paginateItems } from '@/helpers/pagination';
 import '@/assets/style/home.css';
 
 interface Props {
@@ -13,7 +12,7 @@ interface Props {
 }
 
 const { page = 1 } = Astro.props;
-const pageSize = slateConfig.pagination?.pageSize ?? 20;
+const pageSize = getPageSize();
 const rawGroups = await getFeaturedPostGroups();
 const paginated = paginateItems(rawGroups, page, pageSize);
 const rawPosts = paginated.items.flatMap((group) => group.items);

@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
-import { getPostDisplayTitle } from '@/helpers/post';
+import { getPostDisplayTitle, formatDisplayDomain } from '@/helpers/post';
 import { getCollectionHref, getPostCollections } from '@/helpers/collection';
 // ::: info 这类容器的基础样式。feed 出现在首页/合集/归档/文章页，
 // 样式跟着渲染条目的组件走，才不会漏掉某个页面。
@@ -46,7 +46,7 @@ const {
 
 const showPinned = showPinnedProp && item.data.pinned === true;
 /* 草稿只有登录后才看得到（dev 直接构建进来，生产由脚本注入），
-   所以这里不用再判鉴权。标记要和注入草稿那份一致，见 scripts/archive.ts。 */
+   所以这里不用再判断权限。标记要和注入草稿那份一致，见 scripts/archive.ts。 */
 const showDraft = item.data.draft === true;
 const kind = item.data.kind;
 const externalUrl = item.data.externalUrl;
@@ -60,16 +60,7 @@ const date = item.data.pubDate?.toLocaleDateString('zh-CN', {
   day: 'numeric',
 });
 
-const displayDomain = (() => {
-  if (!externalUrl) return '';
-  try {
-    return new URL(externalUrl).hostname.replace(/^www\./i, '');
-  } catch {
-    return (
-      externalUrl.replace(/^https?:\/\//i, '').split('/')[0] ?? externalUrl
-    );
-  }
-})();
+const displayDomain = externalUrl ? formatDisplayDomain(externalUrl) : '';
 ---
 
 <article
@@ -87,9 +78,9 @@ const displayDomain = (() => {
   ]}
 >
   {
-    /* 置顶标记，规格照 owenyoung.com 的 .post-status-badge：图钉 + 文字，
-       没有底色也没有边框，压得比正文弱一档，贴在条目最上面。
-       串文页里不重复显示 —— 那儿排序本来就不按置顶走。 */
+    /* 置顶标记：图钉 + 文字，规格参考 owenyoung.com 的 .post-status-badge，
+       没有底色也没有边框，比正文弱一档，贴在条目最上面。
+       串文页里不重复显示——那儿排序本来就不按置顶走。 */
     showDraft && (
       <p class="home-entry-status">
         <span class="home-entry-status-badge home-entry-status-draft">
