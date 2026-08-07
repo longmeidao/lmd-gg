@@ -8,7 +8,6 @@ import BackHeader from '@/components/layouts/BackHeader.astro';
 import ArticleJsonLd from '@/components/json-ld/article.astro';
 import RelatedPosts from '@/components/related-posts/index.astro';
 import PostActions from '@/components/admin/PostActions.astro';
-import CodeGroupEvent from '@/components/code-group-event';
 import PostEntry from '@/components/feed/PostEntry.astro';
 import ThreadCollapse from '@/components/feed/ThreadCollapse.astro';
 import slateConfig from '~@/slate.config';
@@ -107,8 +106,6 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
     pubDate={post.data.pubDate}
     lastModified={lastModifiedDate.toDate()}
   />
-  <CodeGroupEvent client:only="react" />
-
   <BackHeader slot="header" />
 
   {
@@ -302,6 +299,7 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
 <script>
   import { spaceOnce } from '@/scripts/feed-typography';
   import '@/scripts/thread-collapse';
+  import '@/scripts/code-groups';
 
   const applySpacing = () =>
     spaceOnce(
