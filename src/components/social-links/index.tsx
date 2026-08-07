@@ -29,7 +29,7 @@ function SocialLinks(props: SocialLinksProps) {
       let icon: ReactNode;
       if (typeof item.icon !== 'string') {
         const iconBase64 = `data:image/svg+xml;base64,${btoa(item.icon.svg)}`;
-        // @ts-expect-error ''--icon'' does not exist in type CSSProperties
+        // @ts-expect-error CSS 自定义属性不在 CSSProperties 的类型里
         icon = <SocialIcon style={{ '--icon': `url(${iconBase64})` }} />;
       } else {
         icon = <SocialIcon className={item.icon} />;

@@ -46,7 +46,7 @@
   text-underline-offset: 0.2em;
 }
 
-/* 分节间距全部交给分隔点，section 自己不再叠一层 margin —— 两边都留 3.5rem
+/* 分节间距全部交给分隔点，section 自己不再叠一层 margin——两边都留 3.5rem
    会变成 7rem，视觉上就散了 */
 .about-section {
   margin-top: 0;

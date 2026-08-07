@@ -1,6 +1,3 @@
-/*
- * @file: Configuration handler
- */
 import type { SlateConfig, ThemeOptions } from '@/typings/config';
 
 const defaultTheme: ThemeOptions = {
@@ -8,7 +5,6 @@ const defaultTheme: ThemeOptions = {
   enableUserChange: true,
 };
 
-/** Default configuration */
 const defaultConfig: Partial<SlateConfig> = {
   lang: 'zh-CN',
   theme: defaultTheme,

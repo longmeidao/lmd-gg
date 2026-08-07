@@ -133,11 +133,6 @@
     background-size: 100% 1px;
   }
 
-  /* a::after{
-    @apply text-slate8 mx-0.5;
-    content: '↗';
-  } */
-
   img {
     @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
   }
@@ -279,7 +274,7 @@
     @apply me-[-0.25em];
   }
 
-  /* Slate Blog: horizontal layout for two to six consecutive images. */
+  /* 连续 2 到 6 张图排成一行 */
   .rehype-figure-container:has(> .rehype-figure:nth-child(2)) {
     column-count: 2;
     column-gap: 8px;

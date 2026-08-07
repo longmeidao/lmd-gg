@@ -5,13 +5,12 @@ import './index.css';
 type ButtonType = 'default' | 'link';
 
 interface BaseButtonProps {
-  /** 设置按钮类型, 默认 default */
+  /** 按钮类型，默认 default */
   type?: ButtonType;
   className?: string;
-  /** 将按钮宽度调整为其父宽度 */
+  /** 宽度撑满父容器 */
   block?: boolean;
   children?: ReactNode;
-  /** 禁用 */
   disabled?: boolean;
   [key: `data-${string}`]: string;
   onClick?: React.MouseEventHandler<HTMLElement>;
@@ -25,9 +24,8 @@ type MergedHTMLAttributes = Omit<
 >;
 
 interface ButtonProps extends BaseButtonProps, MergedHTMLAttributes {
-  /** 点击跳转的地址 */
   href?: string;
-  /** 相当于 a 链接的 target 属性，href 存在时生效 */
+  /** 同 a 标签的 target，仅在有 href 时生效 */
   target?: string;
 }
 

@@ -68,7 +68,7 @@ const ThemeSelect = () => {
   return (
     /*
      * 用原生 <button> 而不是 <div role="radio">：原生元素自带键盘激活、焦点环和
-     * 正确的角色。之前那版还有两个问题 —— 空格键没 preventDefault，按一下会连带
+     * 正确的角色。之前那版还有两个问题——空格键没 preventDefault，按一下会连带
      * 把页面往下滚；aria-label 直接用了内部枚举值，读屏念的是 auto/light/dark。
      */
     <div

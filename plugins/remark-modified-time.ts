@@ -19,7 +19,7 @@ interface VFileLike {
 /** 一次构建里同一个文件会被处理多次，结果缓存下来 */
 const cache = new Map<string, string>();
 
-/** 往回追多少个提交就放弃 —— 正常文章不会有这么长的历史 */
+/** 往回追多少个提交就放弃——正常文章不会有这么长的历史 */
 const MAX_COMMITS = 80;
 
 const git = (args: string[]): string | null => {

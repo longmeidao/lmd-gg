@@ -118,7 +118,7 @@
   color: var(--color-slate12);
 }
 
-/* 光晕：照 jant 的 .archive-chip:focus-within —— 边框染上主色，外面套一圈 3px 微光 */
+/* 光晕：照 jant 的 .archive-chip:focus-within——边框染上主色，外面套一圈 3px 微光 */
 .archive-chip-select:focus-within,
 .archive-chip-select:has(.archive-chip[aria-expanded='true']) {
   border-color: color-mix(

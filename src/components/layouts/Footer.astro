@@ -14,8 +14,6 @@ const { copyright = slateConfig.footer?.copyright } = Astro.props;
   {!!slateConfig.socialLinks && <SocialLinks client:visible />}
   <div class="mt-4 flex items-center justify-between">
     <div class="text-slate8 text-sm">{copyright}</div>
-    {/* S theme selection */}
     {slateConfig.theme?.enableUserChange && <ThemeSelect client:load />}
-    {/* E theme selection */}
   </div>
 </footer>

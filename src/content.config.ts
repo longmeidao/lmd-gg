@@ -6,21 +6,20 @@ const postCollection = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/post' }),
   schema: z
     .object({
-      /** Title */
       title: z.string().optional(),
-      /** Homepage presentation */
+      /** 条目形式，决定首页和详情页的版式 */
       kind: z
         .enum(['article', 'note', 'quote', 'link', 'photo'])
         .default('article'),
-      /** Optional external destination for link and quote entries */
+      /** 链接和引文指向的原文地址 */
       externalUrl: z.url().optional(),
-      /** Optional source label for quoted or linked content */
+      /** 引文出处，显示在引文卡片下方 */
       source: z.string().optional(),
-      /** Optional author commentary shown after quoted or linked content */
+      /** 引文和链接后面附的个人看法 */
       commentary: z.string().optional(),
-      /** Optional thread identifier used to group related homepage entries */
+      /** 串文的键名，同键的条目在 feed 里连成一串 */
       thread: z.string().optional(),
-      /** Published and addressable, but omitted from the homepage feed */
+      /** 已发布、地址能访问，但不出现在首页最新里 */
       hiddenFromLatest: z.boolean().optional(),
       /** 精选辑标记：收进 /featured，并进入默认 RSS */
       featured: z.boolean().optional(),
@@ -31,13 +30,10 @@ const postCollection = defineCollection({
       attached: z.boolean().optional(),
       /** 置顶：在首页最新里排到最前 */
       pinned: z.boolean().optional(),
-      /** Optional one-to-five-star rating */
       rating: z.number().int().min(1).max(5).optional(),
-      /** Collections this entry belongs to (合集) */
       collections: z.array(z.string()).optional(),
-      /** Whether it's a draft */
       draft: z.boolean().optional(),
-      /** Publish date (required when not draft) */
+      /** 非草稿必填，见下面的 superRefine */
       pubDate: z.coerce.date().optional(),
     })
     .superRefine((data, ctx) => {

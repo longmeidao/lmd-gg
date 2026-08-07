@@ -640,7 +640,7 @@
   color: var(--w-text-2);
 }
 
-/* 短横线画在行上（不是那个 span —— span 自身 font-size:0 会让 em 塌成 0），
+/* 短横线画在行上（不是那个 span——span 自身 font-size:0 会让 em 塌成 0），
    这样才能和右侧作者、来源链接两行的文字基线对齐 */
 .writer-quote-meta > span[aria-hidden] {
   display: none;
@@ -779,7 +779,7 @@
 /*
  * 悬停预览：鼠标停在第 N 颗上时，1..N 一起点亮。
  *
- * 预览必须比选中态弱一档，否则两者长得一模一样 —— 鼠标从右边移过来先扫到
+ * 预览必须比选中态弱一档，否则两者长得一模一样——鼠标从右边移过来先扫到
  * 第 5 颗，5 颗全亮成选中的样子，看着就像「默认选了 5 星」。
  * 所以预览用半透明的琥珀色、也不放大；真正选中了才是实色 + scale(1.1)。
  *
@@ -1221,7 +1221,7 @@ html.dark .writer-hide-latest input:checked {
   margin: 12px 0;
 }
 
-/* 可见性分段 —— 选中项高亮 */
+/* 可见性分段——选中项高亮 */
 
 .writer-publish-chips {
   display: flex;

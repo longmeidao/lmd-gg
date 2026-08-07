@@ -33,10 +33,8 @@ const sessionEndpoint = import.meta.env.DEV
 <script>
   /**
    * 登录状态的显隐。
-   *
-   * 必须在 astro:page-load 上重跑：ClientRouter 换页后 DOM 是新的，
-   * 那批 [data-admin-only] 又是 hidden 的，只在模块顶层跑一次的话，
-   * 软跳转过去的页面就永远认不出登录状态。
+   * 必须在 astro:page-load 上重跑：ClientRouter 换页后 DOM 是新的，那批
+   * [data-admin-only] 又是 hidden 的，只在模块顶层跑一次的话软跳转后就认不出登录状态。
    */
   type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
 
@@ -69,11 +67,10 @@ const sessionEndpoint = import.meta.env.DEV
     checked = true;
     /*
      * 身份由 Cloudflare Access 管，Cookie 浏览器自动带。
-     *
-     * redirect: 'manual' 是兜底：万一 Access 应用把 /api/admin/* 也圈了进去，
-     * 未登录时它会在 Worker 之前就 302 到跨源的登录页，浏览器跟过去拿不到
-     * CORS 头，每个匿名访客的控制台都会红一条。改成手动之后 302 变成
-     * opaqueredirect（ok 为 false），照样判定成未登录，但不再报错。
+     * redirect: 'manual' 是兜底：万一 Access 把 /api/admin/* 也圈了进去，
+     * 未登录时它会在 Worker 之前先 302 到跨源的登录页，浏览器跟过去拿不到
+     * CORS 头，每个未登录访客的控制台都会报错。手动模式下 302 变成
+     * opaqueredirect（ok 为 false），照样判定未登录，但不再报错。
      */
     void fetch(endpoint, { credentials: 'same-origin', redirect: 'manual' })
       .then(async (response) => {

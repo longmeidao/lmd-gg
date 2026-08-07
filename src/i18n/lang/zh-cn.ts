@@ -1,6 +1,5 @@
 export default {
   common: {
-    /** 全部合集 */
     all: '全部文章',
   },
   blog: {

@@ -1,19 +1,12 @@
 /**
  * 「新建合集」弹窗。
  *
- * 版式照 jant 的 `.collection-quick-dialog`（jant-me/jant，
- * packages/core/src/styles/ui.css）：标题 + 右上角取消，中间一个带小标签的
- * 输入框，底部一颗通栏的实心确认键。数值直接取自那份 ui.css，
- * 颜色换成本站的 slate 档位。
- *
- * 用原生 <dialog> + showModal()：焦点收拢、Esc 关闭、背景 inert 都是白送的，
- * 不用自己写一套。
- *
- * 撰写面板和条目管理菜单共用这一个，所以弹窗是用时才建、关掉就移除，
- * 不往两个页面各塞一份 markup。
+ * 版式参考 jant 的 .collection-quick-dialog，用原生 <dialog> + showModal()：
+ * 焦点收拢、Esc 关闭、背景变灰都是浏览器白送的。撰写面板和条目管理共用此弹窗，
+ * 所以用的时候才建、关掉就移除，不往两个页面各塞一份标记。
  */
 
-/** 返回去掉首尾空白的名字；用户取消或没填则返回 null。 */
+/** 返回去掉首尾空白的名字；用户取消或没填则返回 null */
 export const askCollectionName = (): Promise<string | null> =>
   new Promise((resolve) => {
     const dialog = document.createElement('dialog');

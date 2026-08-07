@@ -45,7 +45,7 @@ import './search.css';
 
 <script is:inline type="module">
   /*
-   * ClientRouter 换页后 DOM 是全新的，所以不能在模块顶层把元素引用抓死 ——
+   * ClientRouter 换页后 DOM 是全新的，所以不能在模块顶层把元素引用抓死——
    * 那样按钮的监听会留在已被移除的旧节点上，快捷键也会去开一个脱离文档的
    * 旧 dialog，表现就是「点了没反应」。
    *
@@ -55,7 +55,7 @@ import './search.css';
   const q = (selector) => document.querySelector(selector);
 
   /**
-   * 把查询切成词。pagefind 会把匹配不上的词悄悄丢掉再返回结果 ——
+   * 把查询切成词。pagefind 会把匹配不上的词悄悄丢掉再返回结果——
    * 「香蕉截图」和「截图」拿到的结果和分数完全一样，所以得自己校验。
    */
   const termsOf = (query) => {

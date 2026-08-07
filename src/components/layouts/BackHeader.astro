@@ -6,7 +6,7 @@ import HeaderActions from './HeaderActions.astro';
  * 非首页的页头：左上角一个返回按钮，右侧是登录后才出现的操作。
  * 首页用的是带头像的 `Header.astro`。
  *
- * 返回是真链接而不是按钮 + JS —— 之前靠委托监听跳转，而监听只写在个别页面里，
+ * 返回是真链接而不是按钮 + JS——之前靠委托监听跳转，而监听只写在个别页面里，
  * 直接打开归档页或 404 时点了没反应。
  *
  * 用法是 `<BackHeader slot="header" />`：slot 得写在使用处，

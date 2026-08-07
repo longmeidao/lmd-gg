@@ -1,12 +1,12 @@
 import slateConfig from '~@/slate.config';
 
 /**
- * 合集（collection）—— 一组内容的集合，有自己的页面 `/<slug>`。
+ * 每个合集有自己的页面 `/<slug>`。
  *
- * 合集名是中文的时候没法自动推出拉丁 slug，所以 slug 的来源分两级：
+ * 合集名为中文时不好自动生成拉丁 slug，所以 slug 的来源分两级：
  *  1. `slate.config.ts` 里的 `collectionSlugs` 显式映射（想要 `/city-walks` 这种就写在这里）
- *  2. 没写映射时按名字自动生成：拉丁字符转 kebab-case，其余原样保留
- *     （`/原型` 这种地址栏里显示是可读的，只在传输时才百分号编码）
+ *  2. 没写映射的按名字自动生成：拉丁字符转 kebab-case，其余保留原样
+ *     （`/原型` 这种地址栏里是可读的，只在传输时才百分号编码）
  */
 const slugMap: Record<string, string> = slateConfig.collectionSlugs ?? {};
 
@@ -26,7 +26,7 @@ export const getCollectionSlug = (name: string) =>
 
 /**
  * 没写 collections 的条目归到这个默认合集。
- * 只在展示和筛选时兜底，**不会写进 md** —— frontmatter 里该缺就缺。
+ * 只在展示和筛选时兜底，**不会写进文章**——frontmatter 里该缺就缺。
  */
 export const DEFAULT_COLLECTION = '未分类';
 

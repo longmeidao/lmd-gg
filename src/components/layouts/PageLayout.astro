@@ -23,7 +23,7 @@ const {
 } = Astro.props;
 const fullTitle = getFullTitle(title);
 
-// Apply the theme before first paint to avoid a light/dark flash.
+// 首屏绘制前先定好主题，否则深色模式会先闪一下浅色
 const themeScript = `
   function getThemeMode() {
     const theme = localStorage.getItem('theme');
@@ -81,9 +81,9 @@ const themeScript = `
     <a class="skip-link" href="#main-content">跳到主要内容</a>
     <script is:inline>
       /*
-       * 自己把焦点送进 <main>。光靠 href="#main-content" 不行：ClientRouter 会
-       * 接管同页锚点跳转，实测按下回车后 hash 没变、焦点被打回 body，
-       * 等于这个链接白点。document 不会被换页替换掉，所以只绑一次。
+       * 自己把焦点送进 <main>：光靠 href="#main-content" 不行，ClientRouter 会
+       * 接管同页锚点跳转，按下回车后 hash 没变、焦点被打回 body。document 不会
+       * 被换页替换掉，所以只绑一次。
        */
       document.addEventListener('click', (event) => {
         const link = event.target.closest?.('.skip-link');

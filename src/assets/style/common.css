@@ -198,7 +198,7 @@ body {
   }
 }
 
-/* 跳过导航。不用 display:none / visibility:hidden —— 那样它就不可聚焦了；
+/* 跳过导航。不用 display:none / visibility:hidden——那样它就不可聚焦了；
    挪出视口，聚焦时再拉回来。 */
 .skip-link {
   position: fixed;
@@ -215,7 +215,7 @@ body {
   transform: translateY(-200%);
 }
 
-/* 这里用 :focus 而不是 :focus-visible —— 跳过链接本来就只有键盘会碰到，
+/* 这里用 :focus 而不是 :focus-visible——跳过链接本来就只有键盘会碰到，
    而 :focus-visible 在程序化 focus() 时不匹配，链接会留在视口外，
    等于按了 Tab 什么也看不见。 */
 .skip-link:focus {
@@ -274,7 +274,7 @@ body {
  * 所以合成一份、挂两个选择器。
  *
  * 字体栈里不放 'Heti Kai Black'：那个 @font-face 定义在 heti.min.css 里，
- * 而它只在文章页引入 —— 文章页的中文会落到楷体，首页因为查无此家族直接落到
+ * 而它只在文章页引入——文章页的中文会落到楷体，首页因为查无此家族直接落到
  * serif（宋体），同一段字两页长得不一样。统一取首页那一档。
  *
  * font-weight 也得写死：heti.min.css 有 `.heti em { font-weight: 600 }`，
@@ -305,7 +305,7 @@ body {
 /*
  * ::: info / tip / warning 容器。
  *
- * 详情页和首页 feed 的 DOM 不在同一个作用域里，之前各写一份就飘了 —— 这里合成
+ * 详情页和首页 feed 的 DOM 不在同一个作用域里，之前各写一份就飘了——这里合成
  * 一段声明、挂两个选择器。权重要压过 vendor 的 `.block-default.info`(0,2,0)，
  * 所以带上外层容器。
  */
@@ -370,7 +370,7 @@ body {
 /* heti 会在中西文之间插入 <heti-spacing>，其自带样式用 margin 撑出间隙。
    margin 落在 inline 盒之外，text-decoration 画不过去，链接/日期的下划线
    就会在每个间隙处断开（见 heti.min.css 的 `.heti .heti-spacing-start`）。
-   改用 padding —— padding 属于 inline 盒，下划线连续。
+   改用 padding——padding 属于 inline 盒，下划线连续。
    heti.min.css 的加载顺序按页面而异，所以这里用 !important 压掉它的 margin。 */
 .heti-spacing-start,
 .heti .heti-spacing-start {

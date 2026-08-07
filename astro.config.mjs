@@ -88,5 +88,4 @@ function generateAstroConfigure() {
   return astroConfig;
 }
 
-// https://astro.build/config
 export default defineConfig(generateAstroConfigure());

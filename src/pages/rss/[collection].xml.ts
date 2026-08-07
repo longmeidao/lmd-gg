@@ -9,7 +9,7 @@ import { buildRssItems } from '@/helpers/feed';
 /**
  * 每个合集一份 RSS，地址是 `/rss/<合集 slug>.xml`。
  *
- * 和主 feed 不同，这里不限定 kind —— 合集里本来就混着随记、引文、链接，
+ * 和主 feed 不同，这里不限定 kind——合集里本来就混着随记、引文、链接，
  * 只筛掉草稿。
  */
 export async function getStaticPaths() {

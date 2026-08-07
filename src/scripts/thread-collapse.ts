@@ -2,7 +2,7 @@
  * 串文折叠段的展开/收起。
  *
  * 监听挂在 document 上，只绑一次：ClientRouter 换页后 DOM 是全新的，
- * 抓死元素引用会让软跳转过去的页面点了没反应（同 search / post-actions 的处理）。
+ * 引用如果抓死了旧节点，软跳转过去的页面点了就没反应（同 search / post-actions）。
  */
 
 const EXPANDED_LABEL = '收起';
@@ -10,7 +10,7 @@ const EXPANDED_LABEL = '收起';
 const CHEVRON_DOWN = 'M4 6l4 4 4-4';
 const CHEVRON_UP = 'M4 10l4-4 4 4';
 
-/** 设定某一段的折叠状态。归档筛选也要用，所以单独导出。 */
+/** 设定某一段的折叠状态。归档筛选也要用，所以单独导出 */
 export const setThreadCollapsed = (
   wrapper: HTMLElement,
   collapsed: boolean,
@@ -38,7 +38,7 @@ const toggleShell = (button: HTMLElement) => {
   const wrapper = button.closest<HTMLElement>('[data-thread-collapse]');
   const shell = wrapper?.querySelector<HTMLElement>('[data-thread-shell]');
   if (!wrapper || !shell) return;
-  // 手动动过之后，归档筛选就别再替他收起来了（见 scripts/archive.ts）
+  // 手动操作过之后，归档筛选就别再替他收起来了
   delete wrapper.dataset.autoExpanded;
   setThreadCollapsed(wrapper, !shell.hasAttribute('data-collapsed'));
 };
