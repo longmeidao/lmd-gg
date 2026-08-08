@@ -10,7 +10,7 @@
 - Pagefind 静态全文搜索、Astro RSS 与 Sitemap
 - Cloudflare Workers、Access、R2、Image Transformations
 - GitHub Git Data API 原子提交与 Actions 自动部署
-- pnpm 10、ESLint、Prettier、Vitest/Miniflare、Playwright
+- pnpm 10、ESLint、Prettier、Vitest/Miniflare
 
 ## 本地开发
 
@@ -66,7 +66,6 @@ src/pages/           静态页面与动态路由
 src/scripts/         浏览器脚本与撰写器模块
 src/worker.ts        只接管 /api/* 的 Cloudflare Worker
 tests/               Vitest/Workers 测试
-e2e/                 Playwright 浏览器冒烟测试
 ```
 
 ## 部署
