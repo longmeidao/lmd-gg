@@ -40,11 +40,7 @@ const postGroups = await Promise.all(
     </section>
 
     <section id="post-list-section" class="mb-16 scroll-mt-8">
-      {
-        /* 不要加 aria-live：这个 feed 是静态渲染的，不存在需要播报的更新，
-          而 scripts/feed-typography.ts 会在加载后往里注入上百个 <heti-spacing>，
-          挂了实时区域就等于让读屏把整屏 feed 重念一遍。 */
-      }
+      {/* 静态 feed 不使用 aria-live，避免排版脚本触发重复播报。 */}
       <div id="post-list" class="home-feed">
         {
           postGroups.map((group, groupIndex) => (

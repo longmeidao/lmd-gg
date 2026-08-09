@@ -7,14 +7,10 @@ interface PostPresentationData {
   externalUrl?: string;
 }
 
-/**
- * 条目地址就是 `/<slug>`，没有任何前缀（原来是 `/blog/<slug>`）。
- * 合集页也在根下，两者共用 src/pages/[...slug].astro 这一个 slug 空间。
- * slug 里可能带目录（`prototype/short-note`），所以路由用 rest 参数。
- */
+/** 条目和合集共用根级 slug 空间，条目 id 可以包含子目录。 */
 export const getPostPath = (id: string) => `/${id}`;
 
-/** 展示用域名：去掉协议和 www 前缀 */
+/** 返回不含协议和 www 前缀的展示域名。 */
 export const formatDisplayDomain = (value: string) => {
   try {
     return new URL(value).hostname.replace(/^www\./i, '');

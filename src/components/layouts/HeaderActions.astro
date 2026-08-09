@@ -19,7 +19,6 @@ const sessionEndpoint = import.meta.env.DEV
     data-admin-write
     hidden
   >
-    {/* 羽毛笔，同 jant 的 compose-prompt-avatar */}
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
       <line x1="16" y1="8" x2="2" y2="22"></line>
@@ -31,11 +30,7 @@ const sessionEndpoint = import.meta.env.DEV
 </nav>
 
 <script>
-  /**
-   * 登录状态的显隐。
-   * 必须在 astro:page-load 上重跑：ClientRouter 换页后 DOM 是新的，那批
-   * [data-admin-only] 又是 hidden 的，只在模块顶层跑一次的话软跳转后就认不出登录状态。
-   */
+  /** 在初次加载和软导航后同步管理员元素。 */
   type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
 
   const revealAdmin = () => {
@@ -48,7 +43,7 @@ const sessionEndpoint = import.meta.env.DEV
     document.dispatchEvent(new CustomEvent('lmd:admin-authenticated'));
   };
 
-  // 没登录时不必每次换页都再问一遍服务端
+  // 未登录状态在当前会话内复用。
   let checked = false;
 
   const applyAdminState = () => {
@@ -65,13 +60,7 @@ const sessionEndpoint = import.meta.env.DEV
     if (!endpoint) return;
 
     checked = true;
-    /*
-     * 身份由 Cloudflare Access 管，Cookie 浏览器自动带。
-     * redirect: 'manual' 是兜底：万一 Access 把 /api/admin/* 也圈了进去，
-     * 未登录时它会在 Worker 之前先 302 到跨源的登录页，浏览器跟过去拿不到
-     * CORS 头，每个未登录访客的控制台都会报错。手动模式下 302 变成
-     * opaqueredirect（ok 为 false），照样判定未登录，但不再报错。
-     */
+    // 不跟随跨源登录重定向，避免未登录时产生 CORS 错误。
     void fetch(endpoint, { credentials: 'same-origin', redirect: 'manual' })
       .then(async (response) => {
         const result = (await response.json().catch(() => ({}))) as {

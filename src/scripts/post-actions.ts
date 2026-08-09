@@ -1,9 +1,4 @@
-/**
- * 首页 / 详情页条目上的管理操作：回复、编辑、加入合集、可见性、精选、置顶、删除。
- *
- * 写接口是「整份 markdown 读回来 → 改 frontmatter → 写回去」，
- * 所以这里只对 frontmatter 做定点增删，正文原样保留。
- */
+/** 条目管理操作；只修改 frontmatter，正文保持不变。 */
 
 import { DEFAULT_COLLECTION } from '@/helpers/collection';
 import { splitFrontmatter } from '@/domain/frontmatter';
@@ -19,7 +14,7 @@ const VISIBILITY_LABELS: Record<Visibility, string> = {
   private: '草稿',
 };
 
-/** 站点上出现过的所有合集：条目自带的 + 首页筛选栏里的 */
+/** 收集条目和筛选栏中的真实合集。 */
 const knownCollections = () => {
   const names = new Set<string>();
   document
@@ -30,17 +25,17 @@ const knownCollections = () => {
           JSON.parse(element.dataset.postCollections || '[]') as string[]
         ).forEach((tag) => names.add(tag));
       } catch {
-        /* 忽略坏掉的属性 */
+        /* 忽略无效属性。 */
       }
     });
-  // 首页筛选栏的第一颗是「全部文章」，那是伪合集，跳过
+  // 跳过筛选栏中的总入口。
   [...document.querySelectorAll<HTMLElement>('[data-collection-filter]')]
     .slice(1)
     .forEach((button) => {
       const name = button.dataset.collectionFilter;
       if (name) names.add(name);
     });
-  // 兜底合集只是展示用的，不是真合集，不能写进 frontmatter
+  // 默认合集仅用于展示，不写入 frontmatter。
   names.delete(DEFAULT_COLLECTION);
   return [...names].sort((left, right) => left.localeCompare(right, 'zh-CN'));
 };
@@ -54,7 +49,7 @@ const splitFrontmatterOrThrow = (content: string) => {
 const joinPost = (lines: string[], body: string) =>
   `---\n${lines.join('\n')}\n---\n\n${body.replace(/^\n+/, '')}`;
 
-/** 删掉某个顶层 key（含 `collections:` 这种带缩进列表的块） */
+/** 删除顶层键及其缩进内容。 */
 const dropKey = (lines: string[], key: string) => {
   const result: string[] = [];
   let skippingBlock = false;
@@ -88,7 +83,7 @@ const setVisibility = (content: string, visibility: Visibility) => {
   if (visibility === 'private') {
     next.push('draft: true');
   } else if (!hasPubDate) {
-    // schema 要求非草稿必须有 pubDate
+    // 非草稿必须包含 pubDate。
     const today = new Intl.DateTimeFormat('sv-SE', {
       timeZone: 'Asia/Taipei',
     }).format(new Date());
@@ -97,7 +92,7 @@ const setVisibility = (content: string, visibility: Visibility) => {
   return joinPost(next, body);
 };
 
-/** 精选辑 / 置顶都是布尔开关：开就写 `key: true`，关就把这行删掉 */
+/** 设置或删除布尔标记。 */
 const setFlag = (content: string, key: 'featured' | 'pinned', on: boolean) => {
   const { lines, body } = splitFrontmatterOrThrow(content);
   const next = dropKey(lines, key);
@@ -237,11 +232,7 @@ const setupPostActions = (root: HTMLElement) => {
     try {
       const content = await readPost(slug);
       await writePost(slug, change(content));
-      /*
-       * dev 下不自己 reload：写完文件后 Astro 的内容监听会重跑一次
-       * `vite program reload` 并把页面刷掉，我们再叠一次 location.reload()
-       * 就变成连着两次整页加载，看起来就是闪。生产没有 HMR，仍然要自己刷。
-       */
+      // 开发环境由 Astro 自动刷新；生产环境需要主动刷新。
       if (!isLocalWriter) window.location.reload();
       else closeAllMenus();
     } catch (error) {
@@ -258,11 +249,7 @@ const setupPostActions = (root: HTMLElement) => {
   });
 
   popover.addEventListener('click', async (event) => {
-    /*
-     * 必须拦住冒泡：document 上有一句「点哪儿都关掉所有菜单」的监听，
-     * 不拦的话二级面板刚切过去就被整个关掉，再打开又被重置回 root。
-     * 会写文件的那几项（置顶、精选辑、删除）因为最后会重新加载页面，看不出这问题。
-     */
+    // 阻止 document 的菜单关闭监听打断二级面板交互。
     event.stopPropagation();
 
     const target = event.target as HTMLElement;
@@ -345,8 +332,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeAllMenus();
 });
 document.addEventListener('lmd:admin-authenticated', init);
-// 归档页登录后会注入草稿，它们的操作菜单也要挂上监听（事件从 archive.ts 冒泡上来）
+// 为登录后注入的草稿注册操作菜单。
 document.addEventListener('lmd:archive-items-changed', init);
-// ClientRouter 换页后是新的 DOM 节点，要重新挂事件
+// 软导航后为新节点重新注册事件。
 document.addEventListener('astro:page-load', init);
 init();

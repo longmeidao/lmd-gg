@@ -1,19 +1,12 @@
-/**
- * 归档页：图标胶囊筛选（自绘下拉，不用原生 select）+ 方格/列表切换。
- *
- * jant 的 /archive 用 URL 参数在服务端筛，本站是静态输出，所以改成前端筛：
- * 数据本来就全在页面里，切换零延迟，也不用为每种组合生成页面。
- */
+/** 静态归档页的多选筛选、草稿注入和视图切换。 */
 
 import { escapeAttribute, escapeHtml, markdownBlocks } from './writer/markdown';
-// 纯 TS、无 Astro 依赖，正文摘要和服务端渲染的方格共用同一套规则
 import { formatDisplayDomain, getPostExcerpt } from '@/helpers/post';
-// 顺带把折叠段的点击监听装上（模块自带副作用），列表视图里的串文要用
+// 导入模块会注册串文折叠事件。
 import { setThreadCollapsed } from './thread-collapse';
 import { groupThreads, THREAD_COLLAPSE_FROM } from '@/helpers/threads';
 import type { DraftSummary } from '@/domain/content-contract';
 
-/** 每个筛选维度保存一组已选值——筛选是多选的（同 jant，胶囊上显示计数 + 清除） */
 type Filters = Record<string, Set<string>>;
 
 type AdminWindow = typeof window & { __lmdAdminAuthenticated?: boolean };
@@ -47,11 +40,8 @@ const applyDraftData = (element: HTMLElement, draft: DraftSummary) => {
 };
 
 /**
- * 把一条草稿画成和首页一样的 feed 条目：结构照抄 PostEntry.astro 的分支，
- * 类名沿用，样式全来自 home.css。草稿不进静态构建，只能在前端补画——
- * 改 PostEntry 的结构时这里要跟着改。
- *
- * 唯一多出来的是顶部那枚「草稿」标记，复用置顶标记的 .home-entry-status。
+ * 使用与 PostEntry.astro 一致的结构渲染草稿。
+ * 修改正式条目结构时需要同步更新。
  */
 const draftEntryMarkup = (
   draft: DraftSummary,
@@ -116,7 +106,7 @@ const draftEntryMarkup = (
         ${commentary}
       </div>`;
   } else {
-    // 无标题就不造标题，和首页一致：只显示正文
+    // 无标题内容只显示正文。
     main = `
       <div>
         ${title ? `<header class="home-entry-header"><a class="home-entry-title" href="${href}">${title}</a></header>` : ''}
@@ -141,7 +131,7 @@ const draftEntryMarkup = (
     </footer>`;
 };
 
-/** 草稿按串文分组：和生产端 helpers/content 的 groupPostThreads 同一套规则 */
+/** 使用正式内容相同的规则为草稿分组。 */
 const groupDraftThreads = (drafts: DraftSummary[]) =>
   groupThreads(
     drafts,
@@ -149,11 +139,6 @@ const groupDraftThreads = (drafts: DraftSummary[]) =>
     (left, right) => left.pubDate.localeCompare(right.pubDate),
   );
 
-/**
- * 折叠段的 markup 不在这里重写一遍：页面上放了一份
- * components/feed/ThreadCollapse.astro 渲染出的模板，克隆它就行
- * （同 PostActions 的做法），样式和交互自然跟服务端那份一模一样。
- */
 const threadCollapse = () => {
   const template = document.querySelector<HTMLTemplateElement>(
     '[data-thread-collapse-template]',
@@ -207,11 +192,6 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
   header.append(headerLabel, headerCount);
   gridItems.append(header);
 
-  /**
-   * 给草稿配一份操作菜单：克隆页面里那份 PostActions 模板，再把 slug 和
-   * 状态属性改成这条草稿的。模板里的那份是 hidden 的（组件默认如此），
-   * 但能走到这儿说明已经登录，克隆出来直接放出。
-   */
   const draftActions = (draft: DraftSummary) => {
     const template = document.querySelector<HTMLTemplateElement>(
       '[data-post-actions-template]',
@@ -236,7 +216,7 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
       .querySelector('a.post-admin-row')
       ?.setAttribute('href', `/write?edit=${slug}`);
 
-    // 这几处文案服务端是按 props 渲染的，克隆出来要按草稿的状态改写
+    // 根据草稿状态更新服务端生成的文案。
     const label = admin.querySelector<HTMLElement>('[data-visibility-label]');
     if (label) label.textContent = '草稿';
     const featured = admin.querySelector<HTMLElement>('[data-featured-label]');
@@ -248,7 +228,6 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     return admin;
   };
 
-  /** 列表视图里正常条目的分隔标记，草稿行沿用同一个 */
   const groupDivider = () => {
     const divider = document.createElement('div');
     divider.className = 'home-group-divider';
@@ -256,7 +235,6 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     return divider;
   };
 
-  /** 条目的日期在方格和列表里显示成一样的短日期 */
   const draftDate = (draft: DraftSummary) => {
     const date = draft.pubDate ? new Date(draft.pubDate) : null;
     const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
@@ -292,7 +270,7 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     title.textContent = draft.title || draft.slug;
     const summary = document.createElement('span');
     summary.className = 'archive-tile-summary';
-    // 和正常方格一样显示正文摘要（archive.astro 用的也是 96 字上限）
+    // 与正式方格使用相同的摘要长度。
     summary.textContent = getPostExcerpt(draft.body, 96) ?? '';
     copy.append(title, summary);
     content.append(copy);
@@ -300,7 +278,6 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     gridItems.append(tile);
   });
 
-  /** 列表视图里的一条：结构照搬 components/feed/PostEntry.astro 的 <article> */
   const draftArticle = (draft: DraftSummary) => {
     const editUrl = `/write?edit=${encodeURIComponent(draft.slug)}`;
     const { validDate, label } = draftDate(draft);
@@ -313,13 +290,12 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
     return article;
   };
 
-  // 列表视图的草稿照搬正常条目的结构（cluster > divider? + group > article），
-  // 标题、日期、间距全走首页那份样式，不用另写一套
+  // 草稿沿用正式条目的分组结构和样式。
   const listItems = document.createDocumentFragment();
   groupDraftThreads(missing).forEach((group, groupIndex) => {
     const row = document.createElement('div');
     row.className = 'home-feed-cluster archive-draft-row';
-    // 筛选标记挂在条目上（同正常条目），cluster 只做分组容器
+    // 筛选属性保留在条目上，cluster 仅负责分组。
     row.dataset.feedCluster = '';
     if (groupIndex > 0) row.append(groupDivider());
 
@@ -338,7 +314,7 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
       return article;
     });
 
-    // 前面那几条折起来，规则和 ThreadGroup.astro 一致（两条起才折）
+    // 使用与 ThreadGroup.astro 相同的折叠阈值。
     const context = group.thread ? articles.slice(0, -1) : [];
     const collapse =
       context.length >= THREAD_COLLAPSE_FROM ? threadCollapse() : null;
@@ -357,8 +333,7 @@ const addDrafts = (body: HTMLElement, drafts: DraftSummary[]) => {
   grid.prepend(gridItems);
   list.prepend(listItems);
 
-  // 草稿插到最前面之后，原本的第一条不再是第一条了，给它补上分隔标记，
-  // 否则草稿和正文之间会少一条，节奏断在那儿。
+  // 草稿置顶后，为第一条正式内容补充分隔线。
   const firstOriginal = list.querySelector<HTMLElement>(
     '.home-feed-cluster:not(.archive-draft-row)',
   );
@@ -399,8 +374,7 @@ const setup = () => {
   body.dataset.archiveReady = 'true';
 
   let items = [...body.querySelectorAll<HTMLElement>('[data-archive-item]')];
-  // 归档页同一条内容有方格和列表两份 DOM，计数只能认其中一份（方格）。
-  // 合集页只有列表、没有方格，所以按「有没有方格」决定认哪一份。
+  // 归档页按方格计数；合集页没有方格，改按列表计数。
   const hasTiles = items.some((item) =>
     item.classList.contains('archive-tile'),
   );
@@ -422,7 +396,6 @@ const setup = () => {
     filters[name] ??= new Set<string>();
     return filters[name]!;
   };
-  /** 多选：没选任何一项就是「全部」；选了就看有没有交集 */
   const passes = (name: string, values: string[]) => {
     const chosen = selected(name);
     return chosen.size === 0 || values.some((value) => chosen.has(value));
@@ -441,8 +414,7 @@ const setup = () => {
 
     items.forEach((item) => {
       const media = (item.dataset.media || '').split(',').filter(Boolean);
-      // 形式的可选值含 `note:titled` / `note:untitled` 这种带子级的写法。
-      // 长文（article）就是带标题的随记，所以也归到 note / note:titled 下。
+      // article 同时归入 note 和 note:titled。
       const kindValues = [item.dataset.kind ?? ''];
       if (item.dataset.kind === 'note' || item.dataset.kind === 'article') {
         kindValues.push(
@@ -464,11 +436,11 @@ const setup = () => {
         passes('media', mediaValues) &&
         passes('visibility', visibilityValues);
       item.hidden = !matches;
-      // 方格视图里每条只算一次（列表视图有同样一份，不重复计数）
+      // 每条内容只计数一次。
       if (matches && isCountable(item)) visible += 1;
     });
 
-    // 整月被筛空就把月份标题也收起来，并更新每月计数
+    // 隐藏空月份并更新月度计数。
     monthHeaders.forEach((header) => {
       const key = header.dataset.monthHeader;
       const shown = items.filter(
@@ -482,12 +454,7 @@ const setup = () => {
       if (counter) counter.textContent = String(shown);
     });
 
-    /*
-     * 列表视图按串文成组，所以筛选之后要重算每组的状态：
-     * - data-visible-count 决定 CSS 画不画轨道（只剩一条就不该画）
-     * - is-thread-latest 那颗大锚点要落在「当前可见的最后一条」上
-     * - 整组被筛空就连 cluster 一起收起来，分隔点也跟着让位
-     */
+    // 筛选后重新计算串文轨道、末条标记和分组可见性。
     let shownClusters = 0;
     body
       .querySelectorAll<HTMLElement>('[data-feed-cluster]')
@@ -506,14 +473,14 @@ const setup = () => {
           shown.at(-1)?.classList.add('is-thread-latest');
         }
 
-        // 串文折起来的那一截也得跟着筛选走，否则会剩下一个指向空处的按钮
+        // 折叠段随内容一起筛选，避免留下空按钮。
         const collapse = cluster.querySelector<HTMLElement>(
           '[data-thread-collapse]',
         );
         if (collapse) {
           const inside = members.filter((member) => collapse.contains(member));
           collapse.hidden = inside.every((member) => member.hidden);
-          // 反过来，露在外面的最新那条被筛掉了：展开，不然整组只看得见一个按钮
+          // 外部条目全部隐藏时自动展开折叠段。
           const orphaned =
             !collapse.hidden &&
             members
@@ -523,7 +490,7 @@ const setup = () => {
             '[data-thread-shell]',
           );
           if (orphaned) {
-            // 记一笔是筛选替他展开的，清掉筛选就该收回去；本来就展开着的不碰
+            // 仅回收由筛选自动展开的折叠段。
             if (shell?.hasAttribute('data-collapsed')) {
               collapse.dataset.autoExpanded = '';
               setThreadCollapsed(collapse, false);
@@ -547,8 +514,7 @@ const setup = () => {
     if (empty) empty.hidden = visible > 0;
   };
 
-  // 空状态里那颗「清除筛选」按钮要一次性清空所有维度，
-  // 而每个维度的 syncChip 是闭包里的，这里收集起来统一调用
+  // 收集各维度的重置函数，供空状态按钮统一调用。
   const resetters: Array<() => void> = [];
 
   selects.forEach((select) => {
@@ -573,7 +539,6 @@ const setup = () => {
       ...menu.querySelectorAll<HTMLButtonElement>('[data-chip-value]'),
     ];
 
-    /** 胶囊上：选 1 项显示文字，选多项显示计数，选了就露出清除按钮 */
     const syncChip = () => {
       const chosen = selected(name);
       options.forEach((option) => {
@@ -613,14 +578,14 @@ const setup = () => {
       option.addEventListener('click', () => {
         const value = option.dataset.chipValue ?? '';
         const chosen = selected(name);
-        // 「全部 X」这一项是清空入口，其余项各自切换
+        // 总入口清空当前维度，其他选项独立切换。
         if (option.dataset.chipDefault === 'true') chosen.clear();
         else if (chosen.has(value)) chosen.delete(value);
         else chosen.add(value);
 
         syncChip();
         apply();
-        // 多选时保持菜单打开，方便连着勾
+        // 多选时保持菜单打开。
         if (option.dataset.chipDefault === 'true') {
           menu.hidden = true;
           trigger.setAttribute('aria-expanded', 'false');
@@ -643,7 +608,6 @@ const setup = () => {
     syncChip();
   });
 
-  /** 筛选到空结果时，给一个一键回到全部的出口，不用逐个胶囊点回去 */
   const clearAll = body.querySelector<HTMLButtonElement>(
     '[data-archive-clear-filters]',
   );
@@ -679,7 +643,7 @@ const setup = () => {
   if ((window as AdminWindow).__lmdAdminAuthenticated) void loadDrafts(body);
 };
 
-// document 级监听：模块只求值一次，软导航再多次也不会叠加
+// document 级监听不受软导航影响，只注册一次。
 document.addEventListener('click', () => closeMenus());
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeMenus();

@@ -21,71 +21,53 @@ import { devWebWriter } from './plugins/dev-web-writer';
 import { silenceAstroServerApp } from './plugins/silence-astro-server-app';
 import slateConfig from './slate.config';
 
-function generateAstroConfigure() {
-  const remarkPlugins = [
-    // CommonMark 规定分隔符紧贴汉字又紧贴标点时不能开启强调，所以
-    // `工具*（包括…）*并没有` 认不出来，得靠空格/换行隔开，而那些空格又会
-    // 原样渲染成多余的空隙。这个插件按 CJK 规则放宽判定。
-    // 注意：只对 `*`/`**` 生效，`_` 在 CommonMark 里是刻意保持严格的。
-    remarkCjkFriendly,
-    // 给 `*（…）*` 这种整段被括号包住的强调打上 em-aside，供样式区分旁注
-    remarkParentheticalEmphasis,
-    remarkGemoji,
-    remarkMath,
-    codeImport,
-    remarkBlockContainers,
-  ];
+const remarkPlugins = [
+  // 放宽 CJK 相邻标点对 `*`、`**` 的限制；`_` 仍遵循 CommonMark。
+  remarkCjkFriendly,
+  // 标记 `*（…）*` 形式的旁注。
+  remarkParentheticalEmphasis,
+  remarkGemoji,
+  remarkMath,
+  codeImport,
+  remarkBlockContainers,
+];
 
-  if (slateConfig.lastModified) {
-    remarkPlugins.push(remarkModifiedTime);
-  }
+if (slateConfig.lastModified) remarkPlugins.push(remarkModifiedTime);
+if (slateConfig.readTime) remarkPlugins.push(remarkReadingTime);
 
-  if (slateConfig.readTime) {
-    remarkPlugins.push(remarkReadingTime);
-  }
-
-  const astroConfig = {
-    site: slateConfig.site,
-    trailingSlash: 'never',
-    // 本地调试不需要 Astro 工具栏；也避免旧的 Vite 预打包哈希让浏览器
-    // 请求到 504 的工具栏模块，继而中断其他 island 的水合。
-    devToolbar: {
-      enabled: false,
+export default defineConfig({
+  site: slateConfig.site,
+  trailingSlash: 'never',
+  // 关闭未使用且可能干扰 island 水合的开发工具栏。
+  devToolbar: {
+    enabled: false,
+  },
+  integrations: [
+    astroExpressiveCode(),
+    mdx(),
+    react(),
+    sitemap({
+      ...slateConfig.sitemap,
+      filter: (page) => !page.includes('/write'),
+    }),
+  ],
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
+  compressHTML: true,
+  markdown: {
+    processor: unified({
+      remarkPlugins,
+      rehypePlugins: [rehypeKatex, rehypeFigure],
+    }),
+  },
+  vite: {
+    plugins: [silenceAstroServerApp(), devWebWriter(), svgr(), tailwindcss()],
+    // 动态导入无法被开发服务器自动发现，因此显式预打包 emoji-mart。
+    // @emoji-mart/data 是 JSON 数据包，不参与预打包。
+    optimizeDeps: {
+      include: ['emoji-mart'],
     },
-    integrations: [
-      astroExpressiveCode(),
-      mdx(),
-      react(),
-      sitemap({
-        ...slateConfig.sitemap,
-        filter: (page) => !page.includes('/write'),
-      }),
-    ],
-    // 站内链接悬停即预取，换页几乎无等待
-    prefetch: {
-      prefetchAll: true,
-      defaultStrategy: 'hover',
-    },
-    compressHTML: true,
-    markdown: {
-      processor: unified({
-        remarkPlugins,
-        rehypePlugins: [rehypeKatex, rehypeFigure],
-      }),
-    },
-    vite: {
-      plugins: [silenceAstroServerApp(), devWebWriter(), svgr(), tailwindcss()],
-      // emoji-mart 只在撰写面板里动态 import，dev 的依赖预打包扫不到它，
-      // 首次点击表情就会 504。显式列出来让它随服务启动一起预打包。
-      // 不含 @emoji-mart/data：那是个 JSON 数据包，预打包不了（会告警），
-      // 它本来也不走这条路径。
-      optimizeDeps: {
-        include: ['emoji-mart'],
-      },
-    },
-  };
-
-  return astroConfig;
-}
-
-export default defineConfig(generateAstroConfigure());
+  },
+});

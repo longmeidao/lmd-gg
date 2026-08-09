@@ -1,11 +1,10 @@
 @reference '../../assets/style/common.css';
 
-/* transition 只列真正会变的属性：transition-all 会把布局属性也拖进过渡。
-   按压缩放用 0.96，低于 0.95 观感就夸张了。 */
+/* 仅过渡视觉属性，按压缩放保持克制。 */
 .sb-button {
   @apply bg-slate3 text-slate11 hover:bg-slate4 hover:text-slate12 min-w-16 cursor-pointer touch-manipulation rounded-full px-4 py-2 text-center text-base transition-[color,background-color,scale] duration-200 ease-out select-none active:scale-[0.96];
 
-  /* 渲染成 <a> 时没有 <button> 的 UA 居中，显式对齐，两种标签外观一致 */
+  /* 链接与按钮保持相同对齐。 */
   text-align: center;
 }
 

@@ -1,18 +1,13 @@
-/**
- * frontmatter 的拆解与标量解析。
- *
- * 三个运行环境共用：生产 Worker（content-contract）、浏览器撰写与条目管理
- * （writer/frontmatter、post-actions）、本地 dev 插件。必须是纯 TS。
- */
+/** Worker、浏览器和开发插件共用的纯 TypeScript frontmatter 工具。 */
 
-/** 拆开 frontmatter 与正文；识别不了返回 null */
+/** 拆分 frontmatter 与正文；格式无效时返回 null。 */
 export const splitFrontmatter = (content: string) => {
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(content);
   if (!match) return null;
   return { lines: match[1]!.split('\n'), body: match[2]! };
 };
 
-/** YAML 标量去引号：`"x"` / `'x'` 都剥掉外壳 */
+/** 移除 YAML 标量两侧的引号。 */
 export const unquote = (value: string) => {
   const trimmed = value.trim();
   if (

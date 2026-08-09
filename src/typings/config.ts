@@ -42,14 +42,11 @@ export interface SlateConfig {
     label: string;
     href: string;
   }>;
-  /**
-   * 合集名 → URL slug 的映射。只在想要拉丁 slug（`/city-walks`）时才需要写；
-   * 没有映射的合集会按名字自动生成，中文名会保留原样。
-   */
+  /** 合集名到 URL slug 的显式映射；未映射时自动生成。 */
   collectionSlugs?: Record<string, string>;
   readTime?: boolean;
   lastModified?: boolean;
-  /** 首页、精选辑和合集页每页显示的内容组数；串文按一个内容组计算 */
+  /** 每页内容组数；串文按一组计算。 */
   pagination?: {
     pageSize: number;
   };

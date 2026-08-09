@@ -22,19 +22,10 @@ import FilterBar from '@/components/feed/FilterBar.astro';
 import '@/assets/style/home.css';
 import '@/assets/style/archive.css';
 
-/**
- * 归档：按月分组的方格墙 + 顶部图标胶囊筛选（版式参考 jant 的 /archive）。
- * 列表视图直接复用首页的条目展示（jant 那边是 TimelineFeedItem，本站是 PostEntry）。
- * 站点是静态输出，jant 的 URL 参数式服务端筛选换成前端筛选。
- */
+/** 按月分组的静态归档，提供方格、列表和前端筛选。 */
 const postCollection = await getSitePosts();
 
-/**
- * 正文里的第一张图，用作方格封面。
- *
- * 图片只在 R2 上存原件，尺寸由 Cloudflare 现场转换，所以这里只是把正文那张
- * 的地址换个宽度重新生成——方格才 170px，别用正文的 1200px 那份。
- */
+/** 将正文首图转换为归档方格尺寸。 */
 const firstImage = (body: string | undefined) =>
   body?.match(/!\[[^\]]*\]\(\s*([^)\s]+)/)?.[1] ??
   body?.match(/<img[^>]+src=["']([^"']+)/)?.[1] ??
@@ -85,7 +76,7 @@ const entries = await Promise.all(
   }),
 );
 
-/** 按月分组，保持整体的时间倒序 */
+/** 按月分组并保持时间倒序。 */
 const filters = buildFilters(entries);
 
 const months: Array<{ key: string; label: string; items: typeof entries }> = [];
@@ -100,11 +91,7 @@ entries.forEach((entry) => {
     });
 });
 
-/**
- * 列表视图按串文分组，和首页用的是同一个 groupPostThreads——不这么做，
- * 同一串的几条会摊成互不相干的独立条目，左边那条锚点轨道根本画不出来。
- * 方格视图不分组：那是一格一条的墙，串起来没有意义。
- */
+/** 列表按串文分组；方格保持一格一条。 */
 const listGroups = groupPostThreads(entries);
 ---
 
@@ -179,7 +166,6 @@ const listGroups = groupPostThreads(entries);
         ? '/__lmd/write?view=drafts'
         : '/api/admin/posts?view=drafts'}
     >
-      {/* 方格视图 */}
       <div class="archive-grid" data-archive-grid>
         {
           months.map((month) => (
@@ -195,8 +181,7 @@ const listGroups = groupPostThreads(entries);
                 <a
                   class:list={[
                     'archive-tile',
-                    /* dev 会把草稿一起构建进来（showDraftsAtBuild），生产则由脚本
-                       注入并带上这个类。两边都标上，草稿的虚线框才一致。 */
+                    /* 开发构建和生产注入的草稿使用相同标记。 */
                     entry.visibility === 'private' && 'archive-draft-tile',
                   ]}
                   href={entry.url}
@@ -297,7 +282,7 @@ const listGroups = groupPostThreads(entries);
         }
       </div>
 
-      {/* 列表视图：和首页一样的条目展示 */}
+      {/* 列表视图复用首页条目。 */}
       <div class="archive-list home-feed" data-archive-list>
         {
           listGroups.map((group, groupIndex) => (
@@ -325,24 +310,17 @@ const listGroups = groupPostThreads(entries);
         }
       </div>
 
-      {
-        /*
-        草稿是登录后由脚本注入的，拿不到 Astro 组件，所以在这里放一份模板，
-        scripts/archive.ts 克隆它再改 slug 和几个状态属性——免得把
-        PostActions 那一大段 markup 在 JS 里重抄一遍。
-        <template> 的内容不进文档树，也不会被 revealAdmin 扫到。
-      */
-      }
+      {/* 登录后注入的草稿复用此操作模板。 */}
       <template data-post-actions-template>
         <PostActions slug="" />
       </template>
 
-      {/* 同理：注入的草稿如果串成一串，前面几条也要能折叠 */}
+      {/* 供注入的草稿串文克隆折叠结构。 */}
       <template data-thread-collapse-template>
         <ThreadCollapse position="before" count={0} />
       </template>
 
-      {/* 空状态是筛选筛出来的，得给条回去的路，不然只能逐个胶囊点回全部 */}
+      {/* 筛选空状态提供一键重置。 */}
       <div class="archive-empty" data-archive-empty hidden>
         <p>没有符合条件的内容。</p>
         <button

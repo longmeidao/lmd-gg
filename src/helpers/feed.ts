@@ -8,7 +8,7 @@ import type { PostEntry } from './content';
 import { byPubDateDesc } from './content';
 import { getPostDisplayTitle, getPostExcerpt, getPostPath } from './post';
 
-/** Astro Container 还是实验 API，把它限制在 RSS 适配层，页面查询不依赖它 */
+/** 将实验性的 Astro Container 限制在 RSS 适配层。 */
 export const buildRssItems = async (
   posts: PostEntry[],
 ): Promise<RSSFeedItem[]> => {

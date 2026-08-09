@@ -40,7 +40,7 @@ const posts = await Promise.all(
     const date = post.data.pubDate;
     return {
       ...post,
-      // 以下都是筛选用的：和归档页同一套判定，同一个脚本消费
+      // 使用与归档页一致的筛选字段。
       kind: post.data.kind,
       year: date ? date.getFullYear() : 0,
       hasTitle: Boolean(post.data.title?.trim()),
@@ -60,7 +60,7 @@ const posts = await Promise.all(
   }),
 );
 
-// 页面本身就限定了合集，再给一个合集筛选没有意义
+// 合集页不显示重复的合集筛选。
 const filters = buildFilters(posts, { includeCollection: false });
 const feedHref = `/rss/${getCollectionSlug(name)}.xml`;
 ---

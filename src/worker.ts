@@ -1,13 +1,6 @@
 /**
- * lmd.gg 的后台 Worker：站点仍是静态构建（`dist/`），这个 Worker 只接管 `/api/*`，
- * 其余请求交给静态资源（见 wrangler.jsonc 的 `assets.run_worker_first`）。
- *
- * 只做静态站做不到的三件事：保管密钥（GITHUB_TOKEN 不能进前端 JS）、
- * 校验身份（Cloudflare Access 签发的 JWT）、写仓库 / 传媒体
- * （写进 git 后由 CI 重新构建部署）。内容依旧是 git 里的 markdown。
- *
- * `Env` 由 `wrangler types` 从 wrangler.jsonc 生成（worker-configuration.d.ts），
- * 不手写——改了绑定记得重跑一次。
+ * lmd.gg 后台 Worker：仅处理 `/api/*`，其余请求交给静态资源。
+ * 负责 Access 鉴权、GitHub 内容写入和 R2 媒体上传。
  */
 
 import {
@@ -34,10 +27,7 @@ const json = (data: unknown, status = 200) =>
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });
 
-/*
- * Cloudflare Access 在边缘就会挡住未登录请求，但 Worker 仍然自己验一遍签名：
- * 光靠边缘拦截的话，绕过自定义域名（比如走 workers.dev）就没人管了。
- */
+// Worker 再次验证 Access 签名，防止通过其他域名绕过边缘规则。
 
 interface AccessClaims {
   aud?: string[] | string;
@@ -55,14 +45,11 @@ interface CertsResponse {
   keys?: JsonWebKey[];
 }
 
-/**
- * JWKS 缓存。放模块级是有意的：Access 的公钥对所有请求都一样，不是请求态，
- * 跨请求复用不会串数据。（要避免的是把某个请求的数据存进全局。）
- */
+/** Access 公钥与请求无关，可安全跨请求缓存。 */
 let cachedKeys: { at: number; keys: CryptoKey[] } | null = null;
 
 const accessKeys = async (env: Env): Promise<CryptoKey[]> => {
-  // 证书会轮换，缓存一小时足够，也避免每个请求都去取一次
+  // 缓存一小时，在支持证书轮换的同时减少 JWKS 请求。
   if (cachedKeys && Date.now() - cachedKeys.at < 3600_000)
     return cachedKeys.keys;
 
@@ -70,7 +57,7 @@ const accessKeys = async (env: Env): Promise<CryptoKey[]> => {
     `${env.ACCESS_TEAM_DOMAIN.replace(/\/$/, '')}/cdn-cgi/access/certs`,
   );
   if (!response.ok) {
-    // 没这条日志的话，配错了只会看到 authenticated:false，无从查起
+    // 保留响应正文，便于定位 Access 配置错误。
     console.error(
       JSON.stringify({
         event: 'access_certs_failed',
@@ -148,7 +135,7 @@ const verifyAccess = async (request: Request, env: Env): Promise<boolean> => {
   return audience.includes(env.ACCESS_AUD);
 };
 
-/* GitHub 内容读写 */
+/* GitHub 内容读写。 */
 
 const githubHeaders = (env: Env) => ({
   authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -219,7 +206,7 @@ const listDrafts = async (env: Env): Promise<DraftSummary[]> => {
     .sort((left, right) => right.pubDate.localeCompare(left.pubDate));
 };
 
-/** 已存在就返回它的 sha（更新时必须带上），不存在返回 null */
+/** 返回已有文件的 SHA；文件不存在时返回 null。 */
 const fileSha = async (env: Env, path: string): Promise<string | null> => {
   const response = await fetch(
     `${contentsUrl(env, path)}?ref=${encodeURIComponent(env.GITHUB_REF)}`,
@@ -262,10 +249,7 @@ interface GitTreeEntry {
   sha: string;
 }
 
-/**
- * 一次提交整批 Markdown：先创建不可见的 blob/tree/commit，最后才移动分支指针。
- * 任一步失败都不会让线上分支只出现半条串文。
- */
+/** 原子提交整批 Markdown，避免分支出现不完整串文。 */
 export const commitFilesAtomically = async (
   env: Env,
   items: WriteItem[],
@@ -372,7 +356,7 @@ export const commitFilesAtomically = async (
   }
 };
 
-/* 路由 */
+/* 路由。 */
 
 const handlePosts = async (
   request: Request,
@@ -447,12 +431,10 @@ const handleUpload = async (
     return json({ error: '只接受 POST 请求。' }, 405);
   }
   const fileName = makeUploadName(url.searchParams.get('name') ?? 'file');
-  // 只存原件。展示尺寸由 Cloudflare Image Transformations 现场生成，
-  // 所以这里不压缩也不生成变体（Worker 里也跑不了图像处理库）。
+  // R2 只保存原件，展示尺寸由 Image Transformations 生成。
   const key = `images/originals/${fileName}`;
 
-  // 先按 content-length 判断，再把 body 直接流给 R2。
-  // `await request.arrayBuffer()` 会把整个文件读进内存，大文件直接把 Worker 撑爆。
+  // 先检查 content-length，再将请求体直接流入 R2，避免整文件进入内存。
   const declared = Number(request.headers.get('content-length') ?? '0');
   if (!Number.isFinite(declared) || declared <= 0) {
     return json({ error: '没有收到文件内容。' }, 400);
@@ -476,10 +458,8 @@ const handleUpload = async (
     .toLowerCase();
 
   /**
-   * 不再把所有图片固定缩成 1200px WebP q92：截图文字会糊，已经量化过的
-   * PNG 还可能越转越大。PNG 先试原尺寸无损 WebP，再试原尺寸 PNG8；照片
-   * 才使用限宽的有损 WebP。每个候选都以真实响应的格式和 Content-Length
-   * 为准，只有确实更小才采用，否则返回原件。
+   * PNG 依次尝试无损 WebP 和 PNG8，照片使用限宽 WebP。
+   * 仅采用格式正确且实际体积更小的候选，否则返回原件。
    */
   const candidates: MediaCandidate[] =
     contentType === 'image/png'
@@ -529,11 +509,11 @@ const handleUpload = async (
       ) {
         selectedUrl = candidate.url;
         selectedBytes = transformedBytes;
-        // PNG 候选按质量排序：无损 WebP 可用时，不再为了少几个字节降级到 PNG8。
+        // PNG 候选按质量排序，命中后不再尝试更低质量格式。
         break;
       }
     } catch (error) {
-      // 压缩探测失败不能让上传失败；保留原件 URL 即可。
+      // 转换探测失败时保留原件 URL。
       console.warn(
         JSON.stringify({
           event: 'media_candidate_probe_failed',
@@ -559,7 +539,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // run_worker_first 把 /api/* 交给了 Worker，这里再补一重
+    // 仅接管 API 路径。
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     const authenticated = await verifyAccess(request, env).catch(() => false);

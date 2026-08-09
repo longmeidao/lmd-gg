@@ -5,10 +5,8 @@ import './index.css';
 type ButtonType = 'default' | 'link';
 
 interface BaseButtonProps {
-  /** 按钮类型，默认 default */
   type?: ButtonType;
   className?: string;
-  /** 宽度撑满父容器 */
   block?: boolean;
   children?: ReactNode;
   disabled?: boolean;
@@ -25,7 +23,6 @@ type MergedHTMLAttributes = Omit<
 
 interface ButtonProps extends BaseButtonProps, MergedHTMLAttributes {
   href?: string;
-  /** 同 a 标签的 target，仅在有 href 时生效 */
   target?: string;
 }
 

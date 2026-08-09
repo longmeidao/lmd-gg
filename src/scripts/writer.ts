@@ -21,11 +21,11 @@ import {
   generatedSlug as makeGeneratedSlug,
   markdownFor as serializeMarkdown,
 } from './writer/publish';
+import { renderWriterFields, renderWriterPreview } from './writer/render';
 
 const root = document.querySelector<HTMLElement>('[data-writer-root]');
 
 if (root) {
-  /** 撰写面板元素缺一不可，缺失就是页面没拼完整，直接报错 */
   const $ = <T extends HTMLElement>(selector: string) => {
     const element = root.querySelector<T>(selector);
     if (!element) throw new Error(`Writer UI missing: ${selector}`);
@@ -68,15 +68,14 @@ if (root) {
   const searchParams = new URLSearchParams(window.location.search);
   const editSlug = searchParams.get('edit');
   const replySlug = searchParams.get('reply');
-  // 回复目标所在的串文；新建串文时与回复内容同一次提交
+  // 回复目标没有串文时，与回复内容一并补写串文键。
   let replyThreadId = '';
   let replyNeedsBackfill = false;
   let replyTargetContent = '';
   let editThreadId = '';
-  /** 回复时渲染在编辑区上方的「上文」，作为串文的第一个节点 */
   let replyContextHtml = '';
   let replyContextExpanded = false;
-  // 上文和预览里的中西混排要和主站一致（首页对 .home-entry-date 也是这么做的）
+  // 上文与预览使用站内一致的中西文间距。
   const typography = new Heti(
     '.writer-reply-context-body, .writer-reply-context-meta, [data-writer-preview]',
   );
@@ -95,9 +94,7 @@ if (root) {
   };
   let autosaveTimer = 0;
 
-  // 图标取自 jant 的 compose 工具栏（18×18 视口，1.55 线宽），保持视觉一致
-  // 不标 Record<string, string>：那样 keyof 会退化成 string，
-  // icon('typo') 这种写错的名字就查不出来了
+  // 保留字面量键，使 icon() 能检查图标名称。
   const TOOL_ICONS = {
     media:
       '<rect x="2.75" y="3" width="12.5" height="11.25" rx="3" /><circle cx="6.15" cy="6.85" r="0.85" fill="currentColor" stroke="none" /><path d="M3.6 11.95 6.75 8.8c.42-.42 1.11-.42 1.53 0l1.4 1.4" /><path d="m8.95 10.2 1.38-1.38c.46-.46 1.21-.46 1.67 0l2.4 2.4" />',
@@ -131,7 +128,6 @@ if (root) {
     </div>
   `;
 
-  /** 可视化星级：5 颗可点的星 + n/5，做法同 jant 的 .compose-star-rating */
   const starRating = (item: WriterItem, index: number) => {
     if (!item.showRating) return '';
     const current = Number(item.rating) || 0;
@@ -192,88 +188,6 @@ if (root) {
     </div>
   `;
 
-  const noteFields = (item: WriterItem) => `
-    ${
-      item.showTitle
-        ? `<input
-            class="writer-title-input"
-            data-field-name="title"
-            aria-label="标题"
-            placeholder="标题"
-            value="${escapeAttribute(item.title)}"
-          />`
-        : ''
-    }
-    <textarea
-      class="writer-main-textarea"
-      data-field-name="body"
-      aria-label="正文"
-      placeholder="写点什么……"
-    >${escapeHtml(item.body)}</textarea>
-  `;
-
-  const linkFields = (item: WriterItem) => `
-    <label class="writer-url-row">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M10.6 13.4a4.5 4.5 0 0 0 6.4 0l2.1-2.1a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2m1.9 4.5a4.5 4.5 0 0 0-6.4 0l-2.1 2.1a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"></path>
-      </svg>
-      <input
-        data-field-name="externalUrl"
-        aria-label="链接地址"
-        inputmode="url"
-        placeholder="输入链接…"
-        value="${escapeAttribute(item.externalUrl)}"
-      />
-    </label>
-    <input
-      class="writer-title-input"
-      data-field-name="title"
-      aria-label="链接标题"
-      placeholder="链接标题"
-      value="${escapeAttribute(item.title)}"
-    />
-    <textarea
-      class="writer-commentary-textarea"
-      data-field-name="commentary"
-      aria-label="我的评论"
-      placeholder="你的想法"
-    >${escapeHtml(item.commentary)}</textarea>
-  `;
-
-  const quoteFields = (item: WriterItem) => `
-    <div class="writer-quote-input">
-      <span aria-hidden="true">“</span>
-      <textarea
-        data-field-name="body"
-        aria-label="引文"
-        placeholder="输入引文…"
-      >${escapeHtml(item.body)}</textarea>
-    </div>
-    <label class="writer-quote-meta">
-      <span aria-hidden="true">—</span>
-      <input
-        data-field-name="source"
-        aria-label="作者"
-        placeholder="作者"
-        value="${escapeAttribute(item.source)}"
-      />
-    </label>
-    <input
-      class="writer-source-link"
-      data-field-name="externalUrl"
-      aria-label="来源链接"
-      inputmode="url"
-      placeholder="来源链接"
-      value="${escapeAttribute(item.externalUrl)}"
-    />
-    <textarea
-      class="writer-commentary-textarea"
-      data-field-name="commentary"
-      aria-label="我的评论"
-      placeholder="你的想法"
-    >${escapeHtml(item.commentary)}</textarea>
-  `;
-
   const renderItem = (item: WriterItem, index: number) => `
     <section
       class="writer-item"
@@ -284,7 +198,7 @@ if (root) {
     >
       <div class="writer-thread-node" aria-hidden="true"></div>
       ${
-        // 串文或回复时顶栏让位给标题，形式切换下沉到每条内容自己头上
+        // 串文和回复在每条内容内显示形式切换。
         state.items.length > 1 || replyContextHtml
           ? `<div class="writer-item-head">
               ${formatSwitcher(item, index)}
@@ -302,7 +216,7 @@ if (root) {
           : ''
       }
       <div class="writer-item-fields">
-        ${item.kind === 'note' ? noteFields(item) : item.kind === 'link' ? linkFields(item) : quoteFields(item)}
+        ${renderWriterFields(item)}
       </div>
       ${toolbar(item, index)}
     </section>
@@ -389,7 +303,7 @@ if (root) {
   const renderItems = (focusIndex?: number) => {
     itemsHost.innerHTML =
       replyContextHtml + state.items.map(renderItem).join('');
-    // 回复时上文本身就是串文的第一节，所以也要走串文版式
+    // 回复上文作为串文首节显示。
     const threadMode = state.items.length > 1 || Boolean(replyContextHtml);
     headerFormats.hidden = threadMode;
     threadHeading.hidden = !threadMode;
@@ -420,52 +334,7 @@ if (root) {
   function updatePreview() {
     const item = state.items[state.activeIndex] ?? state.items[0];
     if (!item) return;
-    const date = state.pubDate
-      ? new Date(`${state.pubDate}T00:00:00`).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })
-      : '发布时';
-    const rating = item.rating
-      ? `<span class="writer-preview-rating">${'★'.repeat(Number(item.rating))}${'☆'.repeat(5 - Number(item.rating))}</span>`
-      : '';
-
-    if (item.kind === 'link') {
-      preview!.innerHTML = `
-        <div class="writer-preview-link">
-          <div class="writer-preview-link-url">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14 5h5v5M19 5l-9 9"></path>
-              <path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5"></path>
-            </svg>
-            <a href="${escapeAttribute(item.externalUrl || '#')}">${escapeHtml(formatDisplayDomain(item.externalUrl || 'https://example.com'))}</a>
-          </div>
-          <h2>${escapeHtml(item.title || '链接标题')}</h2>
-        </div>
-        ${markdownBlocks(item.commentary)}
-        <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
-      `;
-      return;
-    }
-    if (item.kind === 'quote') {
-      preview!.innerHTML = `
-        <blockquote class="writer-preview-quote">
-          <span aria-hidden="true">“</span>
-          ${markdownBlocks(item.body || '引文会显示在这里。')}
-          ${item.source ? `<cite>— ${escapeHtml(item.source)}</cite>` : ''}
-          ${item.externalUrl ? `<a href="${escapeAttribute(item.externalUrl)}" aria-label="打开来源链接">↗</a>` : ''}
-        </blockquote>
-        ${markdownBlocks(item.commentary)}
-        <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
-      `;
-      return;
-    }
-    preview!.innerHTML = `
-      ${item.showTitle && item.title ? `<h1>${escapeHtml(item.title)}</h1>` : ''}
-      ${markdownBlocks(item.body || '内容会实时显示在这里。')}
-      <footer><span class="writer-preview-date">${date}</span>${rating}</footer>
-    `;
+    preview.innerHTML = renderWriterPreview(item, state.pubDate);
     typography.autoSpacing();
   }
 
@@ -506,13 +375,12 @@ if (root) {
     }
   };
 
-  /** 身份由 Cloudflare Access 管（浏览器自动带 Cookie），dev 端点直接放行 */
+  /** 验证生产环境的 Access 会话；开发环境直接放行。 */
   const verifySession = async () => {
     if (localWriter) return true;
 
     try {
-      // redirect: 'manual' 的理由同 HeaderActions.astro：未登录时若 Access
-      // 抢先 302 到跨源登录页，跟过去就是一条 CORS 报错。302 一律当未登录。
+      // 不跟随跨源登录重定向，避免未登录时产生 CORS 错误。
       const response = await fetch(sessionEndpoint, {
         credentials: 'same-origin',
         redirect: 'manual',
@@ -541,11 +409,11 @@ if (root) {
     renderItems();
     if (editSlug) await loadPostForEditing(editSlug);
     else if (replySlug) await loadReplyTarget(replySlug);
-    // 打开撰写面板就能直接开始敲（编辑/回复那两条路径会重渲，所以放在它们之后）
+    // 编辑和回复加载完成后再聚焦输入框。
     focusFirstField(state.activeIndex);
   };
 
-  // 有任意字段填过内容就算「有草稿」，退出时需要确认
+  // 任一内容字段非空时，关闭前需要确认。
   const hasContent = () => {
     syncAllItems();
     return state.items.some((item) =>
@@ -583,13 +451,12 @@ if (root) {
     closeWriter();
   };
 
-  /** 生产环境 Access 会在页面加载前就拦掉未登录的人，走到这里多半是接口没部署或 Access 配错了 */
   const showUnavailable = () => {
     writerWindow.hidden = true;
     setStatus('撰写接口不可用：请确认已登录，且 /api/admin 已部署。', true);
   };
 
-  /** 上文只用编辑器那套精简 markdown 渲染；站点 remark 插件（`::: info`）没有对应实现，丢外壳只留内容 */
+  /** 使用精简 Markdown 渲染上文，并移除不支持的容器指令。 */
   const replyContextMarkup = (
     parsed: ReturnType<typeof parseExistingPost>,
     pubDate: string,
@@ -621,7 +488,6 @@ if (root) {
     `;
   };
 
-  /** 打开回复：读取上文及串文 id */
   async function loadReplyTarget(slug: string) {
     setStatus('正在读取要回复的内容…');
     try {
@@ -703,11 +569,6 @@ if (root) {
     updatePreview();
   };
 
-  /**
-   * 光标落到某条内容的第一个可输入字段。DOM 顺序就是各形式该先填的那一项，
-   * 取第一个 textarea/input 即可。和 renderItems(focusIndex) 那条「新加一节
-   * 串文」的路径不同：切换形式时内容还在原地，不需要平滑滚动和 220ms 延迟。
-   */
   const focusFirstField = (index: number) => {
     itemsHost
       .querySelector<HTMLElement>(`[data-writer-item][data-index="${index}"]`)
@@ -722,13 +583,12 @@ if (root) {
     item.kind = kind;
     state.activeIndex = index;
     renderItems();
-    // 换了形式就把光标送到该形式的第一个字段，不用再伸手点一下
+    // 切换形式后聚焦第一个字段。
     focusFirstField(index);
     scheduleDraftSave();
   };
 
-  /** emoji-mart 动态导入，不进主包；每次关闭后重建 Picker（参考 jant 的做法，
-     disconnect/reconnect 后行观察器恢复不可靠，会导致分类变空） */
+  /** 动态加载 emoji-mart；每次关闭后重建 Picker，避免重连后分类丢失。 */
   let emojiContainer: HTMLElement | null = null;
   let emojiTargetIndex = 0;
 
@@ -764,13 +624,12 @@ if (root) {
       data = dataModule.default;
       Picker = pickerModule.Picker as typeof Picker;
     } catch {
-      // 加载失败必须把容器撤掉：留着它会让下一次点击走到「关闭」分支，
-      // 按钮看起来就彻底没反应了。
+      // 失败时移除容器，确保下次仍可重试。
       if (emojiContainer === container) closeEmojiPicker();
       setStatus('表情面板加载失败，请刷新页面重试。', true);
       return;
     }
-    // 异步 import 期间可能已经被关掉了
+    // 加载期间面板可能已关闭。
     if (emojiContainer !== container) return;
 
     const picker = new Picker({
@@ -795,7 +654,7 @@ if (root) {
     });
     container.appendChild(picker as unknown as HTMLElement);
 
-    // 相对撰写窗口定位：优先放按钮上方，放不下就翻到下面
+    // 优先显示在按钮上方，空间不足时移到下方。
     const btnRect = button.getBoundingClientRect();
     const winRect = writerWindow.getBoundingClientRect();
     const pickerWidth = 352;
@@ -809,7 +668,6 @@ if (root) {
     container.style.top = `${top}px`;
   };
 
-  /** 附文面板：铺满撰写窗口的覆盖层（参考 jant 的 .compose-attached-panel），整屏才放得下长文 */
   let attachedIndex = 0;
 
   const openAttachedPanel = (index: number) => {
@@ -836,13 +694,9 @@ if (root) {
     attachedPanel.hidden = true;
   };
 
-  /**
-   * 插图=上传：开系统文件选择器 → POST 到写接口 → 插入返回的地址。
-   * dev 走 /__lmd/upload（写进 public/media/uploads），生产留给 /api/admin/upload。
-   */
   const uploadEndpoint = localWriter ? '/__lmd/upload' : '/api/admin/upload';
 
-  /** 按 MIME 归类决定插入正文的写法——归档页的媒介筛选就靠这些标记认出来 */
+  /** 按 MIME 类型生成可被归档筛选识别的 Markdown。 */
   const mediaMarkdown = (file: File, url: string) => {
     const type = file.type || '';
     if (type.startsWith('image/')) return `\n![](${url})\n`;
@@ -1093,7 +947,7 @@ if (root) {
         const item = state.items[index];
         if (item) {
           item.showRating = !item.showRating;
-          // 关掉评分就把分数一起清掉，免得留下看不见的评分
+          // 关闭评分时同步清空分值。
           if (!item.showRating) item.rating = '';
         }
         renderItems();
@@ -1118,7 +972,7 @@ if (root) {
       const value = starButton.dataset.setRating ?? '';
       const item = state.items[index];
       if (item) {
-        // 再点当前分数就取消，和大多数星级控件的手感一致
+        // 再次点击当前分值时取消评分。
         item.rating = item.rating === value ? '' : value;
       }
       renderItems();
@@ -1333,7 +1187,7 @@ if (root) {
     if (event.target === confirmPanel) toggleConfirm(false);
   });
 
-  // Esc：先收起已展开的浮层，都关掉之后再询问是否保存草稿并关闭
+  // Esc 依次关闭浮层，最后触发草稿关闭确认。
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || writerWindow.hidden) return;
     event.preventDefault();

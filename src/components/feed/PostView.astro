@@ -41,8 +41,7 @@ interface Props {
 const { post, relatedPosts } = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
 const hasTitle = Boolean(post.data.title?.trim());
-// 页面标题、og、JSON-LD 仍然需要一个名字，所以这里保留兜底；
-// 但正文里只有 hasTitle 为真时才渲染 h1。
+// 页面元数据始终需要标题，正文仅在原文有标题时显示 h1。
 const postTitle = getPostDisplayTitle(post.data);
 const postDescription = getPostExcerpt(post.body);
 const lastModifiedDate = dayjs(
@@ -53,24 +52,15 @@ const lastModifiedDate = dayjs(
 const lastModified = lastModifiedDate.format('YYYY年M月D日');
 const pubDate = dayjs(post.data.pubDate);
 const formattedPubDate = pubDate.format('YYYY年M月D日');
-/** 只有一张图的随记算出来是 0 分钟，那行字没有意义 */
 const showReadTime =
   Boolean(slateConfig.readTime) && remarkPluginFrontmatter.minutesRead > 0;
 
-/**
- * 「编辑于」只在确实改过正文、且晚于发布日期时才显示。
- * 严格晚于是兜底：remark-modified-time 读的是 git 提交时间戳，按构建机器时区
- * 格式化，CI 的 runner 是 UTC，跨时区会把同一时刻渲染成前一天。根治办法是
- * 工作流里钉死 TZ（见 .github/workflows/deploy.yml）。
- */
+/** 仅在正文修改日期晚于发布日期时显示编辑日期。 */
 const showLastModified =
   Boolean(slateConfig.lastModified) &&
   lastModifiedDate.startOf('day').isAfter(pubDate.startOf('day'));
 
-/**
- * 串文里的任意一条被点开时，整串都要展示出来，左侧锚点高亮当前这条。
- * 点开的正好是最新一条时，把之前的压暗，突出最新的（参考 owenyoung.com 的串文页）。
- */
+/** 展示完整串文并高亮当前条目；打开末条时弱化较早内容。 */
 const threadId = post.data.thread;
 const threadEntries = threadId
   ? await renderFeedPosts(
@@ -85,15 +75,10 @@ const isThread = threadEntries.length > 1;
 const currentIndex = threadEntries.findIndex((entry) => entry.id === post.id);
 const isLatestInThread = isThread && currentIndex === threadEntries.length - 1;
 
-/*
- * 当前这条之外的内容折叠起来，上下各一段。
- * owen 只折前面的、后面永远全展开——看串文中间那条时，下方会拖着一长串
- * 收不起来。这里把「之后」也折上，当前那条正好被夹在两个按钮中间。
- */
+// 当前条目前后的内容分别折叠。
 const threadBefore = isThread ? threadEntries.slice(0, currentIndex) : [];
 const threadAfter = isThread ? threadEntries.slice(currentIndex + 1) : [];
 
-/** 只折 1 条不值得——按钮占的地方跟内容差不多，还多一次点击。2 条起才折 */
 const collapseBefore = threadBefore.length >= THREAD_COLLAPSE_FROM;
 const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
 ---
@@ -108,15 +93,10 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
   />
   <BackHeader slot="header" />
 
-  {
-    /* 正文要有 <main> 地标：读屏用户靠它一步跳到内容，否则只能从页头一路 Tab 下来。
-      串文视图和正文都算内容，一起包进来。 */
-  }
+  {/* 串文和正文共用 main 地标。 */}
   <main id="main-content" tabindex="-1">
     {
-      /* 串文视图必须放在 .blog-content 外面：blog.css 的正文样式（a / blockquote）
-         会套到 feed 的结构性元素上——引文卡片被再包一层引用边框，日期和合集链接
-         也变成蓝色带下划线。挪出来就一次性干净了。 */
+      /* 串文位于 .blog-content 外，避免正文样式影响 feed 结构。 */
       isThread && (
         <section
           class="thread-view home-column"
@@ -152,8 +132,7 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
                     />
                   ))}
 
-                {/* 串文页原来整页都没有操作菜单：下面那条信息栏被 !isThread
-                    挡掉了，串文里的条目也没传过 PostActions。给当前这条补上。 */}
+                {/* 当前串文条目保留管理操作。 */}
                 <PostEntry
                   item={threadEntries[currentIndex]!}
                   isFirst={currentIndex === 0}
@@ -197,8 +176,7 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
 
     <div class="blog-content">
       {
-        /* 无标题的内容不造标题、也不在上面挂日期——那一行对一条随记来说太重了。
-         日期和操作统一放到正文下面的信息栏（同 owen 的 /18oun）。 */
+        /* 无标题内容将日期和操作放在正文下方。 */
         hasTitle && (
           <div class:list={['post-header', 'mb-16', isThread && 'sr-only']}>
             <h1>{postTitle}</h1>
@@ -237,8 +215,7 @@ const collapseAfter = threadAfter.length >= THREAD_COLLAPSE_FROM;
       </div>
 
       {
-        /* 正文下面的信息栏。无标题的内容在这里第一次出现日期；有标题的上面已经
-         有发布日期了，这里只补「编辑于」。两者都把操作按钮放在这一行。 */
+        /* 信息栏显示尚未出现的日期信息和管理操作。 */
         !isThread && (
           <div class="post-meta-bar">
             <div class="post-meta-bar-facts">

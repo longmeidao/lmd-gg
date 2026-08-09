@@ -75,7 +75,7 @@ for (const link of itemLinks) {
     );
   }
 
-  // 条目地址无前缀，直接就是 /<slug>
+  // 条目地址直接使用根路径 slug。
   const id = decodeURIComponent(url.pathname)
     .replace(/^\//, '')
     .replace(/\/$/, '');

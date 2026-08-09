@@ -32,10 +32,7 @@ import './search.css';
       />
       <kbd>ESC</kbd>
     </div>
-    {
-      /* 文案要和 script 里清空后写回的那句保持一致；索引只覆盖正文
-        （data-pagefind-body），所以别承诺能搜标签。 */
-    }
+    {/* 索引只覆盖 data-pagefind-body，不包含标签。 */}
     <p class="site-search-status" aria-live="polite" data-search-status>
       输入标题或正文关键词
     </p>
@@ -44,20 +41,10 @@ import './search.css';
 </dialog>
 
 <script is:inline type="module">
-  /*
-   * ClientRouter 换页后 DOM 是全新的，所以不能在模块顶层把元素引用抓死——
-   * 那样按钮的监听会留在已被移除的旧节点上，快捷键也会去开一个脱离文档的
-   * 旧 dialog，表现就是「点了没反应」。
-   *
-   * 做法：所有处理函数在调用时现查 DOM；每页元素级监听绑一次（用 data 标记
-   * 防重复）；document 级的快捷键因为 document 不会被换掉，只绑一次。
-   */
+  // 每次操作重新查询软导航后的 DOM；document 级快捷键只注册一次。
   const q = (selector) => document.querySelector(selector);
 
-  /**
-   * 把查询切成词。pagefind 会把匹配不上的词悄悄丢掉再返回结果——
-   * 「香蕉截图」和「截图」拿到的结果和分数完全一样，所以得自己校验。
-   */
+  /** 校验 Pagefind 忽略的未命中词。 */
   const termsOf = (query) => {
     if (typeof Intl !== 'undefined' && Intl.Segmenter) {
       const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
@@ -68,14 +55,13 @@ import './search.css';
     return query.toLowerCase().split(/\s+/).filter(Boolean);
   };
 
-  /** 每个词都得在正文或标题里出现，才算命中（pagefind 默认是「或」） */
   const matchesAll = (item, terms) => {
     const haystack =
       `${item.raw_content ?? ''} ${item.meta?.title ?? ''}`.toLowerCase();
     return terms.every((term) => haystack.includes(term));
   };
 
-  /** pagefind 的 excerpt 自带 <mark>，只放行 mark 和文本，其余一律当文本 */
+  /** 摘要仅保留 Pagefind 生成的 mark 和文本。 */
   const appendHighlighted = (target, html) => {
     const parsed = new DOMParser().parseFromString(html, 'text/html');
     parsed.body.childNodes.forEach((node) => {
@@ -85,7 +71,7 @@ import './search.css';
         target.append(text);
         return;
       }
-      // pagefind 会把「凉宫」标成两个相邻的 mark，各自带内边距就中间裂开了
+      // 合并相邻 mark，避免高亮之间出现空隙。
       const previous = target.lastChild;
       if (previous && previous.nodeName === 'MARK') {
         previous.textContent += text;
@@ -97,7 +83,6 @@ import './search.css';
     });
   };
 
-  /** 标题里 pagefind 不给 mark，自己标 */
   const appendMarkedTitle = (target, title, terms) => {
     const lower = title.toLowerCase();
     const hits = [];
@@ -115,7 +100,7 @@ import './search.css';
       return;
     }
     hits.sort((a, b) => a[0] - b[0]);
-    // 合并重叠区间，免得同一段字被标两次
+    // 合并重叠区间。
     const merged = [];
     hits.forEach(([start, end]) => {
       const last = merged.at(-1);
@@ -227,7 +212,6 @@ import './search.css';
     }
   };
 
-  /** 每页绑一次元素级监听 */
   const setup = () => {
     const dialog = q('[data-search-dialog]');
     const openButton = q('[data-search-open]');
@@ -246,7 +230,7 @@ import './search.css';
     });
   };
 
-  // document 不会被 ClientRouter 换掉，快捷键只绑一次
+  // document 不受软导航影响，快捷键只注册一次。
   if (!window.__lmdSearchShortcut) {
     window.__lmdSearchShortcut = true;
     document.addEventListener('keydown', (event) => {

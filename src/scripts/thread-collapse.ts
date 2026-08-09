@@ -1,16 +1,11 @@
-/**
- * 串文折叠段的展开/收起。
- *
- * 监听挂在 document 上，只绑一次：ClientRouter 换页后 DOM 是全新的，
- * 引用如果抓死了旧节点，软跳转过去的页面点了就没反应（同 search / post-actions）。
- */
+/** 通过 document 事件委托处理软导航后的串文折叠。 */
 
 const EXPANDED_LABEL = '收起';
-/** 折叠时朝下、展开后朝上 */
+/** 折叠时向下，展开时向上。 */
 const CHEVRON_DOWN = 'M4 6l4 4 4-4';
 const CHEVRON_UP = 'M4 10l4-4 4 4';
 
-/** 设定某一段的折叠状态。归档筛选也要用，所以单独导出 */
+/** 设置折叠状态，供归档筛选复用。 */
 export const setThreadCollapsed = (
   wrapper: HTMLElement,
   collapsed: boolean,
@@ -22,7 +17,7 @@ export const setThreadCollapsed = (
   else shell.removeAttribute('data-collapsed');
 
   button.setAttribute('aria-expanded', String(!collapsed));
-  // 只换文字节点：按钮里还有那枚三角，整个 textContent 会把它抹掉
+  // 仅更新标签，保留按钮内的图标。
   const label = button.querySelector<HTMLElement>('[data-thread-toggle-label]');
   if (label) {
     label.textContent = collapsed
@@ -38,7 +33,7 @@ const toggleShell = (button: HTMLElement) => {
   const wrapper = button.closest<HTMLElement>('[data-thread-collapse]');
   const shell = wrapper?.querySelector<HTMLElement>('[data-thread-shell]');
   if (!wrapper || !shell) return;
-  // 手动操作过之后，归档筛选就别再替他收起来了
+  // 手动操作后停止自动调整。
   delete wrapper.dataset.autoExpanded;
   setThreadCollapsed(wrapper, !shell.hasAttribute('data-collapsed'));
 };

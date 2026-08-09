@@ -27,7 +27,7 @@ pnpm dev
 pnpm verify
 ```
 
-该命令依次检查格式、运行 Worker/纯逻辑单测、Chrome 冒烟测试、TypeScript、ESLint、Astro 检查和完整静态构建。
+该命令依次检查格式、运行 Worker/纯逻辑单测、TypeScript、ESLint、Astro 检查和完整静态构建。
 
 ## 内容与 URL
 

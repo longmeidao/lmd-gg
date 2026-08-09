@@ -18,7 +18,7 @@
   letter-spacing: -0.025em;
 }
 
-/* 导航不用「·」分隔，靠间距区分（同 owen）；一个字宽左右的 gap 对中文标签够用 */
+/* 导航仅用间距分组，避免额外分隔符。 */
 .home-nav {
   display: flex;
   flex-wrap: wrap;
@@ -46,10 +46,7 @@
 .home-feed-group[data-thread-group] {
   --thread-rail-left: -1.7rem;
 
-  /* 内容相对轨道往右让出的量。竖线的 ::before 挂在 group 上、圆点的挂在
-     item 上，而 item 在这层 padding 之内——所以圆点的 left 必须把它减掉，
-     否则一加缩进圆点就整体脱离竖线（jant 的 .thread-item::before 里同样有
-     `- var(--site-thread-rail-indent)` 这一项）。 */
+  /* 内容缩进量也用于校准轨道圆点。 */
   --thread-rail-indent: 0rem;
   --thread-rail-width: 1px;
   --thread-dot-size: 0.625rem;
@@ -121,8 +118,7 @@
   margin: 3rem auto;
 }
 
-/* 标题的下划线保持标题色。用 text-decoration 而不是背景渐变：渐变按盒宽铺，
-   块级标题会一直画到容器右边缘（就是之前"超框"的那个问题）。 */
+/* 标题下划线随文字长度绘制，并沿用标题颜色。 */
 .home-article-title a {
   color: inherit;
   text-decoration: none;
@@ -134,17 +130,13 @@
   text-underline-offset: 0.2em;
 }
 
-/* 下划线用背景渐变画，而不是 text-decoration 或 border：
-   - text-decoration 逐个 inline 盒绘制，heti 把日期切成 <heti-spacing> 之后会断；
-   - border/padding 会改变盒子高度，把 footer 那一行顶高、下划线也压得太低；
-   background 既连续又完全不参与布局。 */
+/* 背景渐变保证 Heti 间距中的下划线连续，且不改变布局。 */
 .home-entry-date {
   display: inline-block;
   background-image: linear-gradient(currentcolor, currentcolor);
   background-repeat: no-repeat;
 
-  /* 从行盒中线往下推。日期是块级盒（flex item），行高 1.4rem 比文字本身高，
-     所以有余量把线放到字底下约 3px；写死 em 会在不同 line-height 下压到字上。 */
+  /* 按行盒定位，保持下划线与文字的间距。 */
   background-position: 0 calc(50% + 0.62em + 3px);
   background-size: 0 1px;
   color: var(--color-slate8);
@@ -183,8 +175,7 @@
   line-height: 1.15;
 }
 
-/* 置顶标记（照 owenyoung.com 的 .post-status-badge：13px / 500 字重 /
-   11px 图钉 / 4px 间距，没有底色和边框，只是压得比正文弱一档）。 */
+/* 置顶标记弱于正文，不使用底色和边框。 */
 .home-entry-status {
   margin: 0 0 0.5rem;
 }
@@ -240,8 +231,7 @@
   text-decoration: none;
 }
 
-/* feed 正文用最高一档。这样一条动态里三层灰是分开的：
-   正文 slate12 → 评注 slate11 → 日期/合集 slate8。 */
+/* 正文、评注和元信息使用三级明度。 */
 .home-entry-content {
   color: var(--color-slate12);
   font-family: var(--font-sans);
@@ -253,8 +243,7 @@
   margin-top: 0;
 }
 
-/* 但首条是 ::: 容器时得留着：它是个有底色的框，清掉上外边距就直接贴上标题了。
-   标题的下间距、容器本身的上间距都不动，只补这一种情况。 */
+/* 首个提示容器保留与标题之间的间距。 */
 .home-entry-content > .block-default:first-child {
   margin-top: 1.5rem;
 }
@@ -341,7 +330,7 @@
   margin-bottom: 0;
 }
 
-/* 形状交给 common.css 的单枚叶形标记，这里只管间距 */
+/* 叶形由 common.css 定义，此处仅控制间距。 */
 .home-article-content hr {
   margin: 3rem auto;
 }
@@ -473,10 +462,7 @@
   text-underline-offset: 0.2em;
 }
 
-/* 域名和标题是同一个东西的两行，要贴紧；隔开的应该是它们和下面的正文。
-   数值取自 jant：.feed-link-domain 的 margin-bottom 是 0.65rem、
-   .feed-link-title 的是 1.4rem——组内 0.65 对组间 1.4，正好两倍多。
-   原来这里是 1.5rem，比组间距还大，域名就飘成了独立一行。 */
+/* 域名与标题紧密成组，并与正文拉开距离。 */
 .home-link-title {
   display: block;
   grid-column: 1 / -1;
@@ -505,9 +491,7 @@
   margin-top: 1.05rem;
   padding-top: 0.95rem;
 
-  /* 评注是自己写的话，属于内容，用正文那一档。
-     原来的 slate10 和日期的 slate8 相互对比度只有 1.48:1，两行灰糊在一起；
-     slate11 对日期是 2.99:1。和上面被引内容的区分交给那条分隔线，不靠颜色。 */
+  /* 评注接近正文明度，与引用内容通过分隔线区分。 */
   color: var(--color-slate11);
   font-family: var(--font-sans);
   font-size: 1.05rem;
@@ -558,7 +542,7 @@
   align-items: center;
   gap: 0.5rem;
 
-  /* 和左侧的日期/评分拉开距离，不要挤成一团 */
+  /* 与日期和评分保持间距。 */
   margin-inline-start: 0.55rem;
 }
 
@@ -569,7 +553,7 @@
   letter-spacing: 0.08em;
 }
 
-/* 合集不画下划线，只换颜色（照 jant） */
+/* 合集链接仅用颜色反馈悬停。 */
 .home-entry-collections a {
   display: inline-block;
   color: var(--color-slate8);
@@ -585,14 +569,7 @@
 }
 
 @media (max-width: 640px) {
-  /*
-   * 窄屏下轨道往里收、同时给内容一点缩进——这两件事必须一起做，光把轨道
-   * 拉近，圆点还是会顶到文字；只加缩进，轨道又会滑出屏幕左边。jant 的
-   * .thread-group-preview/-detail 在 ≤760px 也正是这么处理的
-   * （line-left −27px → −11px，同时 indent 0 → 8px）。
-   *
-   * 串文详情页的覆盖写在 .thread-view 那条规则后面，见文件下方。
-   */
+  /* 窄屏同步收进轨道并缩进内容，避免圆点贴字或越界。 */
   .home-feed-group[data-thread-group] {
     --thread-rail-left: -0.5rem;
     --thread-rail-indent: 0.75rem;
@@ -602,7 +579,7 @@
     padding-left: 0;
   }
 
-  /* 日期和合集一起缩，不然窄屏下两者字号又对不上了 */
+  /* 日期与合集保持相同字号。 */
   .home-entry-date,
   .home-entry-collections a {
     font-size: 0.8rem;
@@ -626,16 +603,14 @@
 }
 
 /* --- feed 正文的行内元素 -------------------------------------------------- */
-/* 首页/合集页的正文和文章页走的是同一批 markdown，样式得对得上：
-   链接、行内代码、列表、表格、引用、小标题这些原来只在 blog.css 里有。 */
+/* feed 与文章页共用 Markdown 元素样式。 */
 
 .home-entry-content a {
   color: var(--color-indigo11);
   background-image: linear-gradient(var(--color-indigo6), var(--color-indigo6));
   background-repeat: no-repeat;
 
-  /* 行内元素的背景定位区只有内容区那么高，直接定位到底部会紧贴字。
-     行内元素的垂直 padding 不参与行盒高度计算，所以拿它撑出下划线的空隙最安全。 */
+  /* 用行内 padding 留出下划线间距，不抬高行盒。 */
   background-position: 0 100%;
   background-size: 0 1px;
   padding-bottom: 0.2em;
@@ -650,8 +625,7 @@
   background-size: 100% 1px;
 }
 
-/* 渐变下划线是按盒宽铺的，块级链接会一直画到容器右边缘（看起来「超框」）。
-   feed 里的结构性链接本来就有自己的样式，这里统一排除掉。 */
+/* 结构性链接使用各自样式，不继承正文渐变下划线。 */
 .home-entry-content
   a:where(.home-link-url, .home-link-title, .home-entry-title),
 .home-entry-date-link,
@@ -661,8 +635,7 @@
   background-image: none;
 }
 
-/* 换行时每段各画一个完整的框。默认的 slice 会把边框和圆角从中间切开：
-   前半截只有左边圆角、后半截只有右边，看着像被拦腰截断。 */
+/* 换行时每段代码都保留完整边框和圆角。 */
 .home-entry-content code {
   border: 1px solid var(--color-slate4);
   border-radius: 0.5rem;
@@ -673,11 +646,10 @@
   -webkit-box-decoration-break: clone;
   color: var(--color-slate11);
 
-  /* 和文章页的行内代码对齐（blog.css 那边是 text-base）。原来的 0.75em 在
-     17px 正文下只有 12.8px，同一份 markdown 两个页面差了 3px 多。 */
+  /* 与文章页的行内代码字号一致。 */
   font-size: 0.9em;
 
-  /* 快捷键这类短代码不该被拆到两行；万一真有超长的，clone 兜底 */
+  /* 短代码保持单行，超长内容由分段框样式兜底。 */
   white-space: nowrap;
 }
 
@@ -789,16 +761,12 @@
   margin-bottom: 3rem;
 }
 
-/* 串文页的内容列比首页窄，锚点轨道相应往里收 */
+/* 串文页随较窄内容列收进锚点轨道。 */
 .thread-view .home-feed-group[data-thread-group] {
   --thread-rail-left: -1.15rem;
 }
 
-/*
- * 窄屏下回到首页那一组值。必须写在上面那条之后：两者特异性都是 0,3,0，
- * 打平时按源码顺序取后者——之前把它塞在 640px 断点里（那条只有 0,2,0，
- * 而且位置更靠前），详情页在手机上压根吃不到，圆点左缘跑到 −1px 被切掉半个。
- */
+/* 同权重规则依赖源码顺序，窄屏覆盖必须放在详情页规则之后。 */
 @media (max-width: 640px) {
   .thread-view .home-feed-group[data-thread-group] {
     --thread-rail-left: -0.5rem;
@@ -811,7 +779,7 @@
     filter 220ms ease;
 }
 
-/* 点开的正好是最新一条时，把之前的压暗；鼠标移上去（或键盘聚焦进去）再还原 */
+/* 当前项为最新内容时弱化旧内容，交互时恢复。 */
 .thread-view[data-emphasise-latest='true'] .home-feed-item.is-thread-dimmed {
   opacity: 0.42;
 }
@@ -823,7 +791,7 @@
   opacity: 1;
 }
 
-/* 当前这条的锚点用主色（沿用首页 is-thread-latest 那颗大点的尺寸） */
+/* 当前条目使用主色大锚点。 */
 .thread-view .home-feed-item.is-thread-current::before {
   background: var(--color-indigo9);
 }
@@ -873,17 +841,13 @@
 }
 
 /* --- 串文折叠段 ---------------------------------------------------------- */
-/*
- * 规格照 owenyoung.com 的 .thread-context-shell：折叠时压到 160px，
- * 下缘用 mask 化开，配一个朴素的文字按钮。
- * 差别见 components/feed/ThreadCollapse.astro 的注释（当前条上下都能放）。
- */
+/* 折叠内容限制为 160px，并在下缘渐隐。 */
 
 .thread-collapse-shell[data-collapsed] {
   max-height: 160px;
   overflow: hidden;
 
-  /* 60% 之后开始化开，和 owen 一致 */
+  /* 从 60% 处开始渐隐。 */
   mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
   -webkit-mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
 }
@@ -907,12 +871,11 @@
   color: var(--color-slate12);
 }
 
-/* 按钮永远紧挨着当前那条内容。slot 只能渲染一次，所以顺序用 column-reverse
-   在这里调换，而不是在组件里把 markup 写两遍。 */
+/* 用反向列调整按钮顺序，避免重复渲染插槽。 */
 .thread-collapse {
   display: flex;
 
-  /* flex-start：不然按钮被拉成整行宽、文字跑到居中，和左对齐的 feed 不搭 */
+  /* 按钮保持内容宽度并左对齐。 */
   align-items: flex-start;
   flex-direction: column;
 }

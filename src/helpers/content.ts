@@ -30,7 +30,7 @@ export const renderFeedPosts = async (posts: PostEntry[]) =>
     })),
   );
 
-/** 只供本地检查相关文章样式；不写入内容数据，也不会进入生产构建 */
+/** 仅用于本地预览相关文章样式，不进入生产构建。 */
 const devRelatedPreviewIds = new Set([
   'a-chuni-manifesto',
   'do-cloud-gamers-dream-of-electric-sheep',

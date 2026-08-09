@@ -1,7 +1,4 @@
-/**
- * 串文分组：组的位置跟着组里第一条（输入需新到旧），组内按时间正序。
- * 服务端（helpers/content）和归档页前端补画的草稿共用同一套规则。
- */
+/** 串文按首条位置分组，组内按时间正序排列。 */
 export const groupThreads = <T>(
   items: T[],
   threadOf: (item: T) => string | undefined,
@@ -27,5 +24,5 @@ export const groupThreads = <T>(
   return groups;
 };
 
-/** 折叠串文前文：只折 1 条不划算——按钮占的地方跟内容差不多，2 条起才折 */
+/** 至少两条上下文时才折叠。 */
 export const THREAD_COLLAPSE_FROM = 2;

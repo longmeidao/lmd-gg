@@ -1,13 +1,6 @@
 import slateConfig from '~@/slate.config';
 
-/**
- * 每个合集有自己的页面 `/<slug>`。
- *
- * 合集名为中文时不好自动生成拉丁 slug，所以 slug 的来源分两级：
- *  1. `slate.config.ts` 里的 `collectionSlugs` 显式映射（想要 `/city-walks` 这种就写在这里）
- *  2. 没写映射的按名字自动生成：拉丁字符转 kebab-case，其余保留原样
- *     （`/原型` 这种地址栏里是可读的，只在传输时才百分号编码）
- */
+/** 合集 slug 优先使用显式映射，否则自动规范化并保留非拉丁字符。 */
 const slugMap: Record<string, string> = slateConfig.collectionSlugs ?? {};
 
 const autoSlug = (name: string) =>
@@ -16,7 +9,7 @@ const autoSlug = (name: string) =>
     .toLowerCase()
     .replace(/['’"]/g, '')
     .replace(/[\s_/\\]+/g, '-')
-    // 半角/全角标点一律当分隔符，CJK、假名、谚文等保留
+    // 标点作为分隔符，非拉丁文字保留。
     .replace(/[!-,.-@[-`{-~、-〜！-＠［-｀｛-～]+/g, '-')
     .replace(/-{2,}/g, '-')
     .replace(/^-|-$/g, '');
@@ -24,13 +17,10 @@ const autoSlug = (name: string) =>
 export const getCollectionSlug = (name: string) =>
   slugMap[name] ?? (autoSlug(name) || encodeURIComponent(name.trim()));
 
-/**
- * 没写 collections 的条目归到这个默认合集。
- * 只在展示和筛选时兜底，**不会写进文章**——frontmatter 里该缺就缺。
- */
+/** 未指定合集时的展示兜底值，不写入 frontmatter。 */
 export const DEFAULT_COLLECTION = '未分类';
 
-/** 条目所属的合集；一个都没有就落到默认合集 */
+/** 返回条目合集；空值使用默认合集。 */
 export const getPostCollections = (data: { collections?: string[] }) => {
   const names = (data.collections ?? [])
     .map((name) => name.trim())
@@ -41,7 +31,7 @@ export const getPostCollections = (data: { collections?: string[] }) => {
 export const getCollectionHref = (name: string) =>
   `/${getCollectionSlug(name)}`;
 
-/** 把全站条目汇总成合集列表，按条目数降序、同数按名字排 */
+/** 汇总合集，并按条目数降序、名称升序排列。 */
 export const buildCollectionIndex = <
   T extends { data: { collections?: string[] } },
 >(

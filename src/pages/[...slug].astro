@@ -10,10 +10,7 @@ import {
 } from '@/helpers/content';
 import { getPageCount, getPageSize } from '@/helpers/pagination';
 
-/**
- * 站点根下的唯一动态路由：条目和合集都没有前缀，共用这一个 slug 空间。
- * `/a-chuni-manifesto` 是条目，`/凉宫春日` 是合集，靠 getStaticPaths 分流。
- */
+/** 根级动态路由；通过 getStaticPaths 区分条目与合集。 */
 export async function getStaticPaths() {
   const postEntries = await getSitePosts();
 
@@ -31,7 +28,7 @@ export async function getStaticPaths() {
 
   const pageSize = getPageSize();
   const collectionPaths = buildCollectionIndex(sorted).flatMap((entry) => {
-    // 合集 slug 撞上条目 slug 时让条目胜出，并在构建日志里说清楚
+    // slug 冲突时条目优先，并输出构建警告。
     if (takenSlugs.has(entry.slug)) {
       console.warn(
         `[routes] 合集「${entry.name}」的 slug "${entry.slug}" 与同名条目冲突，` +

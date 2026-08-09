@@ -40,10 +40,8 @@
   --font-mono:
     'SFMono-Regular', Consolas, 'Liberation Mono', 'Noto Sans Mono CJK SC',
     monospace;
-  /* 系统字体打头（同 owen 的 ui-sans-serif）。之前 Noto Sans SC 在最前面，
-     它字面更满、笔画更重，正文看着就比 owen 粗一号。 */
-  /* 分隔标记：一枚略微转过角度的叶形（同 jant）。放成变量，
-     免得同一串 data URI 在 common.css 和 blog.css 里各抄一遍。 */
+  /* 系统字体优先，保持不同平台的原生字重。 */
+  /* 文章和 feed 共用的叶形分隔标记。 */
   --divider-leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='black' transform='rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
   --divider-leaf-trio: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
 
@@ -173,33 +171,28 @@
 body {
   @apply text-slate12 text-base;
 
-  /* macOS 默认是次像素渲染，笔画会明显加粗；owen 的 body 也开了 antialiased */
+  /* 避免 macOS 次像素渲染使笔画偏粗。 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: var(--font-sans);
   line-height: 1.6;
 }
 
-/*
- * 内容列保留轻微左偏，但有限宽度的外壳必须在超宽屏居中；否则超过 81.5rem
- * 的全部剩余空间都会堆到右侧，页面看起来被钉在屏幕左边。
- */
+/* 内容列轻微左偏，外壳在超宽屏保持居中。 */
 .site-shell {
   width: min(81.5rem, 100%);
   margin-inline: auto;
   padding-inline: clamp(1.5rem, 12.5vw, 10rem) clamp(1.5rem, 4vw, 3.25rem);
 }
 
-/* 偏左的版式只在宽屏才成立：窄屏下左边 12.5vw 已经比右边的下限大出一截
-   （375px 时是 47px 对 24px），看着就是左右不等。移动端拉回对称。 */
+/* 移动端恢复对称边距。 */
 @media (max-width: 640px) {
   .site-shell {
     padding-inline: 1.5rem;
   }
 }
 
-/* 跳过导航。不用 display:none / visibility:hidden——那样它就不可聚焦了；
-   挪出视口，聚焦时再拉回来。 */
+/* 跳过导航在聚焦前移出视口，但保持可聚焦。 */
 .skip-link {
   position: fixed;
   z-index: 100;
@@ -215,15 +208,13 @@ body {
   transform: translateY(-200%);
 }
 
-/* 这里用 :focus 而不是 :focus-visible——跳过链接本来就只有键盘会碰到，
-   而 :focus-visible 在程序化 focus() 时不匹配，链接会留在视口外，
-   等于按了 Tab 什么也看不见。 */
+/* 程序化聚焦也必须显示跳过导航。 */
 .skip-link:focus {
   border-color: var(--color-slate8);
   transform: translateY(0);
 }
 
-/* 跳过去之后标题别贴在视口最上沿 */
+/* 为锚点跳转保留顶部间距。 */
 #main-content {
   scroll-margin-top: 1.5rem;
 }
@@ -243,8 +234,7 @@ body {
   border: 0;
   background: transparent;
 
-  /* 移动端会把文字标签藏掉，只剩 1rem 的图标；不撑开命中区就只有 16×16，
-     远低于触摸场景 44×44 的推荐值。图标尺寸不变，只放大可点区域。 */
+  /* 保持至少 44×44 的触摸区域。 */
   min-width: 2.75rem;
   min-height: 2.75rem;
   padding: 0;
@@ -269,17 +259,7 @@ body {
   stroke-width: 1.7;
 }
 
-/*
- * 强调：楷体 + 着重号。详情页在 .heti 作用域下，首页 feed 没有那个 class，
- * 所以合成一份、挂两个选择器。
- *
- * 字体栈里不放 'Heti Kai Black'：那个 @font-face 定义在 heti.min.css 里，
- * 而它只在文章页引入——文章页的中文会落到楷体，首页因为查无此家族直接落到
- * serif（宋体），同一段字两页长得不一样。统一取首页那一档。
- *
- * font-weight 也得写死：heti.min.css 有 `.heti em { font-weight: 600 }`，
- * 不覆盖的话文章页还会粗一号。
- */
+/* 详情页和 feed 共用着重样式，显式字重用于覆盖 Heti 默认值。 */
 .blog-content .heti em,
 .home-entry-content em {
   font-family:
@@ -289,8 +269,7 @@ body {
   font-style: italic;
 }
 
-/* 只有整段被括号包住的旁注才缩小，普通强调保持正文字号。
-   这个类由 plugins/remark-parenthetical-emphasis.ts 在构建时打上。 */
+/* 仅缩小构建时标记的括号旁注。 */
 .blog-content .heti em.em-aside,
 .home-entry-content em.em-aside {
   font-size: 0.95rem;
@@ -302,21 +281,14 @@ body {
   text-emphasis-style: open sesame;
 }
 
-/*
- * ::: info / tip / warning 容器。
- *
- * 详情页和首页 feed 的 DOM 不在同一个作用域里，之前各写一份就飘了——这里合成
- * 一段声明、挂两个选择器。权重要压过 vendor 的 `.block-default.info`(0,2,0)，
- * 所以带上外层容器。
- */
+/* 详情页与 feed 共用容器样式；外层选择器用于覆盖 vendor 权重。 */
 .blog-content .block-default,
 .home-entry-content .block-default {
   border-radius: 0.75rem;
   margin-block: 1.5rem;
   padding: 1rem;
   font-size: 0.9rem;
-  /* vendor 的 --block-text-color 是 #333（浅色主题假设）。<p> 被下面盖掉了，
-     但列表、加粗这些非 p 的内容会变成深色背景上的深灰，几乎看不见。 */
+  /* 覆盖 vendor 的浅色主题文字变量。 */
   color: var(--color-slate12);
 }
 
@@ -328,7 +300,7 @@ body {
   line-height: 1.7;
 }
 
-/* 首页 info 的正文跟随 feed 正文色，不用详情页强调一档的 slate12。 */
+/* feed 信息块沿用正文颜色。 */
 .home-entry-content .block-default.info,
 .home-entry-content .block-default.info p {
   color: inherit;
@@ -360,18 +332,13 @@ body {
   font-weight: 600;
 }
 
-/* heti.min.css 给 .heti 强制了 subpixel-antialiased，会盖掉 body 上的 antialiased，
-   正文（唯一挂 .heti 的地方）就比站内其他文字明显粗一号。加载顺序按页面而异，用 !important。 */
+/* 覆盖 Heti 的次像素渲染，保持站内字重一致。 */
 .heti {
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* heti 会在中西文之间插入 <heti-spacing>，其自带样式用 margin 撑出间隙。
-   margin 落在 inline 盒之外，text-decoration 画不过去，链接/日期的下划线
-   就会在每个间隙处断开（见 heti.min.css 的 `.heti .heti-spacing-start`）。
-   改用 padding——padding 属于 inline 盒，下划线连续。
-   heti.min.css 的加载顺序按页面而异，所以这里用 !important 压掉它的 margin。 */
+/* 使用 padding 生成中西文间距，保证行内下划线连续。 */
 .heti-spacing-start,
 .heti .heti-spacing-start {
   margin-inline-end: 0 !important;
@@ -384,8 +351,7 @@ body {
   padding-inline-start: 0.25em;
 }
 
-/* jant 的分隔标记。单枚用在文章内和 about 分节，三枚（各转 90°/100°/80°，
-   三个一模一样的正圆排一行太机械）用在首页分组之间。 */
+/* 单枚叶形用于分节，三枚错角排列用于 feed 分组。 */
 .home-group-divider,
 .about-divider,
 .home-entry-content hr {
@@ -415,7 +381,7 @@ body {
   -webkit-mask-image: var(--divider-leaf);
 }
 
-/* --- 条目管理操作（回复 + 三点菜单，规格参照 jant） ---------------------- */
+/* --- 条目管理操作 -------------------------------------------------------- */
 
 .post-admin {
   display: inline-flex;
@@ -446,8 +412,7 @@ body {
     background-color 150ms ease;
 }
 
-/* 回复按钮是 <a>，在文章页落在 .blog-content 里，会被正文的链接规则染成蓝色
-   并在悬停时画出渐变下划线。这里按原样盖回去（选择器权重要压过 .blog-content a）。 */
+/* 覆盖正文链接样式，保持管理按钮外观。 */
 .blog-content .post-admin a.post-admin-btn {
   background-image: none;
   padding-bottom: 0;
@@ -635,17 +600,10 @@ body {
 }
 
 /* --- 新建合集弹窗 --------------------------------------------------------- */
-/*
- * 版式照 jant 的 `.collection-quick-dialog`（jant-me/jant，
- * packages/core/src/styles/ui.css）。尺寸、圆角、间距直接用那份的数值：
- * 宽 28rem、圆角 1.35rem、头部 1.05/1.1/0.8 的内边距、表单 grid gap 0.95rem、
- * 字段 gap 0.46rem、输入框 min-height 2.8rem + 圆角 0.95rem、
- * 确认键通栏 min-height 3rem + 全圆角。颜色换成本站的 slate 档位。
- */
+/* 沿用条目管理界面的尺寸、圆角和间距。 */
 
 .collection-dialog {
-  /* 显式居中：<dialog> 靠 UA 的 margin:auto 居中，而 Tailwind preflight 把
-     所有元素的 margin 清成 0，弹窗就被顶到左上角。jant 那边也是 fixed 居中。 */
+  /* Tailwind 会重置 dialog 的居中 margin，因此显式定位。 */
   position: fixed;
   top: 50%;
   left: 50%;
@@ -654,9 +612,7 @@ body {
   max-height: calc(100dvh - 2rem);
   border: 1px solid color-mix(in srgb, var(--color-slate12) 8%, transparent);
 
-  /* 圆角直接沿用条目管理菜单那一套：外壳 1.15rem（同 .post-admin-popover），
-     里面的输入框和确认键 0.8rem（同 .post-admin-row）。同一个后台里只用一套
-     圆角刻度，不另起炉灶。 */
+  /* 沿用条目管理菜单的圆角尺度。 */
   border-radius: 1.15rem;
   background: var(--color-slate2);
   padding: 0;
@@ -694,8 +650,7 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* 关闭键和撰写页顶栏的 X 一致：44×44、12px 圆角、平时无底色，
-   hover 才浮出来（同 .writer-topbar-btn）。 */
+/* 关闭按钮与撰写页保持一致。 */
 .collection-dialog-cancel {
   display: flex;
   width: 44px;
@@ -708,7 +663,7 @@ body {
   border-radius: 12px;
   background: none;
 
-  /* 44px 的方块比标题行高，往上提一点让 X 和标题在视觉上齐平 */
+  /* 视觉对齐标题基线。 */
   margin: -0.35rem -0.5rem 0 0;
   padding: 0;
   color: var(--color-slate10);
@@ -756,7 +711,7 @@ body {
   color: var(--color-slate12);
   font: inherit;
 
-  /* 手机上低于 16px，iOS Safari 一聚焦就把整页放大 */
+  /* 16px 可避免 iOS Safari 聚焦时放大页面。 */
   font-size: 16px;
   outline: none;
   transition:
@@ -768,7 +723,7 @@ body {
   color: var(--color-slate9);
 }
 
-/* jant 这里用的是主色描边；本站不要彩色焦点框，改成同一档的中性描边加深 */
+/* 使用中性焦点描边。 */
 .collection-dialog-input:focus-visible {
   border-color: var(--color-slate8);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-slate12) 6%, transparent);

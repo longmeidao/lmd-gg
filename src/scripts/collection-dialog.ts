@@ -1,12 +1,6 @@
-/**
- * 「新建合集」弹窗。
- *
- * 版式参考 jant 的 .collection-quick-dialog，用原生 <dialog> + showModal()：
- * 焦点收拢、Esc 关闭、背景变灰都是浏览器白送的。撰写面板和条目管理共用此弹窗，
- * 所以用的时候才建、关掉就移除，不往两个页面各塞一份标记。
- */
+/** 撰写面板和条目管理共用的原生「新建合集」弹窗。 */
 
-/** 返回去掉首尾空白的名字；用户取消或没填则返回 null */
+/** 返回去除首尾空白的名称；取消或留空时返回 null。 */
 export const askCollectionName = (): Promise<string | null> =>
   new Promise((resolve) => {
     const dialog = document.createElement('dialog');
@@ -70,7 +64,7 @@ export const askCollectionName = (): Promise<string | null> =>
     };
 
     form.addEventListener('submit', (event) => {
-      // method="dialog" 自己会关，但我们要先把值取出来
+      // 关闭前读取输入值。
       event.preventDefault();
       const value = input.value.trim();
       if (!value) {
@@ -84,15 +78,15 @@ export const askCollectionName = (): Promise<string | null> =>
       .querySelector<HTMLButtonElement>('[data-cancel]')!
       .addEventListener('click', () => finish(null));
 
-    // Esc 关闭，以及点背景关闭
+    // 支持 Esc 和点击背景关闭。
     dialog.addEventListener('cancel', () => finish(null));
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog) finish(null);
     });
 
-    // 关闭后一定要把节点摘掉，否则每点一次就往 body 里堆一个
+    // 关闭后移除临时节点。
     dialog.addEventListener('close', () => {
-      resolve(null); // settled 之后 Promise 已决议，这里是取消路径的兜底
+      resolve(null); // Promise 已决议时不会重复生效。
       dialog.remove();
     });
 

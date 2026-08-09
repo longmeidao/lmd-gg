@@ -1,13 +1,8 @@
 @reference './common.css';
 
-/* ---------------------------------------------------------------------------
- * 归档页
- * 版式照 jant 的 /archive（ArchivePage.tsx + ui.css 的 .archive-* 那一组）：
- * 顶部胶囊筛选 + 方格/列表切换，下面按月分组的方格墙。
- * jant 根字号 15px，本站 16px，chrome 部分直接用它的实际渲染像素。
- * ------------------------------------------------------------------------- */
+/* --- 归档页 -------------------------------------------------------------- */
 
-/* 宽度跟着 .site-shell，右上的视图切换才能和顶栏的搜索按钮右对齐 */
+/* 宽度跟随站点外壳，使视图切换与顶栏右对齐。 */
 .archive-page {
   width: 100%;
   margin-bottom: 4rem;
@@ -35,7 +30,7 @@
   font-size: 0.9rem;
 }
 
-/* 计数右边的订阅入口（同 owen 归档页计数旁的 feed-link） */
+/* 订阅入口紧邻内容计数。 */
 .archive-feed-link {
   display: inline-flex;
   align-items: center;
@@ -70,7 +65,7 @@
   gap: 6px;
 }
 
-/* 药丸画在外层容器上：清除按钮要待在胶囊里面，而 button 不能嵌 button */
+/* 胶囊由外层绘制，以容纳独立的清除按钮。 */
 .archive-chip-select {
   position: relative;
   display: inline-flex;
@@ -104,7 +99,7 @@
   transition: color 150ms ease;
 }
 
-/* 没露出清除按钮时右边补回原来的留白（菜单 div 永远排在后面，用不了 :last-child） */
+/* 隐藏清除按钮时补回右侧留白。 */
 .archive-chip-select:has([data-chip-clear][hidden]) .archive-chip {
   padding-right: 10px;
 }
@@ -118,7 +113,7 @@
   color: var(--color-slate12);
 }
 
-/* 光晕：照 jant 的 .archive-chip:focus-within——边框染上主色，外面套一圈 3px 微光 */
+/* 聚焦时用主色边框和微光标示当前筛选器。 */
 .archive-chip-select:focus-within,
 .archive-chip-select:has(.archive-chip[aria-expanded='true']) {
   border-color: color-mix(
@@ -135,7 +130,7 @@
   outline: none;
 }
 
-/* 选中了非默认项：胶囊变实、显示选中的文字 */
+/* 非默认筛选值使用实色胶囊。 */
 .archive-chip-select.is-active {
   border-color: color-mix(in srgb, var(--color-slate12) 22%, transparent);
   background: var(--color-slate3);
@@ -145,7 +140,7 @@
   color: var(--color-slate12);
 }
 
-/* 多选时胶囊右侧的清除按钮（同 jant 的 .archive-chip-clear） */
+/* 多选胶囊右侧的清除按钮。 */
 .archive-chip-clear {
   display: inline-flex;
   width: 1.5rem;
@@ -161,8 +156,7 @@
   color: var(--color-slate9);
   cursor: pointer;
 
-  /* 原来这里声明了两次 transition，后一句只有 color，把前面的 background-color
-     整个盖掉了，hover 的底色是硬切的。合成一句。 */
+  /* 同时过渡文字和背景色。 */
   transition:
     background-color 150ms ease,
     color 150ms ease;
@@ -222,8 +216,7 @@
 
 /* --- 下拉面板 ------------------------------------------------------------ */
 
-/* 数值取自 demo.jant.me 实测：radius 7.4px、padding 3.75px、无阴影、
-   底色就是页面底色、min-width 跟触发器齐宽。比想象中更「平」。 */
+/* 下拉面板保持扁平，并与触发器等宽。 */
 .archive-chip-menu {
   position: absolute;
   z-index: 40;
@@ -253,7 +246,7 @@
   border-radius: 0.34rem;
   background: transparent;
 
-  /* 右边留出勾的位置（勾是绝对定位的），和 jant 的 28px 右内边距一致 */
+  /* 右侧为绝对定位的勾选标记留位。 */
   padding: 0.35rem 1.75rem 0.35rem 0.47rem;
   color: var(--color-slate12);
   font: inherit;
@@ -268,8 +261,7 @@
   background: var(--color-slate3);
 }
 
-/* 子级选项缩进一级（jant 用的是 pl-4） */
-/* 站里暂时没有这类内容：仍可点，只是淡一点 */
+/* 空选项仍可选择，但降低明度。 */
 .archive-chip-option.is-empty {
   opacity: 0.45;
 }
@@ -283,7 +275,7 @@
   padding-left: 1.47rem;
 }
 
-/* 没有对应图标的选项（比如具体年份）留一个等宽占位，文字才对得齐 */
+/* 无图标选项保留等宽占位，以对齐文字。 */
 .archive-chip-option-icon {
   width: 1rem;
   height: 1rem;
@@ -414,12 +406,7 @@
 
   position: absolute;
 
-  /*
-   * 和左边日期同一行。两者的定位原点相同（都是方格的 padding box），但胶囊
-   * 有纵向内边距、又继承了 body 的 1.6 行高，盒子比日期高出一截，中线实测
-   * 差 4.52px。把行高压回 1、再上移一个自身的内边距，胶囊里的字就和日期
-   * 落在同一条线上了。
-   */
+  /* 抵消胶囊内边距，使文字与日期基线对齐。 */
   top: calc(10px - var(--draft-badge-pad-y));
   right: 10px;
   border-radius: 9999px;
@@ -459,7 +446,7 @@
   color: var(--color-indigo9);
 }
 
-/* 这些 svg 不带 width/height 属性，尺寸一律由 CSS 给 */
+/* 图标尺寸统一由 CSS 控制。 */
 .archive-tile-badge svg {
   width: 0.7rem;
   height: 0.7rem;
@@ -470,7 +457,7 @@
   height: 1rem;
 }
 
-/* 有图就拿第一张图当封面，文字压在下方的渐变遮罩上 */
+/* 首张图片作为封面，文字置于底部渐变遮罩上。 */
 .archive-tile-cover {
   position: absolute;
   inset: 0;
@@ -524,7 +511,7 @@
   text-shadow: 0 1px 3px rgb(0 0 0 / 45%);
 }
 
-/* 有封面时摘要少占一点，标题更突出 */
+/* 有封面时缩短摘要，突出标题。 */
 .archive-tile-content.has-cover .archive-tile-summary {
   -webkit-line-clamp: 2;
 }
@@ -534,7 +521,7 @@
   text-shadow: 0 1px 3px rgb(0 0 0 / 55%);
 }
 
-/* 内容贴着方格底部排，和 jant 一致 */
+/* 内容贴近方格底部。 */
 .archive-tile-copy {
   position: relative;
   display: flex;
@@ -622,8 +609,7 @@
 }
 
 /* --- 视图切换 ------------------------------------------------------------ */
-/* 列表视图直接用首页那套条目展示（.home-feed / PostEntry），
-   所以这里只负责显示哪一个容器，不再自己排一套紧凑行。 */
+/* 列表视图复用首页条目，此处仅切换容器。 */
 
 .archive-body[data-view='grid'] .archive-list,
 .archive-body[data-view='list'] .archive-grid {
@@ -638,8 +624,7 @@
   display: none !important;
 }
 
-/* 列表视图的草稿完全走首页条目那套排版（见 scripts/archive.ts），
-   连「草稿」标记也复用置顶那枚 .home-entry-status-badge，只换个颜色。 */
+/* 草稿复用首页条目布局，仅调整状态标记颜色。 */
 .home-entry-status-draft {
   color: var(--color-slate10);
 }

@@ -9,7 +9,6 @@ interface Props {
 const { title, description, image, robots } = Astro.props;
 ---
 
-<!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta
   name="viewport"
@@ -20,11 +19,7 @@ const { title, description, image, robots } = Astro.props;
 <meta name="generator" content={Astro.generator} />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<!--
-  Noto Serif SC 是给标题兜底的：--font-serif 里的中文衬线（Songti SC、SimSun 等）
-  全是本地字体，Android 一般只装了 Noto Sans CJK，整条栈落空后系统会拿黑体顶替，
-  标题就变成无衬线。它排在本地字体之后，本机有宋体就不会发这个请求。
--->
+<!-- Noto Serif SC 为缺少中文衬线字体的设备提供标题后备字体。 -->
 <link
   rel="stylesheet"
   href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600&display=swap"
@@ -32,20 +27,17 @@ const { title, description, image, robots } = Astro.props;
 
 <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
 
-<!-- Primary Meta Tags -->
 <title>{title}</title>
 <meta name="title" content={title} />
 {description && <meta name="description" content={description} />}
 {robots && <meta name="robots" content={robots} />}
 
-<!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
 {description && <meta property="og:description" content={description} />}
 <meta property="og:image" content={new URL(image, Astro.url)} />
 
-<!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:url" content={Astro.url} />
 <meta property="twitter:title" content={title} />

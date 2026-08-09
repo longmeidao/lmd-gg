@@ -1,14 +1,8 @@
-/**
- * 归档页和合集页共用的筛选定义。
- *
- * 两边都要这套图标、标签和媒介推断，之前只写在 archive.astro 里，
- * 合集页要用就得复制一份——复制过的东西迟早会走样（block-default 就走样过一次）。
- */
+/** 归档页和合集页共用的筛选定义。 */
 
-/** 媒介顺序固定，不跟着内容出现顺序变动（参考 jant 的 MediaCategory 排法） */
+/** 媒介选项保持固定顺序。 */
 const MEDIA_ORDER = ['image', 'video', 'audio', 'file', 'attached', 'code'];
 
-/** 媒介图标：对齐 jant 的 MEDIA_KIND_ICONS */
 const MEDIA_ICONS: Record<string, string> = {
   image: 'image',
   video: 'video',
@@ -34,27 +28,20 @@ export const detectMedia = (
 ) => {
   const text = body ?? '';
   const media = new Set<string>();
-  // 附文只认 frontmatter 的标记——正文里的 `---` 常常只是作者手写的分隔线
+  // 附文以 frontmatter 为准，避免把正文分隔线误判为附文。
   if (attached) media.add('attached');
 
-  /**
-   * 只统计「实际嵌入或上传」的媒介，不统计「提到了」。
-   * 一条 `[游戏预告片](https://www.youtube.com/…)` 是正文里的链接，不是这条内容
-   * 自带视频——早前按域名匹配，这种就被误判成视频了。所以只认 <video>/<audio>/<img>
-   * 这类真实元素、iframe 嵌入、或 markdown 媒体语法里指向具体媒体文件的地址。
-   */
+  // 只识别实际嵌入的元素、iframe 或媒体文件链接，不按正文提及的域名判断。
   const VIDEO_EXT = 'mp4|webm|mov|m4v|mkv|avi';
   const AUDIO_EXT = 'mp3|m4a|wav|flac|aac|ogg|opus';
   const FILE_EXT =
     'pdf|epub|mobi|zip|rar|7z|tar|gz|docx?|xlsx?|pptx?|csv|txt|json|pages|numbers|key';
-  /** markdown 的 ![](…) / []( …) 里的目标地址，或 HTML 的 src/href */
   const target = (ext: string) =>
     new RegExp(`(?:\\]\\(|src=["']|href=["'])[^)"'\\s]*\\.(?:${ext})\\b`, 'i');
 
   if (kind === 'photo' || /!\[[^\]]*\]\(|<img[\s>]/.test(text)) {
     media.add('image');
   }
-  // <video> 本身、指向视频文件的地址、或视频站的 iframe 嵌入
   if (
     /<video[\s>]/.test(text) ||
     target(VIDEO_EXT).test(text) ||
@@ -67,7 +54,6 @@ export const detectMedia = (
   if (/<audio[\s>]/.test(text) || target(AUDIO_EXT).test(text)) {
     media.add('audio');
   }
-  // 文件：指向可下载附件的链接（图片、音视频已经单独归类了）
   if (target(FILE_EXT).test(text)) media.add('file');
   if (/^(?:```|~~~)/m.test(text)) media.add('code');
   return [...media];
@@ -77,9 +63,9 @@ interface FilterOption {
   value: string;
   label: string;
   icon?: string;
-  /** 站里还没有这类内容，淡显 */
+  /** 没有对应内容时淡显。 */
   empty?: boolean;
-  /** 缩进一级，表示它是上一项的子筛选（同 jant 的 opt.indent） */
+  /** 作为上一项的子筛选缩进。 */
   indent?: boolean;
 }
 
@@ -91,7 +77,6 @@ export interface FilterDef {
   options: FilterOption[];
 }
 
-/** 参与筛选的条目需要提供的字段 */
 interface FilterableEntry {
   kind: string;
   year: number;
@@ -102,7 +87,7 @@ interface FilterableEntry {
 
 export const buildFilters = (
   entries: FilterableEntry[],
-  /** 合集页本身就限定了一个合集，再给合集筛选没有意义 */
+  /** 合集页可关闭合集筛选。 */
   options: { includeCollection?: boolean } = {},
 ): FilterDef[] => {
   const { includeCollection = true } = options;
@@ -112,8 +97,7 @@ export const buildFilters = (
   const collectionNames = [
     ...new Set(entries.flatMap((e) => e.collections)),
   ].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
-  // 媒介是固定词表（不像年份、合集那样由内容推出来），所以全部列出来；
-  // 站里暂时还没有的那几种淡显，让人一眼看清有哪些维度，又不误以为有内容。
+  // 媒介使用固定词表；没有内容的选项仍保留但淡显。
   const mediaKinds = MEDIA_ORDER.map((kind) => ({
     kind,
     empty: !entries.some((entry) => entry.media.includes(kind)),
@@ -134,7 +118,7 @@ export const buildFilters = (
       label: '年份',
       icon: 'calendar',
       adminOnly: false,
-      // 只有「全部 X」带图标：给一堆年份、合集重复挂同一个图标既没信息量又吵
+      // 仅总入口显示图标，避免重复视觉信息。
       options: [
         { value: '', label: '全部年份', icon: 'calendar' },
         ...years.map((year) => ({ value: String(year), label: `${year} 年` })),
@@ -159,9 +143,7 @@ export const buildFilters = (
       label: '形式',
       icon: 'shapes',
       adminOnly: false,
-      // 形式和媒介一样使用固定词表：全部列出，暂无内容的项淡显。
-      // 层级参考 jant：「随记」下面缩进出「有标题 / 无标题」两项。
-      // 本站的 article 就是带标题的随记，归到「随记 › 有标题」下面。
+      // article 归入「随记 › 有标题」，无内容的固定选项淡显。
       options: [
         { value: '', label: '全部形式', icon: 'shapes' },
         { value: 'note', label: '随记', icon: 'note', empty: !hasNotes },
@@ -223,7 +205,7 @@ export const buildFilters = (
       name: 'visibility',
       label: '可见性',
       icon: 'scanEye',
-      // 只有登录后才有意义，交给 HeaderActions 的 [data-admin-only] 逻辑放出来
+      // 仅在管理员登录后显示。
       adminOnly: true,
       options: [
         { value: '', label: '全部可见性', icon: 'scanEye' },
@@ -272,7 +254,7 @@ export const ICON_PATHS: Record<string, string> = {
   eyeOff:
     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /> <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /> <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /> <path d="m2 2 20 20" />',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" />',
-  // 精选辑沿用 jant 自绘的星芒（不是 lucide 的 star）
+  // 精选辑使用自绘星芒。
   sparkle:
     '<path d="M12 3 10.1 10.1 3 12l7.1 1.9L12 21l1.9-7.1L21 12l-7.1-1.9Z" />',
 };

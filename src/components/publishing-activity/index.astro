@@ -89,9 +89,7 @@ const getLevel = (count: number) =>
     margin-bottom: 0.875rem;
   }
 
-  /* 和「番组计划」那种标题保持一致：走正文 h2 的字号字重，
-     并把 .blog-content h2 的 mt-10 归零——分节间距全由分隔点负责，
-     再叠一层 margin 会让分隔点上下不对称。 */
+  /* 分节间距由分隔标记控制，标题不再叠加上边距。 */
   .activity-heading h2 {
     margin: 0;
     color: var(--color-slate12);

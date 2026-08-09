@@ -3,14 +3,12 @@ import { configs as astroEslintConfigs } from 'eslint-plugin-astro';
 import * as astroEslintParser from 'astro-eslint-parser';
 import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
-// import pluginReactConfig from 'eslint-plugin-react/configs/recommended.js';
 
 export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   ...astroEslintConfigs.recommended,
   ...astroEslintConfigs['jsx-a11y-recommended'],
-  // pluginReactConfig,
   {
     rules: {
       'no-unused-vars': 'off',
@@ -23,7 +21,7 @@ export default [
       'dist',
       '.astro',
       'src/env.d.ts',
-      // wrangler types 生成的，已 gitignore
+      // Wrangler 生成的类型文件。
       'worker-configuration.d.ts',
       '**/.obsidian',
     ],

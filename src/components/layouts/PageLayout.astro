@@ -23,7 +23,7 @@ const {
 } = Astro.props;
 const fullTitle = getFullTitle(title);
 
-// 首屏绘制前先定好主题，否则深色模式会先闪一下浅色
+// 首屏绘制前确定主题，避免颜色闪烁。
 const themeScript = `
   function getThemeMode() {
     const theme = localStorage.getItem('theme');
@@ -74,17 +74,10 @@ const themeScript = `
     <ClientRouter />
   </head>
   <body class="bg-slate1">
-    {
-      /* 键盘用户的第一个落点：不然每换一页都要先 Tab 过头像、撰写、搜索、导航
-        才能进正文。平时不可见，聚焦时才出现。 */
-    }
+    {/* 键盘用户可直接跳到正文；链接仅在聚焦时显示。 */}
     <a class="skip-link" href="#main-content">跳到主要内容</a>
     <script is:inline>
-      /*
-       * 自己把焦点送进 <main>：光靠 href="#main-content" 不行，ClientRouter 会
-       * 接管同页锚点跳转，按下回车后 hash 没变、焦点被打回 body。document 不会
-       * 被换页替换掉，所以只绑一次。
-       */
+      /* ClientRouter 不会可靠移动同页锚点焦点，因此显式聚焦 main。 */
       document.addEventListener('click', (event) => {
         const link = event.target.closest?.('.skip-link');
         if (!link) return;

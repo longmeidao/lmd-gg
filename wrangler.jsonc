@@ -11,8 +11,7 @@
     "head_sampling_rate": 1,
   },
 
-  // 站点仍然是 `pnpm build` 出来的静态产物；Worker 只在 /api/* 前面插一脚，
-  // 其余路径直接由静态资源服务，不进 Worker。
+  // Worker 仅处理 /api/*，其余路径直接提供静态构建产物。
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -33,25 +32,19 @@
     "GITHUB_REPO": "lmd-gg",
     "GITHUB_REF": "main",
 
-    // Access 应用的团队域名和 AUD 标签（Zero Trust → 应用 Overview 里复制）
+    // Access 应用的团队域名和 AUD。
     "ACCESS_TEAM_DOMAIN": "https://longmeidao.cloudflareaccess.com",
     "ACCESS_AUD": "ca5c2be558643e14cc8515459ed875f65958999d367cdecb6c53acba9c2f6393",
 
-    // R2 桶的公开域名（已绑，ssl active）。只有撰写面板上传的媒体走这里；
-    // 仓库里 src/content/images 的图仍由 Astro 构建时处理成 /_astro/*.webp。
+    // 撰写器媒体使用 R2 公开域名；内容图片仍由 Astro 构建处理。
     "MEDIA_PUBLIC_URL": "https://media.lmd.gg",
   },
 
-  // Worker 已建好，这条守卫恢复：没设 GITHUB_TOKEN 就不让部署。
-  // （首次部署时它会挡住，因为 Worker 不存在就没法预先设密钥 ——
-  //  当时是临时摘掉这条完成引导的。）
+  // 缺少 GITHUB_TOKEN 时阻止部署。
   "secrets": {
     "required": ["GITHUB_TOKEN"],
   },
 
-  // lmd.gg 的自定义域名是在 Cloudflare 控制台直接绑到这个 Worker 上的
-  // （Workers → Settings → Domains & Routes），不是通过这里的 routes。
-  // 两种方式二选一即可，别同时配，否则容易互相覆盖。
-  //
+  // 自定义域名由 Cloudflare 控制台绑定，不在此处重复配置。
   // "routes": [{ "pattern": "lmd.gg", "custom_domain": true }]
 }

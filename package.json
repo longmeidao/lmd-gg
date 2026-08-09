@@ -37,7 +37,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "verify": "pnpm format:check && pnpm test && pnpm lint && pnpm build",
+    "verify": "pnpm format:check && pnpm test && pnpm run lint:script && pnpm build",
     "cf:deploy": "pnpm build && wrangler deploy",
     "cf:dev": "wrangler dev",
     "cf:types": "wrangler types"

@@ -134,7 +134,7 @@
   -webkit-line-clamp: 2;
 }
 
-/* 命中的词。默认的 <mark> 是亮黄底黑字，深色界面里太刺眼 */
+/* 命中词使用适合深色界面的弱高亮。 */
 .site-search-results mark {
   border-radius: 0.2rem;
   background: color-mix(in srgb, var(--color-indigo9) 26%, transparent);

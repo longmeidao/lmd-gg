@@ -26,15 +26,11 @@ export interface DraftSummary {
   kind: string;
   pubDate: string;
   collections: string[];
-  /** 串文的键名，没有就是空串。归档页靠它把草稿串成一组，不只是判断有没有 */
+  /** 串文键名；空串表示不属于串文。 */
   thread: string;
   featured: boolean;
   hiddenFromLatest: boolean;
-  /**
-   * 正文和这几个展示用字段，是为了让归档页能把草稿按正常 feed 条目渲染出来。
-   * 草稿不进静态构建（否则谁都能读），所以只能由已鉴权的接口带回来，
-   * 前端拿 scripts/writer/markdown.ts 那套渲染器画出来。
-   */
+  /** 供已鉴权的归档页渲染草稿。 */
   body: string;
   externalUrl: string;
   source: string;
@@ -47,7 +43,7 @@ export const postRelativePath = (slug: string) => {
   return `${CONTENT_DIR}/${slug}.md`;
 };
 
-/** 校验失败的错误码，Worker 和 dev 插件据此映射到 400 */
+/** Worker 和开发插件共用的载荷错误码。 */
 export const INVALID_PAYLOAD_ERRORS = [
   'INVALID_SLUG',
   'INVALID_CONTENT',

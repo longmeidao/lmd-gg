@@ -3,8 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { getPostDisplayTitle, formatDisplayDomain } from '@/helpers/post';
 import { getCollectionHref, getPostCollections } from '@/helpers/collection';
-// ::: info 这类容器的基础样式。feed 出现在首页/合集/归档/文章页，
-// 样式跟着渲染条目的组件走，才不会漏掉某个页面。
+// 容器样式随条目组件加载，覆盖所有 feed 使用场景。
 import 'remark-block-containers/css';
 
 interface Props {
@@ -17,18 +16,15 @@ interface Props {
   isFirst?: boolean;
   isLast?: boolean;
   isThreadLatest?: boolean;
-  /** 串文页里当前被点开的那一条：锚点高亮 */
+  /** 是否为串文当前条目。 */
   isThreadCurrent?: boolean;
-  /** 串文页里被压暗的旧内容 */
+  /** 是否弱化显示。 */
   isDimmed?: boolean;
-  /** 合集页里已经在这个合集下了，footer 不用再重复列出来 */
+  /** 是否隐藏页脚中的合集。 */
   hideCollections?: boolean;
-  /** 置顶标记只在按置顶排序的列表里有意义（首页最新），别处不显示 */
+  /** 是否显示置顶标记。 */
   showPinned?: boolean;
-  /**
-   * 透传到 <article> 上的 data-*。归档/合集的前端筛选按条隐藏，标记必须挂在
-   * 条目本身，否则串成一组之后没法单独筛某一条。
-   */
+  /** 透传到 article 的筛选属性。 */
   itemAttrs?: Record<string, string>;
 }
 
@@ -45,8 +41,7 @@ const {
 } = Astro.props;
 
 const showPinned = showPinnedProp && item.data.pinned === true;
-/* 草稿只有登录后才看得到（dev 直接构建进来，生产由脚本注入），
-   所以这里不用再判断权限。标记要和注入草稿那份一致，见 scripts/archive.ts。 */
+// 草稿可见性已由构建环境或鉴权接口控制。
 const showDraft = item.data.draft === true;
 const kind = item.data.kind;
 const externalUrl = item.data.externalUrl;
@@ -78,9 +73,7 @@ const displayDomain = externalUrl ? formatDisplayDomain(externalUrl) : '';
   ]}
 >
   {
-    /* 置顶标记：图钉 + 文字，规格参考 owenyoung.com 的 .post-status-badge，
-       没有底色也没有边框，比正文弱一档，贴在条目最上面。
-       串文页里不重复显示——那儿排序本来就不按置顶走。 */
+    /* 状态标记位于条目顶部；串文详情页不显示置顶。 */
     showDraft && (
       <p class="home-entry-status">
         <span class="home-entry-status-badge home-entry-status-draft">
@@ -196,9 +189,7 @@ const displayDomain = externalUrl ? formatDisplayDomain(externalUrl) : '';
             {item.data.title && (
               <header class="home-entry-header">
                 {kind === 'note' && (
-                  /* 纯装饰图标：原来挂的 aria-label={kind} 会把内部枚举值
-                     「note」念给中文站点的读屏用户，而 ARIA 也不允许在
-                     role=generic 上用 aria-label。 */
+                  /* 装饰图标不向读屏暴露内部枚举值。 */
                   <span class="home-entry-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M6 4h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
@@ -236,8 +227,7 @@ const displayDomain = externalUrl ? formatDisplayDomain(externalUrl) : '';
     </a>
     {
       item.data.rating && (
-        /* 星星本身交给视觉，文字说明单独给读屏。
-           aria-label 挂在无角色的 span 上按 ARIA 1.2 是不允许的，各家支持也不一致。 */
+        /* 星形仅供视觉呈现，评分文字单独提供给读屏。 */
         <span class="home-entry-rating">
           <span aria-hidden="true">
             {'★'.repeat(item.data.rating)}

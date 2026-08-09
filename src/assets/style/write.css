@@ -1,10 +1,6 @@
 @reference './common.css';
 
-/* ---------------------------------------------------------------------------
- * 撰写窗口
- * 视觉规格对齐 jant 的 compose dialog（jant-me/jant，packages/core/src/styles/ui.css）。
- * jant 的根字号是 15px，本站是 16px，因此 chrome 部分直接用 px 复刻其实际渲染值。
- * ------------------------------------------------------------------------- */
+/* --- 撰写窗口 ------------------------------------------------------------ */
 
 .writer-shell {
   --w-paper: var(--color-slate1);
@@ -62,7 +58,7 @@
   animation: writer-window-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* 预览打开时窗口横向展开，保留双栏实时预览 */
+/* 预览打开时横向展开为双栏。 */
 .writer-window:has(.writer-workspace[data-preview-open='true']) {
   max-width: 1120px;
 }
@@ -225,7 +221,7 @@
   border-bottom-left-radius: var(--w-radius);
 }
 
-/* 预览关闭时编辑区独占整行，右下角也要跟着圆角 */
+/* 预览关闭时编辑区独占整行并补齐圆角。 */
 .writer-workspace:not([data-preview-open='true']) .writer-editor,
 .writer-workspace:not([data-preview-open='true']) .writer-status {
   border-bottom-right-radius: var(--w-radius);
@@ -266,7 +262,7 @@
   padding: 4px 20px 8px 26px;
 }
 
-/* 串文轨道与锚点：尺寸、双层圈和配色都沿用主站首页（home.css 的 thread-* 变量） */
+/* 串文轨道与锚点沿用首页变量。 */
 .writer-items[data-thread-mode='true'] {
   --thread-rail-left: 5px;
   --thread-rail-width: 1px;
@@ -331,7 +327,7 @@
     color-mix(in srgb, var(--color-slate7) 18%, transparent);
 }
 
-/* 正在写的那条是主锚点：更大、更厚的内圈、主站的 indigo */
+/* 当前编辑条目使用更醒目的主色锚点。 */
 .writer-items[data-thread-mode='true']
   .writer-item:last-child
   .writer-thread-node {
@@ -367,7 +363,7 @@
   overflow-y: auto;
 }
 
-/* 收起状态下底部渐隐，提示还有内容 */
+/* 收起时在底部渐隐，提示仍有内容。 */
 .writer-reply-context[data-expanded='false'] .writer-reply-context-body::after {
   position: absolute;
   bottom: 0;
@@ -640,8 +636,7 @@
   color: var(--w-text-2);
 }
 
-/* 短横线画在行上（不是那个 span——span 自身 font-size:0 会让 em 塌成 0），
-   这样才能和右侧作者、来源链接两行的文字基线对齐 */
+/* 短横线绘制在行容器上，以对齐右侧文字基线。 */
 .writer-quote-meta > span[aria-hidden] {
   display: none;
 }
@@ -739,7 +734,7 @@
   flex: 1;
 }
 
-/* 预览开关（对应 jant 的全屏按钮位） */
+/* 预览开关。 */
 .writer-compose-tools button[data-tool='preview'] {
   color: var(--w-text-2);
 }
@@ -748,7 +743,7 @@
   color: var(--w-text);
 }
 
-/* 可视化星级（同 jant 的 .compose-star-rating）：星星行在工具栏上方 */
+/* 星级控件位于工具栏上方。 */
 .writer-star-rating {
   display: flex;
   flex-shrink: 0;
@@ -776,17 +771,7 @@
   transform: scale(1.1);
 }
 
-/*
- * 悬停预览：鼠标停在第 N 颗上时，1..N 一起点亮。
- *
- * 预览必须比选中态弱一档，否则两者长得一模一样——鼠标从右边移过来先扫到
- * 第 5 颗，5 颗全亮成选中的样子，看着就像「默认选了 5 星」。
- * 所以预览用半透明的琥珀色、也不放大；真正选中了才是实色 + scale(1.1)。
- *
- * 两步来：先把整排压回未选中的样子，再点亮 1..N。这样已经选了 3 星时
- * 去指第 1 颗，预览出来就是 1 星，而不是 3 星和 1 星混在一起。
- * `:has(~ ...)` 用来选「后面有兄弟正被悬停」的那些，也就是左边所有星。
- */
+/* 悬停时预览 1..N 颗星，并以较弱样式区分已选状态。 */
 .writer-star-rating:has(.writer-star:hover) .writer-star {
   color: var(--w-divider);
   transform: none;
@@ -805,7 +790,7 @@
   font-size: 0.7rem;
 }
 
-/* emoji-mart 的选择器，挂在撰写窗口上，定位由脚本算 */
+/* Emoji 选择器由脚本定位。 */
 .writer-emoji-picker {
   position: absolute;
   z-index: 100;
@@ -871,7 +856,7 @@
   padding: 12px 18px 4px;
 }
 
-/* 弹层展开时抬高整行，避免被 z-index 更高的顶栏盖住 */
+/* 弹层展开时提高操作行层级。 */
 .writer-bottom:has([data-collection-popover]:not([hidden])),
 .writer-bottom:has([data-publish-popover]:not([hidden])) {
   z-index: 10;
@@ -1181,7 +1166,7 @@ html.dark .writer-hide-latest input:checked {
 .writer-publish-popover {
   right: 0;
 
-  /* 面板比窗口本身高，收窄上限让它落在卡片内部并自行滚动 */
+  /* 面板限制在窗口内并独立滚动。 */
   max-height: min(22rem, calc(100dvh - var(--w-margin-top) - 6rem));
   width: min(25rem, calc(100vw - 1.5rem));
   border-radius: 12px;
@@ -1221,7 +1206,7 @@ html.dark .writer-hide-latest input:checked {
   margin: 12px 0;
 }
 
-/* 可见性分段——选中项高亮 */
+/* 可见性选项高亮当前值。 */
 
 .writer-publish-chips {
   display: flex;
@@ -1370,7 +1355,7 @@ html.dark .writer-hide-latest input:checked {
   color: var(--w-text);
 }
 
-/* --- 附文面板（铺满窗口的覆盖层，同 jant 的 .compose-attached-panel） ----- */
+/* --- 附文面板 ------------------------------------------------------------ */
 
 .writer-attached-panel {
   position: absolute;
@@ -1812,7 +1797,7 @@ html.dark .writer-hide-latest input:checked {
   }
 }
 
-/* 触屏 / 小屏：整屏铺满，与 jant 一致 */
+/* 触屏和小屏使用全屏布局。 */
 @media (max-width: 700px),
   (max-height: 760px),
   (hover: none) and (pointer: coarse) {
@@ -1848,7 +1833,7 @@ html.dark .writer-hide-latest input:checked {
     padding-inline: 20px;
   }
 
-  /* 整屏时让单条内容撑满，工具栏贴到底部操作区上方 */
+  /* 全屏时内容撑满，工具栏贴近底部操作区。 */
   .writer-items:not([data-thread-mode='true']) .writer-item,
   .writer-items:not([data-thread-mode='true']) .writer-item-fields {
     flex: 1;
@@ -1891,12 +1876,7 @@ html.dark .writer-hide-latest input:checked {
   }
 }
 
-/*
- * iOS Safari 在输入框字号小于 16px 时会自动放大整页，放大后不会自己缩回去，
- * 撰写面板里有好几个 15px 的输入框都会触发。手机上统一抬到 16px，
- * 宽屏保持原本更紧凑的 15px。
- * （.writer-quote-meta input 那条原本带 !important，这里得跟上。）
- */
+/* 移动端输入框使用 16px，避免 iOS Safari 聚焦时放大页面。 */
 @media (max-width: 639px) {
   .writer-shell input,
   .writer-shell textarea {

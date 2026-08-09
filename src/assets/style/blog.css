@@ -1,6 +1,6 @@
 @reference "./common.css";
 
-/* 标题下的日期、正文下面的信息栏：跟 owen 的 13.5/18.225 对齐（换算成本站 rem） */
+/* 标题日期与正文信息栏使用同一字号。 */
 .post-header-meta,
 .post-meta-bar,
 .related-post-date {
@@ -8,10 +8,7 @@
   line-height: 1.35;
 }
 
-/*
- * 正文下面的信息栏。无标题的内容在这里第一次出现日期（上面那行对一条随记
- * 来说太重了），操作按钮也从标题旁挪到了这里。
- */
+/* 无标题内容仅在正文下方显示日期和操作按钮。 */
 .post-meta-bar {
   display: flex;
   max-width: 36.75rem;
@@ -22,7 +19,7 @@
   color: var(--color-slate9);
 }
 
-/* 正文链接规则的 specificity 更高；在组件末端明确恢复相关文章的结构样式。 */
+/* 覆盖正文链接权重，恢复相关文章布局。 */
 .blog-content .related-post {
   border-bottom: 0;
   color: inherit;
@@ -51,14 +48,13 @@
   gap: 0.4rem;
 }
 
-/* heti 会往文字里插 <heti-spacing>，它在 flex 容器下会被当成独立的 flex item
-   而散开。日期整段本来就在一个 span 里，这里把插入物拉回行内。 */
+/* Heti 间距元素在信息栏内保持行内布局。 */
 .post-meta-bar-facts heti-spacing,
 .post-meta-bar-facts heti-adjacent {
   display: inline;
 }
 
-/* 只有操作按钮、没有文字时，把按钮推到左边，别孤零零吊在右侧 */
+/* 无文字时将操作按钮靠左。 */
 .post-meta-bar-facts:empty {
   display: none;
 }
@@ -67,7 +63,7 @@
   margin-left: 0;
 }
 
-/* 相关文章保留旧版圆角列表；区块线改用首页的三枚叶形分隔标记。 */
+/* 相关文章使用圆角列表和三枚叶形分隔标记。 */
 .blog-content .related-posts {
   max-width: 36.75rem;
   border-top: 0;
@@ -80,7 +76,7 @@
 .blog-content {
   @apply mr-auto mb-16 w-full max-w-[36.75rem];
 
-  /* 标题不加粗：owen 的 h1 是 500，不是 600/700 */
+  /* 标题使用中等字重。 */
   h1 {
     @apply text-slate12 mb-3 text-[1.96rem] leading-[1.15] font-medium;
     font-family: var(--font-serif);
@@ -104,9 +100,7 @@
     font-family: var(--font-reading);
   }
 
-  /* 下划线只用一种画法：背景渐变。
-     text-decoration 会被 heti 插入的 <heti-spacing> 切断，而两种画法同时开
-     就会出现上下两条线。clone 让换行的每段各画一条。 */
+  /* 渐变下划线跨越 Heti 间距，换行时逐段绘制。 */
   a {
     @apply text-indigo11 no-underline;
 
@@ -116,8 +110,7 @@
     );
     background-repeat: no-repeat;
 
-    /* 行内元素的背景定位区只有内容区那么高，直接贴底会压到字上；
-       行内的垂直 padding 不影响行盒高度，用它撑出空隙不会顶高排版。 */
+    /* 用行内 padding 留出下划线间距，不抬高行盒。 */
     background-position: 0 100%;
     background-size: 0 1px;
     padding-bottom: 0.2em;
@@ -137,7 +130,7 @@
     @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
   }
 
-  /* 同 feed：换行时每段各画一个完整的框，默认 slice 会把边框圆角切开 */
+  /* 换行时每段代码都保留完整边框和圆角。 */
   code {
     @apply border-slate4 bg-slate3 text-slate11 mx-0.5 rounded-lg border p-0.5 px-1 text-base;
 
@@ -199,8 +192,7 @@
     }
   }
 
-  /* 一枚略微转过角度的叶形标记（同 jant）。写在这里而不是 common.css，
-     因为 prose / preflight 的 hr 规则会盖掉外面同specificity 的声明。 */
+  /* 在正文作用域覆盖 prose 的分隔线规则。 */
   .post-content hr {
     width: 10px;
     height: 11px;
@@ -260,8 +252,6 @@
     @apply inline;
   }
 
-  /* 间隙的 margin→padding 处理统一在 common.css，这里不再重复 */
-
   heti-adjacent {
     @apply inline;
   }
@@ -274,7 +264,7 @@
     @apply me-[-0.25em];
   }
 
-  /* 连续 2 到 6 张图排成一行 */
+  /* 连续图片最多六张并排。 */
   .rehype-figure-container:has(> .rehype-figure:nth-child(2)) {
     column-count: 2;
     column-gap: 8px;

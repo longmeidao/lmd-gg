@@ -76,7 +76,7 @@ async function listDrafts(
     .sort((left, right) => right.pubDate.localeCompare(left.pubDate));
 }
 
-/** 本地专用写作 API；仅注入 Vite 开发服务器，固定绕过生产鉴权 */
+/** 仅供 Vite 开发服务器使用的免鉴权写作 API。 */
 export function devWebWriter(): Plugin {
   return {
     name: 'lmd-dev-web-writer',
@@ -86,7 +86,7 @@ export function devWebWriter(): Plugin {
       server.middlewares.use(async (request, response, next) => {
         const url = new URL(request.url ?? '/', 'http://localhost');
 
-        /** 媒体上传（dev 专用）：原样写入 public/media/uploads/ */
+        /** 将本地媒体原样写入 public/media/uploads/。 */
         if (url.pathname === '/__lmd/upload') {
           if (request.method !== 'POST') {
             respond(response, 405, { error: '只接受 POST 请求。' });
@@ -220,12 +220,7 @@ export function devWebWriter(): Plugin {
               originals.set(filePath, await readFile(filePath, 'utf8'));
           }
 
-          /*
-           * 直接原地写，不走「临时文件 + rename」：rename 会让 chokidar 收到
-           * 两次事件（旧 inode 消失 + 新文件出现），Astro 就重载两次页面。
-           * 多文件「要么全成、要么全不动」没有丢：任何一步失败就按已存的
-           * 原文把写过的逐个还原。
-           */
+          // 原地写入可避免 rename 触发两次页面重载；失败时回滚全部已写文件。
           const committed: number[] = [];
           try {
             for (const [index, item] of items.entries()) {

@@ -10,7 +10,7 @@ Astro 7 / React 19 / Tailwind CSS 4 / Node 24 / pnpm 10。
 
 - **pnpm 是唯一包管理器**，不要混用 npm/yarn
 - 内容配置在 `src/content.config.ts`（不是旧的 `src/content/config.ts`），条目用 `post.id`
-- 完整验证链路：`pnpm verify`（格式、单测、浏览器冒烟、类型、lint、构建）
+- 完整验证链路：`pnpm verify`（格式、单测、类型、lint、构建）
 
 ## 内容写作
 

@@ -8,7 +8,7 @@ import Button from '@/components/button';
 <PageLayout title="四〇四">
   <BackHeader slot="header" />
 
-  {/* min-h 而不是 h：固定高度在 200% 缩放下会把文字挤出容器 */}
+  {/* 使用最小高度，避免放大文字时内容溢出。 */}
   <main
     id="main-content"
     tabindex="-1"

@@ -1,13 +1,6 @@
-/*
- * 「最后修改」时间。
- *
- * 取的不是文件的最后一次提交，而是**最后一次正文真的变了**的提交。
- * 因为一次批量整理（删 frontmatter 里的 tags/description、清行尾空白、
- * 把 `_强调_` 换成 `*强调*`）会把每篇文章的提交时间全推到同一天，
- * 而读者看到的内容一个字都没变。
- *
- * 判定方式：从新到旧遍历这个文件的提交，把每个版本的正文（frontmatter 之外
- * 的部分）按行去掉行尾空白后比较，第一处真有差异的提交就是答案。
+/**
+ * 返回正文最后发生语义变化的提交时间。
+ * frontmatter、行尾空白和首尾空行的变化不计入正文修改。
  */
 import { execSync } from 'node:child_process';
 
@@ -16,10 +9,10 @@ interface VFileLike {
   data: { astro: { frontmatter: Record<string, unknown> } };
 }
 
-/** 一次构建里同一个文件会被处理多次，结果缓存下来 */
+/** 在单次构建中复用同一文件的结果。 */
 const cache = new Map<string, string>();
 
-/** 往回追多少个提交就放弃——正常文章不会有这么长的历史 */
+/** 最多检查的历史提交数。 */
 const MAX_COMMITS = 80;
 
 const git = (args: string[]): string | null => {
@@ -34,7 +27,6 @@ const git = (args: string[]): string | null => {
   }
 };
 
-/** 去掉 frontmatter，只留正文 */
 const bodyOf = (source: string): string => {
   if (!source.startsWith('---')) return source;
   const close = source.indexOf('\n---', 3);
@@ -43,7 +35,6 @@ const bodyOf = (source: string): string => {
   return afterFence < 0 ? '' : source.slice(afterFence + 1);
 };
 
-/** 行尾空白和首尾空行不算内容改动 */
 const normalize = (source: string): string =>
   bodyOf(source)
     .split('\n')
@@ -70,7 +61,7 @@ const lastContentChange = (filepath: string): string | null => {
     });
   if (commits.length === 0) return null;
 
-  // git show 要的是相对仓库根的路径
+  // git show 使用仓库根目录的相对路径。
   const root = git(['rev-parse', '--show-toplevel'])?.trim();
   const relative =
     root && filepath.startsWith(root)
@@ -79,15 +70,15 @@ const lastContentChange = (filepath: string): string | null => {
 
   for (const { hash, date } of commits) {
     const after = git(['show', `${hash}:"${relative}"`]);
-    // 读不出来（改过名、浅克隆等）就别猜，按这个提交算
+    // 无法读取父版本时，使用当前提交时间。
     if (after === null) return date;
     const before = git(['show', `${hash}~1:"${relative}"`]);
-    // 没有父版本 = 这次提交新建了文件，算内容变更
+    // 没有父版本表示文件在当前提交创建。
     if (before === null) return date;
     if (normalize(after) !== normalize(before)) return date;
   }
 
-  // 追到头都只是格式改动，退回最早那次
+  // 仅发现格式变化时，使用最早可用的提交。
   return commits.at(-1)?.date ?? null;
 };
 
