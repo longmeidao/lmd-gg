@@ -4,13 +4,43 @@ import {
   setPostThread,
 } from '../src/scripts/writer/frontmatter';
 import { markdownFor } from '../src/scripts/writer/publish';
-import { blankWriterItem } from '../src/scripts/writer/model';
+import {
+  blankWriterItem,
+  writerContentSnapshot,
+} from '../src/scripts/writer/model';
 import {
   renderWriterFields,
   renderWriterPreview,
 } from '../src/scripts/writer/render';
 
 describe('writer frontmatter', () => {
+  it('tracks content changes without treating focus or generated ids as edits', () => {
+    const item = { ...blankWriterItem(), body: '已发布内容' };
+    const state = {
+      items: [item],
+      activeIndex: 0,
+      collections: ['随记'],
+      visibility: 'public' as const,
+      pubDate: '2026-08-11',
+      customSlug: 'published-note',
+    };
+    const published = writerContentSnapshot(state);
+
+    expect(
+      writerContentSnapshot({
+        ...state,
+        activeIndex: 1,
+        items: [{ ...item, id: 'new-render-id' }],
+      }),
+    ).toBe(published);
+    expect(
+      writerContentSnapshot({
+        ...state,
+        items: [{ ...item, body: '发布后又修改' }],
+      }),
+    ).not.toBe(published);
+  });
+
   it('round-trips a private article', () => {
     const item = {
       ...blankWriterItem(),

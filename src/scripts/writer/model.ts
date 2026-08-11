@@ -28,6 +28,26 @@ export interface StoredDraft extends WriterState {
   version: 2;
 }
 
+export const writerContentSnapshot = (state: WriterState) =>
+  JSON.stringify({
+    items: state.items.map((item) => ({
+      kind: item.kind,
+      title: item.title,
+      body: item.body,
+      externalUrl: item.externalUrl,
+      source: item.source,
+      commentary: item.commentary,
+      attachedText: item.attachedText,
+      rating: item.rating,
+      showTitle: item.showTitle,
+      showRating: item.showRating,
+    })),
+    collections: state.collections,
+    visibility: state.visibility,
+    pubDate: state.pubDate,
+    customSlug: state.customSlug,
+  });
+
 export const makeWriterId = () =>
   globalThis.crypto?.randomUUID?.() ??
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;

@@ -8,11 +8,11 @@ import '@/assets/style/about.css';
 import '@/assets/style/bangumi.css';
 import 'remark-block-containers/css';
 
-const publishedArticles = await getCollection(
+const publishedPosts = await getCollection(
   'post',
-  ({ data }) => data.draft !== true && data.kind === 'article',
+  ({ data }) => data.draft !== true,
 );
-const publishedDates = publishedArticles
+const publishedDates = publishedPosts
   .map((post) => post.data.pubDate)
   .filter((date): date is Date => date instanceof Date);
 ---

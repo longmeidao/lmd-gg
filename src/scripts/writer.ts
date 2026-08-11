@@ -7,6 +7,7 @@ import {
   type WriterItem,
   type WriterKind,
   type WriterState,
+  writerContentSnapshot,
 } from './writer/model';
 import {
   escapeAttribute,
@@ -93,6 +94,7 @@ if (root) {
     customSlug: '',
   };
   let autosaveTimer = 0;
+  let cleanSnapshot = writerContentSnapshot(state);
 
   // 保留字面量键，使 icon() 能检查图标名称。
   const TOOL_ICONS = {
@@ -409,23 +411,15 @@ if (root) {
     renderItems();
     if (editSlug) await loadPostForEditing(editSlug);
     else if (replySlug) await loadReplyTarget(replySlug);
+    cleanSnapshot = writerContentSnapshot(state);
     // 编辑和回复加载完成后再聚焦输入框。
     focusFirstField(state.activeIndex);
   };
 
-  // 任一内容字段非空时，关闭前需要确认。
-  const hasContent = () => {
+  // 仅在内容相对载入或发布后的基准有变化时确认。
+  const hasUnsavedChanges = () => {
     syncAllItems();
-    return state.items.some((item) =>
-      [
-        item.title,
-        item.body,
-        item.externalUrl,
-        item.source,
-        item.commentary,
-        item.attachedText,
-      ].some((value) => value.trim().length > 0),
-    );
+    return writerContentSnapshot(state) !== cleanSnapshot;
   };
 
   const toggleConfirm = (open: boolean) => {
@@ -444,7 +438,7 @@ if (root) {
 
   const requestClose = () => {
     if (!confirmPanel.hidden) return;
-    if (hasContent()) {
+    if (hasUnsavedChanges()) {
       toggleConfirm(true);
       return;
     }
@@ -1120,7 +1114,10 @@ if (root) {
 
       replyNeedsBackfill = false;
 
+      window.clearTimeout(autosaveTimer);
+      autosaveTimer = 0;
       localStorage.removeItem(storageKey);
+      cleanSnapshot = writerContentSnapshot(state);
       const urls =
         result.urls?.slice(0, posts.length) ??
         posts.map((post) => `/${post.slug}`);
