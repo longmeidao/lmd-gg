@@ -58,6 +58,39 @@ describe('content contract', () => {
     ).toThrow('INVALID_OPERATION');
   });
 
+  it('accepts a safe slug migration and rejects ambiguous renames', () => {
+    expect(
+      readWriteItems({
+        posts: [
+          {
+            slug: 'new-name',
+            previousSlug: 'old-name',
+            content: '---\npubDate: 2026-08-20\n---\n',
+            operation: 'update',
+          },
+        ],
+      }),
+    ).toMatchObject([
+      {
+        slug: 'new-name',
+        previousSlug: 'old-name',
+        operation: 'update',
+      },
+    ]);
+    expect(() =>
+      readWriteItems({
+        posts: [
+          {
+            slug: 'new-name',
+            previousSlug: 'old-name',
+            content: '---\npubDate: 2026-08-20\n---\n',
+            operation: 'create',
+          },
+        ],
+      }),
+    ).toThrow('INVALID_RENAME');
+  });
+
   it('only exposes draft metadata', () => {
     expect(
       parseDraftSummary(

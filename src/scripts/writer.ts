@@ -2,6 +2,7 @@ import Heti from 'heti/js/heti-addon.js';
 import {
   blankWriterItem,
   makeWriterId,
+  restoredPublishDate,
   type StoredDraft,
   type Visibility,
   type WriterItem,
@@ -16,9 +17,11 @@ import {
   stripDirectives,
 } from './writer/markdown';
 import { formatDisplayDomain } from '@/helpers/post';
+import type { WriteItem } from '@/domain/content-contract';
 import { askCollectionName } from './collection-dialog';
 import { parseExistingPost, setPostThread } from './writer/frontmatter';
 import {
+  editWriteItem,
   generatedSlug as makeGeneratedSlug,
   markdownFor as serializeMarkdown,
 } from './writer/publish';
@@ -67,7 +70,7 @@ if (root) {
     JSON.parse(root.dataset.collections || '[]') as string[],
   );
   const searchParams = new URLSearchParams(window.location.search);
-  const editSlug = searchParams.get('edit');
+  let editSlug = searchParams.get('edit');
   const replySlug = searchParams.get('reply');
   // 回复目标没有串文时，与回复内容一并补写串文键。
   let replyThreadId = '';
@@ -94,6 +97,7 @@ if (root) {
     customSlug: '',
   };
   let autosaveTimer = 0;
+  let pubDateCustomized = false;
   let cleanSnapshot = writerContentSnapshot(state);
 
   // 保留字面量键，使 icon() 能检查图标名称。
@@ -342,7 +346,11 @@ if (root) {
 
   const saveDraft = (announce = false) => {
     syncAllItems();
-    const draft: StoredDraft = { version: 2, ...state };
+    const draft: StoredDraft = {
+      version: 2,
+      ...state,
+      pubDateCustomized,
+    };
     localStorage.setItem(storageKey, JSON.stringify(draft));
     if (announce) setStatus('草稿已保存在此浏览器。');
   };
@@ -369,9 +377,10 @@ if (root) {
           ? stored.collections
           : [],
         visibility: stored.visibility || 'public',
-        pubDate: stored.pubDate || today,
+        pubDate: restoredPublishDate(stored, today),
         customSlug: stored.customSlug || '',
       };
+      pubDateCustomized = stored.pubDateCustomized === true;
     } catch {
       localStorage.removeItem(storageKey);
     }
@@ -536,11 +545,11 @@ if (root) {
       state.collections = parsed.collections;
       state.visibility = parsed.visibility;
       state.pubDate = parsed.pubDate;
+      pubDateCustomized = true;
       state.customSlug = slug;
       editThreadId = parsed.thread;
       publishDate!.value = state.pubDate;
       customSlug!.value = slug;
-      customSlug!.disabled = true;
       renderItems();
       setStatus(`正在编辑 ${slug}`);
     } catch (error) {
@@ -795,7 +804,7 @@ if (root) {
         ? `thread-${new Date().toISOString().slice(0, 10)}-${makeWriterId().slice(0, 8)}`
         : undefined);
     return state.items.map((item, index) => ({
-      slug: editSlug || generatedSlug(item, index),
+      slug: generatedSlug(item, index),
       content: markdownFor(item, threadId),
     }));
   };
@@ -1040,7 +1049,10 @@ if (root) {
   hideLatest.addEventListener('change', () => {
     setVisibility(hideLatest.checked ? 'hidden' : 'public');
   });
-  publishDate.addEventListener('input', scheduleDraftSave);
+  publishDate.addEventListener('input', () => {
+    pubDateCustomized = true;
+    scheduleDraftSave();
+  });
   customSlug.addEventListener('input', scheduleDraftSave);
 
   root.querySelector('[data-close-preview]')?.addEventListener('click', () => {
@@ -1081,11 +1093,9 @@ if (root) {
     );
 
     try {
-      const publishItems: Array<{
-        slug: string;
-        content: string;
-        operation?: 'create' | 'update';
-      }> = [...posts];
+      const publishItems: WriteItem[] = editSlug
+        ? posts.map((post) => editWriteItem(post, editSlug!))
+        : [...posts];
       if (replySlug && replyNeedsBackfill) {
         if (!replyTargetContent) throw new Error('无法读取要回复的内容。');
         publishItems.push({
@@ -1125,6 +1135,7 @@ if (root) {
         `${editSlug ? '已更新' : posts.length > 1 ? '串文已发布' : '已发布'}：${urls.join('、')}`,
       );
       if (urls[0]) {
+        editSlug = posts[0]!.slug;
         window.history.replaceState(
           null,
           '',

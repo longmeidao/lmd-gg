@@ -12,6 +12,8 @@ export interface WriteItem {
   slug: string;
   content: string;
   operation?: 'create' | 'update';
+  /** 更新时的原 slug；存在时在同一次提交中迁移文件。 */
+  previousSlug?: string;
 }
 
 export interface WritePayload {
@@ -49,6 +51,7 @@ export const INVALID_PAYLOAD_ERRORS = [
   'INVALID_CONTENT',
   'INVALID_ITEM_COUNT',
   'INVALID_OPERATION',
+  'INVALID_RENAME',
   'DUPLICATE_SLUG',
 ] as const;
 
@@ -57,7 +60,7 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
     typeof payload.slug === 'string' && typeof payload.content === 'string'
       ? [{ slug: payload.slug.trim(), content: payload.content }]
       : [];
-  const items = Array.isArray(payload.posts)
+  const items: WriteItem[] = Array.isArray(payload.posts)
     ? payload.posts
         .filter(
           (item): item is WriteItem =>
@@ -68,6 +71,7 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
         )
         .map((item) => {
           const operation = (item as WriteItem).operation;
+          const previousSlug = (item as WriteItem).previousSlug;
           if (
             operation !== undefined &&
             operation !== 'create' &&
@@ -75,10 +79,14 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
           ) {
             throw new Error('INVALID_OPERATION');
           }
+          if (previousSlug !== undefined && typeof previousSlug !== 'string') {
+            throw new Error('INVALID_RENAME');
+          }
           return {
             slug: item.slug.trim(),
             content: item.content,
             ...(operation ? { operation } : {}),
+            ...(previousSlug ? { previousSlug: previousSlug.trim() } : {}),
           };
         })
     : legacy;
@@ -88,6 +96,7 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
   }
 
   const seen = new Set<string>();
+  const renameSources = new Set<string>();
   for (const item of items) {
     if (!SLUG_PATTERN.test(item.slug)) throw new Error('INVALID_SLUG');
     if (!item.content.startsWith('---\n')) throw new Error('INVALID_CONTENT');
@@ -96,6 +105,21 @@ export const readWriteItems = (payload: WritePayload): WriteItem[] => {
     }
     if (seen.has(item.slug)) throw new Error('DUPLICATE_SLUG');
     seen.add(item.slug);
+
+    if (item.previousSlug !== undefined) {
+      if (
+        item.operation !== 'update' ||
+        item.previousSlug === item.slug ||
+        !SLUG_PATTERN.test(item.previousSlug) ||
+        renameSources.has(item.previousSlug)
+      ) {
+        throw new Error('INVALID_RENAME');
+      }
+      renameSources.add(item.previousSlug);
+    }
+  }
+  for (const source of renameSources) {
+    if (seen.has(source)) throw new Error('INVALID_RENAME');
   }
   return items;
 };

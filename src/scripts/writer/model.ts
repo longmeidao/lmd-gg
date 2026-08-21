@@ -26,7 +26,12 @@ export interface WriterState {
 
 export interface StoredDraft extends WriterState {
   version: 2;
+  /** 只有用户主动改过发布日期时，跨天恢复草稿才保留旧值。 */
+  pubDateCustomized?: boolean;
 }
+
+export const restoredPublishDate = (draft: StoredDraft, today: string) =>
+  draft.pubDateCustomized ? draft.pubDate || today : today;
 
 export const writerContentSnapshot = (state: WriterState) =>
   JSON.stringify({

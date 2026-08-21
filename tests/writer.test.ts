@@ -3,9 +3,10 @@ import {
   parseExistingPost,
   setPostThread,
 } from '../src/scripts/writer/frontmatter';
-import { markdownFor } from '../src/scripts/writer/publish';
+import { editWriteItem, markdownFor } from '../src/scripts/writer/publish';
 import {
   blankWriterItem,
+  restoredPublishDate,
   writerContentSnapshot,
 } from '../src/scripts/writer/model';
 import {
@@ -39,6 +40,36 @@ describe('writer frontmatter', () => {
         items: [{ ...item, body: '发布后又修改' }],
       }),
     ).not.toBe(published);
+  });
+
+  it('uses the current date for untouched drafts and preserves manual dates', () => {
+    const draft = {
+      version: 2 as const,
+      items: [blankWriterItem()],
+      activeIndex: 0,
+      collections: [],
+      visibility: 'public' as const,
+      pubDate: '2026-08-05',
+      customSlug: '',
+    };
+
+    expect(restoredPublishDate(draft, '2026-08-20')).toBe('2026-08-20');
+    expect(
+      restoredPublishDate({ ...draft, pubDateCustomized: true }, '2026-08-20'),
+    ).toBe('2026-08-05');
+  });
+
+  it('marks a changed published slug as one atomic update', () => {
+    expect(
+      editWriteItem(
+        { slug: 'new-name', content: '---\npubDate: 2026-08-20\n---\n' },
+        'old-name',
+      ),
+    ).toMatchObject({
+      slug: 'new-name',
+      previousSlug: 'old-name',
+      operation: 'update',
+    });
   });
 
   it('round-trips a private article', () => {

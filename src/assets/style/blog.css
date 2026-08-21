@@ -1,5 +1,11 @@
 @reference "./common.css";
 
+/* 正文与串文共用图片边界、圆角和留白。 */
+:where(.blog-content, .home-feed-group[data-thread-group] .home-entry-content)
+  img {
+  @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
+}
+
 /* 标题日期与正文信息栏使用同一字号。 */
 .post-header-meta,
 .post-meta-bar,
@@ -124,10 +130,6 @@
     @apply no-underline;
 
     background-size: 100% 1px;
-  }
-
-  img {
-    @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
   }
 
   /* 换行时每段代码都保留完整边框和圆角。 */

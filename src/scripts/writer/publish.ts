@@ -1,4 +1,5 @@
 import type { Visibility, WriterItem } from './model';
+import type { WriteItem } from '@/domain/content-contract';
 
 export const slugify = (value: string) =>
   value
@@ -21,6 +22,16 @@ export const generatedSlug = (
   const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 12);
   return `${item.kind}-${stamp}-${index + 1}`;
 };
+
+/** 已发布内容改 slug 时，由服务端在一次提交中迁移旧文件。 */
+export const editWriteItem = (
+  post: Pick<WriteItem, 'slug' | 'content'>,
+  previousSlug: string,
+): WriteItem => ({
+  ...post,
+  operation: 'update',
+  ...(post.slug !== previousSlug ? { previousSlug } : {}),
+});
 
 interface MarkdownOptions {
   collections: string[];

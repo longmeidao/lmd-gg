@@ -67,7 +67,8 @@ describe('admin worker', () => {
           content: '---\npubDate: 2026-08-01\n---\n',
         },
         {
-          slug: 'reply-target',
+          slug: 'renamed-target',
+          previousSlug: 'reply-target',
           content: '---\npubDate: 2026-08-01\nthread: "thread-1"\n---\n',
           operation: 'update',
         },
@@ -80,6 +81,17 @@ describe('admin worker', () => {
     expect(
       calls.filter(([url]) => String(url).endsWith('/git/blobs')),
     ).toHaveLength(2);
+    const treeCall = calls.find(
+      ([url, init]) =>
+        String(url).endsWith('/git/trees') && init?.method === 'POST',
+    );
+    expect(JSON.parse(String(treeCall?.[1]?.body))).toMatchObject({
+      tree: [
+        { path: 'src/content/post/new-reply.md', sha: 'blob-1' },
+        { path: 'src/content/post/renamed-target.md', sha: 'blob-2' },
+        { path: 'src/content/post/reply-target.md', sha: null },
+      ],
+    });
     expect(
       calls.filter(
         ([url, init]) =>

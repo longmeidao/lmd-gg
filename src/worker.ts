@@ -288,13 +288,18 @@ export const commitFilesAtomically = async (
       .map((entry) => entry.path),
   );
   for (const item of items) {
-    const exists = existingPaths.has(postRelativePath(item.slug));
+    const targetExists = existingPaths.has(postRelativePath(item.slug));
+    const sourceSlug = item.previousSlug ?? item.slug;
+    const sourceExists = existingPaths.has(postRelativePath(sourceSlug));
     const operation = item.operation ?? defaultOperation;
-    if (operation === 'create' && exists) {
+    if (operation === 'create' && targetExists) {
       throw new Error(`POST_EXISTS:${item.slug}`);
     }
-    if (operation === 'update' && !exists) {
-      throw new Error(`POST_MISSING:${item.slug}`);
+    if (operation === 'update' && !sourceExists) {
+      throw new Error(`POST_MISSING:${sourceSlug}`);
+    }
+    if (item.previousSlug && targetExists) {
+      throw new Error(`POST_EXISTS:${item.slug}`);
     }
   }
 
@@ -318,12 +323,24 @@ export const commitFilesAtomically = async (
       method: 'POST',
       body: JSON.stringify({
         base_tree: baseTreeSha,
-        tree: items.map((item, index) => ({
-          path: postRelativePath(item.slug),
-          mode: '100644',
-          type: 'blob',
-          sha: blobs[index]!.sha,
-        })),
+        tree: [
+          ...items.map((item, index) => ({
+            path: postRelativePath(item.slug),
+            mode: '100644',
+            type: 'blob',
+            sha: blobs[index]!.sha,
+          })),
+          ...items
+            .filter((item): item is WriteItem & { previousSlug: string } =>
+              Boolean(item.previousSlug),
+            )
+            .map((item) => ({
+              path: postRelativePath(item.previousSlug),
+              mode: '100644',
+              type: 'blob',
+              sha: null,
+            })),
+        ],
       }),
     },
     request,

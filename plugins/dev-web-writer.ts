@@ -196,6 +196,9 @@ export function devWebWriter(): Plugin {
           const paths = items.map((item) =>
             postPath(contentDirectory, item.slug),
           );
+          const sourcePaths = items.map((item) =>
+            postPath(contentDirectory, item.previousSlug ?? item.slug),
+          );
 
           const operations = items.map(
             (item) =>
@@ -204,37 +207,61 @@ export function devWebWriter(): Plugin {
           );
           const originals = new Map<string, string>();
           for (const [index, filePath] of paths.entries()) {
-            const exists = await access(filePath)
+            const sourcePath = sourcePaths[index]!;
+            const targetExists = await access(filePath)
               .then(() => true)
               .catch((error: NodeJS.ErrnoException) => {
                 if (error.code === 'ENOENT') return false;
                 throw error;
               });
-            if (operations[index] === 'create' && exists) {
+            const sourceExists = await access(sourcePath)
+              .then(() => true)
+              .catch((error: NodeJS.ErrnoException) => {
+                if (error.code === 'ENOENT') return false;
+                throw error;
+              });
+            if (operations[index] === 'create' && targetExists) {
               throw new Error(`POST_EXISTS:${items[index]!.slug}`);
             }
-            if (operations[index] === 'update' && !exists) {
-              throw new Error(`POST_MISSING:${items[index]!.slug}`);
+            if (operations[index] === 'update' && !sourceExists) {
+              throw new Error(
+                `POST_MISSING:${items[index]!.previousSlug ?? items[index]!.slug}`,
+              );
             }
-            if (exists)
+            if (items[index]!.previousSlug && targetExists) {
+              throw new Error(`POST_EXISTS:${items[index]!.slug}`);
+            }
+            if (targetExists)
               originals.set(filePath, await readFile(filePath, 'utf8'));
+            if (sourceExists && sourcePath !== filePath) {
+              originals.set(sourcePath, await readFile(sourcePath, 'utf8'));
+            }
           }
 
-          // 原地写入可避免 rename 触发两次页面重载；失败时回滚全部已写文件。
-          const committed: number[] = [];
+          // 新路径写入与旧路径删除视为一次操作；任一步失败都恢复全部文件。
+          const touchedPaths = new Set([...paths, ...sourcePaths]);
           try {
             for (const [index, item] of items.entries()) {
               await mkdir(path.dirname(paths[index]!), { recursive: true });
               await writeFile(paths[index]!, item.content, 'utf8');
-              committed.push(index);
+            }
+            for (const [index, item] of items.entries()) {
+              if (item.previousSlug) await unlink(sourcePaths[index]!);
             }
           } catch (error) {
             await Promise.all(
-              committed.map(async (index) => {
-                const filePath = paths[index]!;
+              [...touchedPaths].map(async (filePath) => {
                 const original = originals.get(filePath);
-                if (original === undefined) await unlink(filePath);
-                else await writeFile(filePath, original, 'utf8');
+                if (original === undefined) {
+                  await unlink(filePath).catch(
+                    (unlinkError: NodeJS.ErrnoException) => {
+                      if (unlinkError.code !== 'ENOENT') throw unlinkError;
+                    },
+                  );
+                } else {
+                  await mkdir(path.dirname(filePath), { recursive: true });
+                  await writeFile(filePath, original, 'utf8');
+                }
               }),
             );
             throw error;
