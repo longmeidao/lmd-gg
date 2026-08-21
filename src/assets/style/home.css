@@ -252,6 +252,11 @@
   margin-bottom: 0;
 }
 
+/* 首页和详情页的串文都复用文章图片边界、圆角和留白。 */
+.home-feed-group[data-thread-group] .home-entry-content img {
+  @apply border-slate6 mx-auto my-8 w-full rounded-2xl border;
+}
+
 .home-entry-content p {
   margin: 0.75rem 0;
 }
