@@ -7,7 +7,8 @@ lmd.gg 是 Astro 7 静态个人站点，部署到 Cloudflare Workers。项目最
 - Node 使用最新 LTS（当前约束见 `package.json`），pnpm 是唯一包管理器。
 - 内容配置位于 `src/content.config.ts`，内容条目标识使用 `post.id`。
 - 站点内容在 Git 中，没有数据库；Worker 只处理 `/api/*`。
-- 修改前先检查 `git status`，不要覆盖未提交改动。
+- 修改前先确认 Git 根目录、remote、提交与 `git status`，不要在镜像目录中修改真实仓库，也不要覆盖未提交改动。
+- 通过 `README.md`、`TODO.md`、`docs/` 和已忽略的 `history/` 恢复项目上下文；项目约束以本文件为唯一代理规则源。
 
 ## 目录职责
 
@@ -64,6 +65,7 @@ Worker 类型由 `wrangler types` 根据 `wrangler.jsonc` 生成到已忽略的 
 
 - Access 应用只保护 `lmd.gg/write`；不要创建覆盖整个主机名的无 path 规则。
 - `/api/admin/*` 由 Worker 验证 Access JWT，摘掉 Access 不会直接开放写入口。
+- 修改 Access 后检查公开首页仍返回 200，而不是被登录跳转覆盖。
 - push 到 `main` 触发 `.github/workflows/deploy.yml`；部署 checkout 必须保留 `fetch-depth: 0`，否则修改时间会失真。
 - 手动部署使用 `pnpm cf:deploy`；部署后分别报告代码、提交、部署和线上验证状态。
 - 新增或修改绑定后重新生成类型；不要把 token、私钥或生成的环境类型提交进仓库。
@@ -74,4 +76,5 @@ Worker 类型由 `wrangler types` 根据 `wrangler.jsonc` 生成到已忽略的 
 - 保留现有路由、SEO、RSS、Bangumi、串文和写作行为，重构不应顺带改变产品设计。
 - 删除代码前确认没有动态导入、Astro 约定式路由或构建脚本引用。
 - 避免全仓机械格式化制造无关 diff。
+- 定时 Actions 只有在 workflow 和脚本均已提交推送后才能称为已启用；外部服务失败可以有限重试，但不要用重试掩盖 4xx 或内容错误。
 - commitlint 不接受 `chore:`；允许 `build / ci / docs / feat / fix / perf / refactor / revert / style / test`。
