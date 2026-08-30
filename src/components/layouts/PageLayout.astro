@@ -60,6 +60,40 @@ const themeScript = `
 <!doctype html>
 <html lang={slateConfig.lang}>
   <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1, minimum-scale=1.0, viewport-fit=cover"
+    />
+    <script is:inline set:html={themeScript} />
+    <style is:inline>
+      html {
+        background: #fcfcfd;
+        color-scheme: light;
+      }
+
+      html.dark,
+      html[data-theme='dark'] {
+        background: #111113;
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        background: inherit;
+      }
+
+      /* 主 CSS 到达前不暴露未排版内容；它会恢复站点外壳。 */
+      .site-shell {
+        visibility: hidden;
+      }
+
+      /* 跳过链接在主 CSS 到达前也必须保持在视口外。 */
+      .skip-link {
+        position: fixed;
+        transform: translateY(-200%);
+      }
+    </style>
     <HeadMeta
       title={fullTitle}
       description={description}
@@ -82,7 +116,6 @@ const themeScript = `
       )
     }
     <Analytics dsn={analyticsDsn} scriptSrc={analyticsScriptSrc} />
-    <script is:inline set:html={themeScript} />
   </head>
   <body class="bg-slate1">
     {/* 键盘用户可直接跳到正文；链接仅在聚焦时显示。 */}

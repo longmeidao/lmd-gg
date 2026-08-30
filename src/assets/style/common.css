@@ -180,6 +180,7 @@ body {
 
 /* 内容列轻微左偏，外壳在超宽屏保持居中。 */
 .site-shell {
+  visibility: visible;
   width: min(81.5rem, 100%);
   margin-inline: auto;
   padding-inline: clamp(1.5rem, 12.5vw, 10rem) clamp(1.5rem, 4vw, 3.25rem);
