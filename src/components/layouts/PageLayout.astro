@@ -104,7 +104,6 @@ const themeScript = `
       <NormalJsonLd title={fullTitle} description={description} image={image} />
     </slot>
     <slot name="head" />
-    <SpeedInsights dsn={speedInsightsDsn} />
     {
       import.meta.env.PROD && (
         <script
@@ -115,7 +114,6 @@ const themeScript = `
         />
       )
     }
-    <Analytics dsn={analyticsDsn} scriptSrc={analyticsScriptSrc} />
   </head>
   <body class="bg-slate1">
     {/* 键盘用户可直接跳到正文；链接仅在聚焦时显示。 */}
@@ -141,5 +139,8 @@ const themeScript = `
         <Footer />
       </slot>
     </div>
+    <!-- 组件会输出自定义元素；放在 body 内，避免 HTML 解析器提前结束 head。 -->
+    <SpeedInsights dsn={speedInsightsDsn} />
+    <Analytics dsn={analyticsDsn} scriptSrc={analyticsScriptSrc} />
   </body>
 </html>
