@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import HeadMeta from './HeadMeta.astro';
@@ -55,7 +54,6 @@ const themeScript = `
     document.documentElement.dataset.theme = mode;
   }
   applyTheme();
-  document.addEventListener('astro:after-swap', applyTheme);
 `;
 ---
 
@@ -85,13 +83,12 @@ const themeScript = `
     }
     <Analytics dsn={analyticsDsn} scriptSrc={analyticsScriptSrc} />
     <script is:inline set:html={themeScript} />
-    <ClientRouter />
   </head>
   <body class="bg-slate1">
     {/* 键盘用户可直接跳到正文；链接仅在聚焦时显示。 */}
     <a class="skip-link" href="#main-content">跳到主要内容</a>
     <script is:inline>
-      /* ClientRouter 不会可靠移动同页锚点焦点，因此显式聚焦 main。 */
+      /* 同页锚点跳转后显式聚焦 main，确保键盘与读屏位置一致。 */
       document.addEventListener('click', (event) => {
         const link = event.target.closest?.('.skip-link');
         if (!link) return;
