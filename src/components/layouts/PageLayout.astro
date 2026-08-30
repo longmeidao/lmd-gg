@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import HeadMeta from './HeadMeta.astro';
 import Header from './Header.astro';
@@ -72,6 +73,7 @@ const themeScript = `
         />
       )
     }
+    <Analytics />
     <script is:inline set:html={themeScript} />
     <ClientRouter />
   </head>
