@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from '@vercel/speed-insights/astro';
 import HeadMeta from './HeadMeta.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
@@ -61,6 +62,7 @@ const themeScript = `
       <NormalJsonLd title={fullTitle} description={description} image={image} />
     </slot>
     <slot name="head" />
+    <SpeedInsights />
     {
       import.meta.env.PROD && (
         <script
