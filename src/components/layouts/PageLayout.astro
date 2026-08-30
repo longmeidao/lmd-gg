@@ -72,6 +72,10 @@ const themeScript = `
     }
     <script is:inline set:html={themeScript} />
     <ClientRouter />
+    <script>
+      import { inject } from '@vercel/analytics';
+      inject();
+    </script>
   </head>
   <body class="bg-slate1">
     {/* 键盘用户可直接跳到正文；链接仅在聚焦时显示。 */}
