@@ -51,6 +51,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@radix-ui/colors": "^3.0.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^7.1.6",
     "astro-expressive-code": "^0.44.1",
     "classnames": "^2.5.1",
