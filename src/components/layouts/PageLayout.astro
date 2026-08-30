@@ -25,6 +25,16 @@ const {
 } = Astro.props;
 const fullTitle = getFullTitle(title);
 
+// Cloudflare 没有 Vercel 的 /_vercel/* 路由，使用公开 DSN 直连官方采集脚本。
+const isVercelBuild = process.env.VERCEL === '1';
+const speedInsightsDsn = isVercelBuild
+  ? undefined
+  : 'fsTh9umJxwfHAT9qKbEawMs5h2r';
+const analyticsDsn = isVercelBuild ? undefined : 'qx5reBHX4WLwYVxjvSZK4483M';
+const analyticsScriptSrc = isVercelBuild
+  ? undefined
+  : 'https://va.vercel-scripts.com/v1/script.js';
+
 // 首屏绘制前确定主题，避免颜色闪烁。
 const themeScript = `
   function getThemeMode() {
@@ -62,7 +72,7 @@ const themeScript = `
       <NormalJsonLd title={fullTitle} description={description} image={image} />
     </slot>
     <slot name="head" />
-    <SpeedInsights />
+    <SpeedInsights dsn={speedInsightsDsn} />
     {
       import.meta.env.PROD && (
         <script
@@ -73,7 +83,7 @@ const themeScript = `
         />
       )
     }
-    <Analytics />
+    <Analytics dsn={analyticsDsn} scriptSrc={analyticsScriptSrc} />
     <script is:inline set:html={themeScript} />
     <ClientRouter />
   </head>
