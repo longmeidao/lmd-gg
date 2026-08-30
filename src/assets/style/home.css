@@ -29,7 +29,7 @@
 }
 
 .home-nav a {
-  color: var(--color-slate10);
+  color: var(--color-slate11);
   text-decoration: none;
   transition: color 150ms ease;
 }
@@ -751,7 +751,7 @@
 
 .home-entry-content figcaption {
   margin-top: 0.5rem;
-  color: var(--color-slate9);
+  color: var(--color-slate11);
   font-size: 0.8rem;
   text-align: center;
 }

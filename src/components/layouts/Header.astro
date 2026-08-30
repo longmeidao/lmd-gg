@@ -14,7 +14,9 @@ const { avatar = slateConfig.avatar } = Astro.props;
     <img
       class="bg-slate2 outline-slate3 block h-full w-full rounded-full border-2 border-white shadow-xs outline-1"
       src={avatar}
-      alt={slateConfig.title}
+      width="56"
+      height="56"
+      alt=""
       draggable="false"
     />
     <span>{slateConfig.title}</span>
