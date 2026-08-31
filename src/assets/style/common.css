@@ -278,31 +278,43 @@ body {
 
 .blog-content .heti .heti-em,
 .home-entry-content .heti-em {
-  position: relative;
-  display: inline-block;
-  -webkit-text-emphasis: none;
-  text-emphasis: none;
+  -webkit-text-emphasis-color: var(--color-slate9);
+  -webkit-text-emphasis-position: under right;
+  -webkit-text-emphasis-style: open sesame;
+  text-emphasis-color: var(--color-slate9);
+  text-emphasis-position: under right;
+  text-emphasis-style: open sesame;
   white-space: nowrap;
 }
 
-/* 原生着重号固定缩放且字形由浏览器决定；用白芝麻字形保证桌面与手机尺寸一致。 */
-.blog-content .heti .heti-em::after,
-.home-entry-content .heti-em::after {
-  position: absolute;
-  inset-inline: 0;
-  bottom: -0.22em;
-  height: 0.55em;
-  background-color: var(--color-slate9);
-  content: '';
-  pointer-events: none;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Ctext x='8' y='12' fill='white' font-family='sans-serif' font-size='22' text-anchor='middle'%3E%EF%B9%86%3C/text%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Ctext x='8' y='12' fill='white' font-family='sans-serif' font-size='22' text-anchor='middle'%3E%EF%B9%86%3C/text%3E%3C/svg%3E");
-  -webkit-mask-position: left center;
-  mask-position: left center;
-  -webkit-mask-repeat: repeat-x;
-  mask-repeat: repeat-x;
-  -webkit-mask-size: 1em 0.55em;
-  mask-size: 1em 0.55em;
+/* 手机保留原生字形；桌面用无内置留白的空心芝麻放大，避免浏览器合成得过小。 */
+@media (hover: hover) and (pointer: fine) {
+  .blog-content .heti .heti-em,
+  .home-entry-content .heti-em {
+    position: relative;
+    display: inline-block;
+    -webkit-text-emphasis: none;
+    text-emphasis: none;
+  }
+
+  .blog-content .heti .heti-em::after,
+  .home-entry-content .heti-em::after {
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.22em;
+    height: 0.55em;
+    background-color: var(--color-slate9);
+    content: '';
+    pointer-events: none;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Cpath fill='white' fill-rule='evenodd' d='M4.5 8.5C3.8 6 6 2.8 11.5 1.2 10.8 4.5 8 7.5 4.5 8.5ZM6 7C7.7 6.4 9.4 4.7 10.3 2.9 7.6 4 6.1 5.5 6 7Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Cpath fill='white' fill-rule='evenodd' d='M4.5 8.5C3.8 6 6 2.8 11.5 1.2 10.8 4.5 8 7.5 4.5 8.5ZM6 7C7.7 6.4 9.4 4.7 10.3 2.9 7.6 4 6.1 5.5 6 7Z'/%3E%3C/svg%3E");
+    -webkit-mask-position: left center;
+    mask-position: left center;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    -webkit-mask-size: 1em 0.55em;
+    mask-size: 1em 0.55em;
+  }
 }
 
 /* 详情页与 feed 共用容器样式；外层选择器用于覆盖 vendor 权重。 */
