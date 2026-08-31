@@ -20,30 +20,30 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 桌面浏览器把原生空心芝麻合成得偏小；此字体面只放大 U+FE46，不改变正文。 */
+/* 桌面浏览器把原生空心芝麻合成得偏小；放大 Noto 的 U+FE46，不改变正文。 */
 @font-face {
   font-family: 'LMD Emphasis Mark';
-  src: url('data:font/woff2;base64,d09GMgABAAAAAAHcAAoAAAAABCgAAAGSAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAANApEXwE2AiQDBgsGAAQgBYNmBy4bhgMgLgpsY9LoER6movTQGcu/LEMhfLJoPNTf/87uvtfvP14gTWCBJNh4GOPPvAkk7fr87+fum5i+iXh1R0xLxTOVlMirfE5fM/C0EXLKAVALQAIJI+//iyrw729ybQ1wvfPocymuZeUBFsjEJdIF3Hn+PLHAJ1m6TYM1+RXTCOoLP0fVKl70OMBKAmcU8K+OUt2EQbgCMHsq5QK7mKjEQakuIkWy1owF8hbb5Drn+AocAHQAciRYZ2Y3+XFnQ3G25zN1ecs8u1L62VheelFZ+ioMf8r+Opv0vQAgQMDwJmxb7k9A2Cv4vHIpyL97wU6DwpLonpX8Eo+MIwy3FCJAUmABhpF+5ksAjJICnviUCKBYGVzoGGWgJ9bFB/QW2EgnBOF0I8Ai8wZsRd/AkfQHXLqQ1Hii4byg3E7A+kXmNrHqD6V0rqOJ4ynu3nJ3mQcLXORvo62jjKq4dOPErnun7lEdu+6cGzp07NGFXSlDVLdNJUTFk6+ZOnTn3qlrV6X66dEsMpP1jnYi+Y9Xp9VKOgsAAAA=')
+  src: url('data:font/woff2;base64,d09GMgABAAAAAAKYAAoAAAAABWQAAAJOAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAANApwgQ0BNgIkAwYLBgAEIAWFdwcuG8UEAD4Ub4xGdRCpdNzjXbgS5g8aaRxyohP5aUWJoH7st/cOtWYS6apZQyKK908lkSiRSPeQGELEQxUL1tr8Y9bEF1U50z1cEomONzw0KwWnnKYQN888S/B8gZteJ6d+ur2llEQBtTD0AMuATOT83x0oifpmOEpMVXezRl3K38YfsC3w879iSyldS6XWqXswXTATP6AIVrAYxtyaj3OCr7XFvCJKSspXP0fmR1ypFgjSVIA5FIA/6Yb6P1gKuwDMAFWEBF1uX+EDEVXl8rFEsPZYbCeqymsdBZOwnlIsnQ7/1S2Vlxsub39Kbi6FdqzdC39H1IOLV3wxv1H2+97XS7uMgq7PhM73j10ofXU7SWG0ce9yMQcivvmnr/tvYr3jeMO6mZ8eTwQgQMDY8/jRagxDfsDbPbAJz65TaZD8WlqHRvlBLJYVDIuLIECRzQ9YaqQWXwLAPPgIsdpQhJhByrCMKqlOUS3CPblGkhfJV1UPKh4SfIpiCX7RcYgAXREEaoo7BImN36tgNaXztNL7XVfxjZgx/JkRXPnn4E5N9g99h64PzlnPoIHyEj00NNxFI7zFUxvob7RZE2rNEeClfAKVl5RFWdeeFazDBh1c8YPoxDz7Nhg0ui2kQplyVYq956tQg7STMZGCCFwy0osxjU1RgkzqN4SM8ihcpAdzbSFDDBKFa5MnVa5k+cczZFgXMoJtYaSbw6MTbDJsIsMEGywTFJptNsFG6wVUrH3YXhlPeYZiI3IXc1ktmS420Spe098P3YlSe35g9HRX1QAAAA==')
     format('woff2');
   unicode-range: U+FE46;
 }
 
 :root {
-  --font-emphasis-adjust: ;
+  --font-emphasis-adjust: 'LMD Emphasis Disabled';
   --font-sans:
-    var(--font-emphasis-adjust) system-ui, -apple-system, 'system-ui', 'Segoe UI',
-    Roboto, 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang TC',
-    'Hiragino Sans CNS', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC',
-    sans-serif;
+    var(--font-emphasis-adjust), system-ui, -apple-system, 'system-ui',
+    'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'PingFang TC', 'Hiragino Sans CNS', 'Microsoft JhengHei', 'Noto Sans TC',
+    'Noto Sans CJK TC', sans-serif;
   --font-serif:
-    var(--font-emphasis-adjust) 'New York Small', 'New York', 'Iowan Old Style',
-    Charter, 'Bitstream Charter', 'Source Serif 4', Cambria, 'Sitka Text', Georgia,
-    'Songti SC', STSong, SimSun, 'Noto Serif SC', 'Noto Serif CJK SC',
-    'Songti TC', PMingLiU, MingLiU, 'Noto Serif TC', 'Noto Serif CJK TC',
-    ui-serif, serif;
+    var(--font-emphasis-adjust), 'New York Small', 'New York',
+    'Iowan Old Style', Charter, 'Bitstream Charter', 'Source Serif 4', Cambria,
+    'Sitka Text', Georgia, 'Songti SC', STSong, SimSun, 'Noto Serif SC',
+    'Noto Serif CJK SC', 'Songti TC', PMingLiU, MingLiU, 'Noto Serif TC',
+    'Noto Serif CJK TC', ui-serif, serif;
   --font-serif-quote:
-    var(--font-emphasis-adjust) 'Songti SC', STSong, SimSun, 'Noto Serif SC',
+    var(--font-emphasis-adjust), 'Songti SC', STSong, SimSun, 'Noto Serif SC',
     'Noto Serif CJK SC', 'Songti TC', PMingLiU, MingLiU, 'Noto Serif TC',
     'Noto Serif CJK TC', ui-serif, 'New York Small', 'New York',
     'Iowan Old Style', Charter, Georgia, 'Times New Roman', Times, serif;
@@ -56,14 +56,14 @@
   --divider-leaf-trio: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 13'%3E%3Cpath fill='black' transform='translate(0,0) rotate(90 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(16,0) rotate(100 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3Cpath fill='black' transform='translate(32,0) rotate(80 6 6.5)' d='M6.765.5.177 6.093l2.61 5.966 8.39-3.17L6.765.5Z'/%3E%3C/svg%3E");
 
   --font-reading:
-    var(--font-emphasis-adjust) ui-sans-serif, system-ui, -apple-system,
+    var(--font-emphasis-adjust), ui-sans-serif, system-ui, -apple-system,
     'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
     'Noto Sans CJK SC', sans-serif;
 }
 
 @media (hover: hover) and (pointer: fine) {
   :root {
-    --font-emphasis-adjust: 'LMD Emphasis Mark',;
+    --font-emphasis-adjust: 'LMD Emphasis Mark';
   }
 }
 
