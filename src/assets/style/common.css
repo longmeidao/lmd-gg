@@ -278,8 +278,13 @@ body {
 
 .blog-content .heti .heti-em,
 .home-entry-content .heti-em {
+  -webkit-text-emphasis-color: var(--color-slate9);
+  -webkit-text-emphasis-position: under right;
+  -webkit-text-emphasis-style: open sesame;
   text-emphasis-color: var(--color-slate9);
+  text-emphasis-position: under right;
   text-emphasis-style: open sesame;
+  white-space: nowrap;
 }
 
 /* 详情页与 feed 共用容器样式；外层选择器用于覆盖 vendor 权重。 */
